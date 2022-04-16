@@ -1,0 +1,17 @@
+[Unit]
+Description=LiberteaPanel
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+User=root
+EnvironmentFile={rootpath}/.env
+WorkingDirectory={rootpath}/panel
+Type=simple
+ExecStart=/bin/sh -c '/usr/bin/python3 -u serve.py >> /tmp/libertea-panel.log 2>&1'
+StandardInput=tty-force
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

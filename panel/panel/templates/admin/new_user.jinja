@@ -1,0 +1,19 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<h1 class="mt-5">New user</h1>
+<div class="section">
+    <form method="post" class="mt-5">
+        <div class="form-group mb-4">
+            <label for="displayName">Display name</label>
+            <input type="text" class="form-control" id="displayName" name="note" value="">
+        </div>
+        <div class="form-group mb-4">
+            <label for="concurrentIps">Max concurrent IPs to connect</label>
+            <input type="number" class="form-control" id="concurrentIps" name="max_ips" value="{{ max_ips }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+
+{% endblock %}

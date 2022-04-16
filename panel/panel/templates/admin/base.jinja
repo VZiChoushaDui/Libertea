@@ -1,0 +1,202 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Libertea</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/v4-shims.min.css" integrity="sha512-p++g4gkFY8DBqLItjIfuKJPFvTPqcg2FzOns2BNaltwoCOrXMqRIOqgWqWEvuqsj/3aVdgoEo2Y7X6SomTfUPA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <link href='https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,400,400italic,500,500italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+        <style> 
+            body {
+                font-family: 'Roboto', sans-serif;
+            }
+
+            h1 {
+                font-size: 20px;
+                text-align: center;
+            }
+
+            .section {
+                width: 100%;
+                margin-top: 20px;
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .stats-item {
+                margin-top: 16px;
+            }
+
+            .stats-item-value {
+                font-size: 28px;
+                font-weight: 300;
+            }
+
+            .stats-item-desc {
+                font-size: 14px;
+                font-weight: 700;
+                text-transform: uppercase;
+                margin-top: -4px;
+                margin-bottom: 8px;
+            }
+
+            .actions .btn {
+                width: 100%;
+                margin-top: 16px;
+            }
+
+            .tabs .tab {
+                border-bottom: 3px solid transparent;
+                display: inline-block;
+                text-decoration: none;
+                font-size: 16px;
+                margin-right: 4px;
+                color: black;
+                font-weight: 400;
+            }
+
+            @media (min-width: 450px) {
+                .tabs .tab {
+                    margin-right: 16px;
+                }
+            }
+
+            .tabs .tab.active {
+                border-bottom: 3px solid #0d6efd;
+                color: #0d6efd;
+                font-weight: 600;
+            }
+
+            .tabs .tab.back {
+                color: #0d6efd;
+                font-weight: 600;
+            }
+
+            .list-item-title {
+                font-size: 16px;
+                font-weight: 600;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .list-item-subtitle {
+                font-size: 14px;
+                opacity: 0.75;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .main-content {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+            
+            
+            .qr-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(10px);
+                display: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                z-index: 999;
+            }
+
+            .qr-modal-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                height: 100%;
+            }
+
+            #qr-code {
+                border: 20px solid white;
+                background: white;
+                border-radius: 10px;
+            }
+
+            #qr-code img {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .header {
+                width: 100%;
+                padding-top: 20px;
+                padding-left: 16px;
+                padding-right: 16px;
+                background: #eee;
+            }
+
+            .header > div {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .logo {
+                float: left;
+                margin-top: -18px;
+            }
+
+            @media (max-width: 576px) {
+                .logo {
+                    float: none;
+                    text-align: center;
+                    margin-bottom: 16px;
+                }
+            }
+
+            .logo > img {
+                max-width: 140px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div>
+                {% if back_to == 'domains' %}
+                <div class="tabs float-start">
+                    <a href="/{{ admin_uuid }}/domains/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Domains</a>
+                </div>
+                {% elif back_to == 'users' %}
+                <div class="tabs float-start">
+                    <a href="/{{ admin_uuid }}/users/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Users</a>
+                </div>
+                {% else %}
+
+                <a href="/{{ admin_uuid }}/">
+                    <div class="logo">
+                        <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" />
+                    </div>
+                </a>
+
+                <div style="clear: both;" class="d-block d-sm-none"></div>
+
+                <div class="tabs float-sm-end">
+                    <a href="/{{ admin_uuid }}/" class="tab {% if page=='dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="/{{ admin_uuid }}/users/" class="tab {% if page=='users' %}active{% endif %}">Users</a>
+                    <a href="/{{ admin_uuid }}/domains/" class="tab {% if page=='domains' %}active{% endif %}">Domains</a>
+                    <a href="/{{ admin_uuid }}/proxies/" class="tab {% if page=='proxies' %}active{% endif %}">Proxies</a>
+                    <a href="/{{ admin_uuid }}/settings/" class="tab {% if page=='settings' %}active{% endif %}">Settings</a>
+                </div>
+                {% endif %}
+
+                <div style="clear: both;"></div>
+            </div>
+        </div>
+        <div class="main-content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </body>
+</html>

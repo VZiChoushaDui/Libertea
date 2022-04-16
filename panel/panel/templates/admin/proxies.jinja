@@ -1,0 +1,70 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<div class="w-100 mt-4 px-3">
+    <a class="btn btn-primary add-proxy-button float-start float-sm-end" href="#">
+        Add new secondary proxy
+    </a>
+</div>
+<div style="clear: both"></div>
+<div class="add-proxy-instructions my-4 mx-3 px-3 py-4" style="border: 1px solid #aaa; border-radius: 16px; display: none;">
+    To add a secondary proxy to your VPN, buy a new server, and copy and paste the following command into the SSH shell:<br /><br />
+    <code id="codeToCopy">curl -fsSL {{ bootstrap_script_url }} | bash -s -- install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
+    <br />
+    <br />
+    <button class="btn btn-outline-primary btn-copy">
+        Copy code to clipboard
+    </button>
+</div>
+
+<script>
+    function copyCode() {
+        var codeToCopy = document.querySelector("#codeToCopy").innerHTML;
+        navigator.clipboard.writeText(codeToCopy);
+
+        document.querySelector(".btn-copy").innerText = "Copied!";
+        setTimeout(function() {
+            document.querySelector(".btn-copy").innerText = "Copy code to clipboard";
+        }, 2000);
+    }
+
+    document.querySelector("#codeToCopy").addEventListener("click", function() {
+        copyCode();
+
+        // select the whole code
+        var range = document.createRange();
+        range.selectNode(document.querySelector("#codeToCopy"));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    });
+
+    document.querySelector(".add-proxy-button").addEventListener("click", function() {
+        document.querySelector(".add-proxy-instructions").style.display = "block";
+        document.querySelector(".add-proxy-button").style.display = "none";
+    });
+
+    document.querySelector(".btn-copy").addEventListener("click", function() {
+        copyCode();
+    });
+
+    var goToNew = new URLSearchParams(window.location.search).get('new');
+    if (goToNew) {
+        document.querySelector(".add-proxy-instructions").style.display = "block";
+        document.querySelector(".add-proxy-button").style.display = "none";
+    }
+</script>
+
+<div class="list-group list-group-flush mt-2">
+    {% for proxy in proxies %}
+        <a href="#" class="list-group-item list-group-item-action">
+            <div class="row">
+                <div class="col-12 list-item-title">
+                    {{ proxy.ip }}
+                </div>
+                <div class="col-12 list-item-subtitle">
+                    🟢 Online
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+flask
+waitress
+Paste
+pymongo
+jinja2

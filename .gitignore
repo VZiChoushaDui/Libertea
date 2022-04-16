@@ -1,0 +1,7 @@
+__pycache__
+/data
+.env
+.vscode
+providers/*/config.json
+/tools
+TODO

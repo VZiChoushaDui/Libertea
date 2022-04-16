@@ -1,0 +1,148 @@
+
+mode: rule
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - 4.2.2.4
+    - 8.8.8.8
+
+tun:
+  enable: true
+  stack: gvisor # or gvisor
+  dns-hijack:
+     - 198.18.0.2:53
+  auto-route: true
+  auto-detect-interface: true
+
+proxy-providers:
+{% for domain in domains %}
+{% if cloudflare_exists %}
+  cloudflare-{{domain}}:
+    type: http
+    url: https://{{ domain }}/{{ user_id }}/cloudflare.yaml
+    path: ./cloudflare-{{ domain }}.yaml
+    interval: 3600
+{% endif %}
+
+{% if direct_exists %}
+  direct-{{ domain }}:
+    type: http
+    url: https://{{ domain }}/{{ user_id }}/direct.yaml
+    path: ./direct-{{ domain }}.yaml
+    interval: 3600
+{% endif %}
+
+{% if cdn_other_exists %}
+  cdn-other-{{ domain }}:
+    type: http
+    url: https://{{ domain }}/{{ user_id }}/cdn-other.yaml
+    path: ./cdn-other-{{ domain }}.yaml
+    interval: 3600
+{% endif %}
+{% endfor %}
+
+rule-providers:
+{% for domain in domains %}
+  excludedips-{{ domain }}:
+    type: http
+    behavior: classical
+    interval: 3600
+    path: ./excludedips.yaml
+    url: https://{{ domain }}/{{ user_id }}/rules.yaml
+{% endfor %}
+
+
+proxy-groups:
+  - name: "main-group"
+    type: fallback
+    proxies:
+{% if direct_exists or cloudflare_exists %}
+      - tier1-group
+{% endif %}{% if cdn_other_exists %}
+      - tier2-group
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    global-default: true
+    lazy: false
+
+{% if direct_exists or cloudflare_exists %}
+  - name: "tier1-group"
+    type: url-test
+    tolerance: 200
+    proxies:
+{% if cloudflare_exists %}
+      - cloudflare-group
+{% endif %}{% if direct_exists %}
+      - direct-group
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
+
+{% if cdn_other_exists %}
+  - name: "tier2-group"
+    type: url-test
+    tolerance: 100
+    proxies:
+{% if cdn_other_exists %}
+      - cdn-other-group
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
+
+{% if cloudflare_exists %}
+  - name: "cloudflare-group"
+    type: load-balance
+    strategy: round-robin
+    use:
+{% for domain in domains %}
+      - cloudflare-{{ domain }}
+{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
+
+{% if cdn_other_exists %}
+  - name: "cdn-other-group"
+    type: load-balance
+    strategy: round-robin
+    use:
+{% for domain in domains %}
+      - cdn-other-{{ domain }}
+{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
+
+{% if direct_exists %}
+  - name: "direct-group"
+    type: load-balance
+    strategy: round-robin
+    use:
+{% for domain in domains %}
+      - direct-{{ domain }}
+{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
+
+mixed-port: 1096
+redir-port: 7892
+external-controller: 127.0.0.1:9090
+
+rules:
+{% for domain in domains %}
+  - RULE-SET,excludedips-{{ domain }},DIRECT
+{% endfor %}
+  - MATCH,main-group

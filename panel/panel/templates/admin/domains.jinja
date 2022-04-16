@@ -1,0 +1,32 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<div class="w-100 mt-4 px-3">
+    <a class="btn btn-primary float-start float-sm-end" href="/{{ admin_uuid }}/domains/new/">
+        Add new domain
+    </a>
+</div>
+<div style="clear: both"></div>
+<div class="list-group list-group-flush mt-2">
+    {% for domain in domains %}
+        <a href="/{{ admin_uuid }}/domains/{{ domain.id }}/" class="list-group-item list-group-item-action">
+            <div class="row">
+                <div class="col-12 list-item-title">
+                    {{ domain.id }}
+                    {% if domain.warning %} ⚠️ {% endif %}
+                </div>
+                <div class="col-12 list-item-subtitle">
+                    {% if domain.status == 'active' %}
+                    ✅ Active
+                    {% elif domain.status == 'inactive' %}
+                    ❌ Inactive, click for details
+                    {% elif domain.status == 'cdn-disabled' %}
+                    ❌ Inactive (CDN disabled), click for details
+                    {% else %}
+                    ⚠️ Unknown status
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+{% endblock %}
