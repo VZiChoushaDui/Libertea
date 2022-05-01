@@ -1,4 +1,4 @@
-import uuid
+import requests
 from . import utils
 from . import stats
 from . import config
@@ -13,6 +13,15 @@ root_url = '/' + config.get_admin_uuid() + '/'
 
 @blueprint.route(root_url)
 def dashboard():
+    update_available = False
+    try:
+        latest_version = requests.get(config.VERSION_ENDPOINT, timeout=1).text
+        latest_version = int(latest_version)
+        if config.LIBERTEA_VERSION < latest_version:
+            update_available = True
+    except:
+        pass
+
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
         users_count=len(utils.get_users()),
@@ -25,6 +34,7 @@ def dashboard():
         ips_today=stats.get_ips_today_all(),
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
+        update_available=update_available,
     )
 
 
