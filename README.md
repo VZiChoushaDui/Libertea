@@ -2,11 +2,12 @@
 
 # Libertea
 
-Easily install and manage Clash VPN.
+Easily install and manage a Clash VPN server.
 
 ## Features
 
 - One-command installation and management
+- User management
 - TROJAN and VLESS protocols
 - Auto select the fastest route on user's devices
 - Multiple domains behind CDN
