@@ -2,21 +2,22 @@
 
 # Libertea
 
-Easily install and manage a Clash VPN server.
+Easily install and manage a Clash VPN server; with auto fallback, auto update and user management. 
 
 ## Features
 
 - One-command installation and management
-- User management
+- Auto select the best route on user's devices
 - TROJAN and VLESS protocols
-- Auto select the fastest route on user's devices
-- Multiple domains behind CDN
-- Secondary proxies for better availability
+- User management
+- Support multiple domains behind CDN
+- Secondary IPs for better availability
 
 ## Requirements
 
-- Ubuntu 20.04 or higher (Ubuntu 22.04 recommended)
+- At least one server with Ubuntu 20.04 or higher (Ubuntu 22.04 recommended)
 - At least one domain behind a CDN (Cloudflare recommended)
+
 
 ## Recommended configuration
 
