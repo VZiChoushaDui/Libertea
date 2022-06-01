@@ -34,9 +34,9 @@ Easily install and manage a Clash VPN server; with auto fallback, auto update an
 
 4. run the following command on your server:
 
-    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+        curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
-*The installation may take a few minutes.*
+    *The installation may take a few minutes.*
 
 5. Provide the domain name and a password for the panel when prompted.
 
