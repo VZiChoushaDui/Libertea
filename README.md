@@ -26,21 +26,15 @@ Easily install and manage a Clash VPN server; with auto fallback, auto update an
 
 ## Installation
 
-1. Buy a domain and set its DNS to a CDN (such as Cloudflare)
+1. Buy a domain and point its DNS to a CDN (such as Cloudflare), and set the CDN to `Full` SSL mode. [help](https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png)
 
-2. Set SSL encryption to `Full` in the SSL settings. [help](https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png)
+2. Set your server's IP address to the CDN's DNS record, and make sure CDN is enabled. (Orange cloud icon in Cloudflare)
 
-3. Buy a server running Ubuntu (22.04 is preferred) and route your domain from CDN panel to its IP
-
-4. run the following command on your server:
+3. run the following command on your server and follow the instructions.
 
         curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
     *The installation may take a few minutes.*
-
-5. Provide the domain name and a password for the panel when prompted.
-
-6. Visit the link provided by the script to access the panel.
 
 ## Update
 
