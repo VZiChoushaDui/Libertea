@@ -50,7 +50,7 @@ def get_single_clash_file_configuration():
     db = client[config.MONGODB_DB_NAME]
     setting = db.settings.find_one({"_id": "single_clash_file_configuration"})
     if setting is None:
-        return False
+        return True
     return setting["value"]
 
 def set_single_clash_file_configuration(val):
