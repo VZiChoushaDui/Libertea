@@ -13,6 +13,8 @@ COMMAND="$1"
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
+touch .libertea.main
+
 echo " ** Initializing firewall..."
 ufw allow ssh >/dev/null
 ufw allow http >/dev/null
@@ -179,6 +181,9 @@ echo " ** Starting docker containers..."
 docker compose down >/dev/null
 docker compose up -d
 
+panel_ip=$(dig +short "$PANEL_DOMAIN" | head -n 1)
+panel_ip=$(echo "$panel_ip" | tr -d '[:space:]')
+
 echo ""
 echo ""
 echo " Installation completed."
@@ -191,3 +196,11 @@ echo ""
 echo " Username: admin"
 echo " Password: $PANEL_ADMIN_PASSWORD"
 echo ""
+if [ "$panel_ip" == "$my_ip" ]; then
+    echo ""
+    echo "WARNING: Your panel domain name is not resolved by CDN."
+    echo "         Please make sure that your domain name is configured to point to $my_ip"
+    echo "         and that SSL/TLS encryption mode is set to *Full*."
+    echo ""
+fi
+

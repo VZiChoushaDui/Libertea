@@ -5,3 +5,5 @@ __pycache__
 providers/*/config.json
 /tools
 TODO
+.libertea.proxy
+.libertea.main

@@ -20,6 +20,14 @@ fi
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
+# if .libertea.main file exists, then this is a main server. don't install proxy
+if [ -f .libertea.main ]; then
+    echo "This is a main Libertea server. You need to install Libertea secondary proxy on a different server."
+    exit 1
+fi
+
+touch .libertea.proxy
+
 echo " ** Initializing firewall..."
 ufw allow ssh >/dev/null
 ufw allow http >/dev/null
