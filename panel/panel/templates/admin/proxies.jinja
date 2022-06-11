@@ -1,5 +1,17 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
+
+<div class="proxy-intro mt-4">
+    <div class="mb-2">
+        Secondary proxies allow users to connect to your Libertea via direct IP routes, bypassing the CDN for 
+        more reliable connections for when the ISPs are blocking the CDN.
+    </div>
+    <div class="mb-2" style="opacity: 0.75">
+        The IPs for secondary proxies might get blocked after a few months, in which case you can simply delete
+        the old secondary proxy server and add a new one, without disrupting your service and main server.
+    </div>
+</div>
+
 <div class="w-100 mt-4 px-3">
     <a class="btn btn-primary add-proxy-button float-start float-sm-end" href="#">
         Add new secondary proxy
