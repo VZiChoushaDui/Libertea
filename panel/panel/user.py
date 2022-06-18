@@ -32,7 +32,7 @@ def user_dashboard(id):
         pass
 
     conf_url = request.url_root.replace('http://', 'https://') + str(id) + '/config.yaml'
-    name = user['_id'][0:8]
+    name = config.get_panel_domain() + "-" + user['_id'][0:8]
 
     clash_conf_url = "clash://install-config?url=" + urllib.parse.quote_plus(conf_url) + "&name=" + urllib.parse.quote(name)
     return render_template('user.jinja', user=user, clash_conf_url=clash_conf_url)
@@ -61,5 +61,5 @@ def user_config(id, file_name):
 
     return conf, 200, {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Content-Disposition': 'inline; filename="' + str(id) + '.yaml"',
+        'Content-Disposition': 'inline; filename="' + config.get_panel_domain() + "-" + str(id) + '.yaml"',
     }
