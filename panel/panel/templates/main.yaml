@@ -24,7 +24,7 @@ proxy-providers:
   cloudflare-{{domain}}:
     type: http
     url: https://{{ domain }}/{{ user_id }}/cloudflare.yaml
-    path: ./cloudflare-{{ domain }}.yaml
+    path: ./{{ domain }}-files/cloudflare.yaml
     interval: 3600
 {% endif %}
 
@@ -32,7 +32,7 @@ proxy-providers:
   direct-{{ domain }}:
     type: http
     url: https://{{ domain }}/{{ user_id }}/direct.yaml
-    path: ./direct-{{ domain }}.yaml
+    path: ./{{ domain }}-files/direct.yaml
     interval: 3600
 {% endif %}
 
@@ -40,7 +40,7 @@ proxy-providers:
   cdn-other-{{ domain }}:
     type: http
     url: https://{{ domain }}/{{ user_id }}/cdn-other.yaml
-    path: ./cdn-other-{{ domain }}.yaml
+    path: ./{{ domain }}-files/cdn-other.yaml
     interval: 3600
 {% endif %}
 {% endfor %}
@@ -51,7 +51,7 @@ rule-providers:
     type: http
     behavior: classical
     interval: 3600
-    path: ./excludedips.yaml
+    path: ./{{ domain }}-files/excludedips.yaml
     url: https://{{ domain }}/{{ user_id }}/rules.yaml
 {% endfor %}
 
