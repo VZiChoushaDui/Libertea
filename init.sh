@@ -21,6 +21,7 @@ ufw allow http >/dev/null
 ufw allow https >/dev/null
 yes | ufw enable >/dev/null
 
+echo " ** Getting public IP..."
 my_ip=$(curl -s https://api.ipify.org)
 
 # if .env does not exist, copy sample.env and fill it with random values
@@ -74,7 +75,7 @@ if [ "$COMMAND" != "update" ]; then
 
     echo "Welcome to **Libertea** installation script."
     echo ""
-    echo "To get started, you need a domain name configured on a CDN (e.g. CloudFlare) and configured to point to $my_ip"
+    echo "To get started, you need a domain name configured on a CDN (e.g. Cloudflare) and configured to point to $my_ip"
     echo "Also, make sure that SSL/TLS encryption mode is set to *Full*."
     echo ""
     echo "Please enter your panel domain name (e.g. mydomain.com):"
@@ -198,9 +199,8 @@ echo " Password: $PANEL_ADMIN_PASSWORD"
 echo ""
 if [ "$panel_ip" == "$my_ip" ]; then
     echo ""
-    echo "WARNING: Your panel domain name is not resolved by CDN."
-    echo "         Please make sure that your domain name is configured to point to $my_ip"
-    echo "         and that SSL/TLS encryption mode is set to *Full*."
+    echo "WARNING: Your panel domain name is not resolved through CDN."
+    echo "         Please make sure that CDN is enabled for your domain (orange cloud icon in Cloudflare)."
     echo ""
 fi
 
