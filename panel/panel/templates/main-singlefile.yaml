@@ -37,14 +37,14 @@ proxy-groups:
       - tier2-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 30
+    interval: 15
     global-default: true
     lazy: false
 
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group"
     type: url-test
-    tolerance: 200
+    tolerance: 100
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group
@@ -52,7 +52,7 @@ proxy-groups:
       - direct-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 30
+    interval: 15
     lazy: false
 {% endif %}
 
@@ -65,7 +65,7 @@ proxy-groups:
       - cdn-other-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 30
+    interval: 15
     lazy: false
 {% endif %}
 
