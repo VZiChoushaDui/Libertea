@@ -13,6 +13,12 @@ COMMAND="$1"
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
+# if .libertea.proxy file exists, then this is a proxy server. don't install main
+if [ -f .libertea.proxy ]; then
+    echo "This is a Libertea proxy server. You can't install both main and proxy on the same server."
+    exit 1
+fi
+
 touch .libertea.main
 
 echo " ** Initializing firewall..."
