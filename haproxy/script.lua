@@ -1,4 +1,5 @@
 local http = require("socket.http")
+local ltn12 = require("ltn12")
 
 core.Info("Hello HAProxy!\n")
 
@@ -27,16 +28,18 @@ local getMaxIps = function(txn, username)
     -- get HOSTCONTROLLER_API_KEY from environment
     local HOSTCONTROLLER_API_KEY = txn.f:env("HOSTCONTROLLER_API_KEY")
 
+    local body = {}
     local r, msg = http.request { 
-        url = "http://127.0.0.1:1000/api/maxIps",
+        url = "http://127.0.0.1:1000/api/maxIps?connId=" .. username,
         method = "GET",
-        headers = { ["X-API-KEY"] = HOSTCONTROLLER_API_KEY }
+        headers = { ["X-API-KEY"] = HOSTCONTROLLER_API_KEY },
+        sink = ltn12.sink.table(body)
     }
     if r == nil then
         logWarn("Error while getting max ips for " .. username .. ": " .. msg)
-        return 1
+        return 3
     end
-    log("Max ips for " .. username .. ": " .. r)
+    log("Max ips for " .. username .. ": " .. table.concat(body))
     return tonumber(r)
 end
 
