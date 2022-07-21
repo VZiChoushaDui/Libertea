@@ -65,8 +65,12 @@ services:
       # - panel
       - log-parser
   provider-trojan-ws:
-    image: teddysun/xray
-    network_mode: host
+    build: ./providers/trojan-ws
+    ports:
+      - "127.0.0.1:2001:2001"
+      - "127.0.0.1:12001:12001"
+    cap_add:
+      - NET_ADMIN
     container_name: libertea-provider-trojan-ws
     restart: always
     volumes:
@@ -74,8 +78,12 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vless-ws:
-    image: teddysun/xray
-    network_mode: host
+    build: ./providers/vless-ws
+    ports:
+      - "127.0.0.1:2002:2002"
+      - "127.0.0.1:12002:12002"
+    cap_add:
+      - NET_ADMIN
     container_name: libertea-provider-vless-ws
     restart: always
     volumes:
