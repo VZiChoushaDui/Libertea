@@ -40,7 +40,7 @@ local getMaxIps = function(txn, username)
         return 3
     end
     log("Max ips for " .. username .. ": " .. table.concat(body))
-    return tonumber(r)
+    return tonumber(table.concat(body))
 end
 
 local function addToSet(set, key)
@@ -80,6 +80,9 @@ local function flush_if_needed()
         for username, ips in pairs(path_ips) do
             total_ips = total_ips + getLength(ips)
             logWarn("   " .. username .. " connected ips: " .. getLength(ips) .. "\n")
+            -- for ip, _ in pairs(ips) do
+            --     logWarn("      " .. ip .. "\n")
+            -- end
         end
         logWarn("Total connected ips: " .. total_ips .. "\n")
         logWarn("***\n")
@@ -113,7 +116,7 @@ local function auth_request(txn)
     -- get first part of path if path contains at least two slashes
     if string.find(path, "/", 2) ~= nil then
         local username = string.sub(path, 2, string.find(path, "/", 2) - 1)
-        log("Fetch " .. username .. " (" .. path .. ") from " .. user_ip .. "\n")
+        log("Fetch " .. username .. " (" .. path .. ") from '" .. user_ip .. "'\n")
 
         if setContains(whitelist_users, username) then
             log("User " .. username .. " is whitelisted\n")
@@ -125,12 +128,11 @@ local function auth_request(txn)
         if path_ips[username] == nil then
             path_ips[username] = {}
         end
+        
+        flush_if_needed()
 
         -- check if user ip is already in path_ips table, if not add the ip to the list
         if not setContains(path_ips[username], user_ip) then
-
-            flush_if_needed()
-
             -- check if user has reached max number of ips
             local maxIps = getMaxIps(txn, username)
             if getLength(path_ips[username]) >= maxIps then
