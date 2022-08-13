@@ -35,6 +35,7 @@ def dashboard():
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
         update_available=update_available,
+        cur_version=config.LIBERTEA_VERSION,
     )
 
 
