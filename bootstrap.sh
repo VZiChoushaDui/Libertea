@@ -40,7 +40,9 @@ if [ -d "/root/$PROJECT_NAME" ]; then
     git reset --hard >/dev/null
     git checkout master >/dev/null
     git reset --hard >/dev/null
-    git pull >/dev/null
+    git clean -fd >/dev/null
+    
+    git pull --rebase >/dev/null
 else
     echo " ** Cloning repository..."
     git clone "$REPO_URL" "/root/$PROJECT_NAME" >/dev/null
