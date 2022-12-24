@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN apt-get update && apt-get install rsyslog -y
 RUN echo '$ModLoad imudp \n\
 $UDPServerRun 514 \n\
