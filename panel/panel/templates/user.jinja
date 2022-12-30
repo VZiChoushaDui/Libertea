@@ -2,10 +2,10 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/v4-shims.min.css" integrity="sha512-p++g4gkFY8DBqLItjIfuKJPFvTPqcg2FzOns2BNaltwoCOrXMqRIOqgWqWEvuqsj/3aVdgoEo2Y7X6SomTfUPA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <style>
             body {
                 padding-bottom: 100px;
@@ -90,11 +90,186 @@
             </div>
         </div>
 
+        <div class="modal fade" id="windowsModal" tabindex="-1" aria-labelledby="windowsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="windowsModalLabel">How to set up on Windows</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol>
+                            <li class="mb-4">
+                                Download and install <strong>Clash for Windows</strong>.<br />
+                                <a class="btn btn-primary mt-2 mb-2" href="https://github.com/Fndroid/clash_for_windows_pkg/releases/download/0.20.12/Clash.for.Windows.Setup.0.20.12.exe">Download</a><br />
+                                <div style="opacity: 0.75">If you see SmartScreen warning, click on <strong>Allow</strong> or <strong>continue</strong></div>
+                            </li>
+                            <li class="mb-4">
+                                Open Clash for Windows
+                            </li>
+                            <li class="mb-4">
+                                Install the configuration by clicking on the button below:<br />
+                                <a class="btn btn-success link-button mt-2" href="{{ clash_conf_url }}" role="button">
+                                    <i class="fa-sharp fa-solid fa-circle-down"></i>
+                                    Install
+                                </a>
+                            </li>
+                            <li class="mb-4">
+                                The profile should be added to the <strong>Profiles</strong> section of Clash for Windows.
+                            </li>
+                            <li class="mb-4">
+                                <i>Optional: Right click on the profile, click <strong>Settings</strong>, set Update Interval to <strong>1</strong> and click OK.</i>
+                            </li>
+                            <li class="mb-4">
+                                Go to <strong>General</strong> section.
+                            </li>
+                            <li class="mb-4">
+                                In the <strong>Service mode</strong> section, click <strong>Manage</strong> and click <strong>Install</strong>. Accept the security prompt if appears.
+                            </li>
+                            <li class="mb-4">
+                                Enable <strong>TUN Mode</strong> and <strong>System Proxy</strong>.
+                            </li>
+                            <li class="mb-4">
+                                Now you're connected. To disconnect, right click on the Clash icon in the system tray (near clock in the taskbar, or in the arrow button next to the clock), and click Quit.
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="androidModal" tabindex="-1" aria-labelledby="androidModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="androidModalLabel">How to set up on Android</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol>
+                            <li class="mb-4">
+                                Download and install <strong>Clash for Android</strong> from Google Play, or <strong>Clash Meta</strong>.
+                                <br />
+                                <a class="btn btn-primary mt-2" href="https://f-droid.org/repo/com.github.metacubex.clash.meta_205014.apk">
+                                    Download Clash Meta
+                                </a>
+                                <a class="btn btn-primary mt-2" href="https://play.google.com/store/apps/details?id=com.github.kr328.clash&hl=en&gl=US">
+                                    Download Clash
+                                </a>
+                            </li>
+                            <li class="mb-4">
+                                Install the configuration by clicking on the button below:<br />
+                                <a class="btn btn-success link-button mt-2" href="{{ clash_conf_url }}" role="button">
+                                    <i class="fa-sharp fa-solid fa-circle-down"></i>
+                                    Install
+                                </a>
+                            </li>
+                            <li class="mb-4">
+                                <i>Optional: Set auto update interval to <strong>1000 min</strong></i>
+                            </li>
+                            <li class="mb-4">
+                                Click <strong><i class="fa-solid fa-floppy-disk"></i> Save icon</strong> on the top right, and then <strong>select the downloaded profile</strong>
+                            </li>
+                            <li class="mb-4">
+                                You can now connect to VPN!
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="iosModal" tabindex="-1" aria-labelledby="iosModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="iosModalLabel">How to set up on iOS</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol>
+                            <li class="mb-4">
+                                Buy and install <strong>Stash - Rule Based Proxy</strong> from AppStore
+                                <a class="btn btn-primary mt-2" href="https://apps.apple.com/us/app/stash-rule-based-proxy/id1596063349">
+                                    Download Stash
+                                </a>
+                            </li>
+                            <li class="mb-4">
+                                Install the configuration by clicking on the button below:<br />
+                                <a class="btn btn-success link-button mt-2" href="{{ clash_conf_url }}" role="button">
+                                    <i class="fa-sharp fa-solid fa-circle-down"></i>
+                                    Install
+                                </a>
+                            </li>
+                            <li class="mb-4">
+                                Go back to home page of Stash, and click Connect button
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="macModal" tabindex="-1" aria-labelledby="macModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="macModalLabel">How to set up on Mac</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <a href="https://install.appcenter.ms/users/clashx/apps/clashx-pro/distribution_groups/public" class="btn btn-primary">Install ClashX Pro for Mac</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
 
         <div class="step mt-5">
             <div class="row justify-content-center">
                 <div class="col-12">
                     <h2>Step 1</h2>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h3>Download the app</h3>
+                    
+                    <div class="row mx-4" class="button-container">
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#androidModal">
+                                <i class="fa-brands fa-android"></i>
+                                Android
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#windowsModal">
+                                <i class="fa-brands fa-windows"></i>
+                                Windows
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#iosModal">
+                                <i class="fa-brands fa-apple"></i>
+                                iOS
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#macModal">
+                                <i class="fa-brands fa-apple"></i>
+                                Mac
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step mt-5">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h2>Step 2</h2>
                 </div>
             </div>
             <div class="row justify-content-center">
