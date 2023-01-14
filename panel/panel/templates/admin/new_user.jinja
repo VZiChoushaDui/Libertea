@@ -8,12 +8,31 @@
             <input type="text" class="form-control" id="displayName" name="note" value="">
         </div>
         <div class="form-group mb-4">
-            <label for="concurrentIps">Max concurrent IPs to connect</label>
-            <input type="number" class="form-control" id="concurrentIps" name="max_ips" value="{{ max_ips }}">
+            <label for="max_ips">Max concurrent IPs to connect</label>
+            <div class="input-group mb-3">  
+                <div class="input-group-text">
+                    <input class="form-check-input mt-0" type="checkbox" value="on" id="max_ips_default" name="max_ips_default" checked>
+                    <label class="form-check-label mx-2" for="max_ips_default">
+                        Default
+                    </label>
+                </div>
+                <input type="number" class="form-control" id="max_ips" name="max_ips" value="{{ max_ips }}">
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
 </div>
+<script>
+    // disable max_ips input if max_ips_default is checked
+    document.getElementById('max_ips_default').addEventListener('change', function() {
+        document.getElementById('max_ips').disabled = this.checked;
+        if (this.checked) {
+            document.getElementById('max_ips').value = '{{ max_ips }}';
+        }
+    });
+    document.getElementById('max_ips_default').dispatchEvent(new Event('change'));
+</script>
+
 
 {% endblock %}
