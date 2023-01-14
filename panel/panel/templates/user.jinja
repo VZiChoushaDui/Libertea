@@ -1,0 +1,213 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <style>
+            body {
+                padding-bottom: 100px;
+            }
+
+            h1 {
+                text-align: center;
+            }
+
+            .step {
+                text-align: center;
+                padding-left: 8px;
+                padding-right: 8px;
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .link-button {
+                max-width: 300px;
+            }
+
+            h2 {
+                font-size: 16px;
+                text-transform: uppercase;
+                font-weight: 700;
+            }
+
+            h3 {
+                font-size: 22px;
+                font-weight: 400;
+            }
+
+            .button-container {
+                max-width: 900px;
+            }
+
+            
+            .qr-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(10px);
+                display: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                z-index: 999;
+            }
+
+            .qr-modal-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                height: 100%;
+            }
+
+            #qr-code {
+                border: 20px solid white;
+                background: white;
+                border-radius: 10px;
+            }
+
+            #qr-code img {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .btn i {
+                margin-right: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="qr-modal">
+            <div class="qr-modal-content">
+                <div id="qr-code"></div>
+                <button class="btn btn-light qr-modal-close" style="margin-top: 24px; width: 150px;">Back</button>
+            </div>
+        </div>
+        <div class="step mt-5">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h2>Step 1</h2>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h3>Download the app</h3>
+                    
+                    <div class="row mx-4" class="button-container">
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" href="https://f-droid.org/repo/com.github.metacubex.clash.meta_205014.apk" role="button">
+                                <i class="fa-brands fa-android"></i>
+                                Android
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" href="https://github.com/Fndroid/clash_for_windows_pkg/releases/download/0.20.12/Clash.for.Windows.Setup.0.20.12.exe" role="button">
+                                <i class="fa-brands fa-windows"></i>
+                                Windows
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" href="https://apps.apple.com/us/app/stash-rule-based-proxy/id1596063349" role="button">
+                                <i class="fa-brands fa-apple"></i>
+                                iOS
+                            </a>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                            <a class="btn btn-primary w-100" href="https://install.appcenter.ms/users/clashx/apps/clashx-pro/distribution_groups/public" role="button">
+                                <i class="fa-brands fa-apple"></i>
+                                Mac
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step mt-5">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h2>Step 2</h2>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h3>Install server</h3>
+                    <div class="row mx-4">
+                        <div class="col-12 px-5 px-sm-2 py-1 text-center">
+                            <a class="btn btn-success w-100 link-button" href="{{ clash_conf_url }}" role="button">
+                                <i class="fa-sharp fa-solid fa-circle-down"></i>
+                                Install
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step mt-5">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h2>Share</h2>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <h3>Share this page to your other devices</h3>
+                    <div class="row mx-4 justify-content-center">
+                        <div class="col-12 col-sm-6 col-md-3 px-5 px-sm-2 py-1">
+                            <a class="btn btn-outline-dark w-100 link-button qr-button" role="button">
+                                <i class="fa-solid fa-qrcode"></i>
+                                QR Code
+                            </a>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-3 px-5 px-sm-2 py-1">
+                            <a class="btn btn-outline-dark w-100 link-button email-button" role="button">
+                                <i class="fa-solid fa-envelope"></i>
+                                Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.querySelector('.qr-button').addEventListener('click', function (event) {
+                var url = window.location.href;
+                var size = 400;
+                size = Math.min(size, window.innerWidth - 120);
+
+                new QRCode(document.getElementById("qr-code"), {
+                    text: url,
+                    width: size,
+                    height: size,
+                });
+
+                document.querySelector('.qr-modal').style.display = 'block';
+                requestAnimationFrame(function () {
+                    document.querySelector('.qr-modal').style.opacity = 1;
+                });                
+            });
+
+            document.querySelector('.qr-modal-close').addEventListener('click', function (event) {
+                document.querySelector('.qr-modal').style.opacity = 0;
+                setTimeout(function () {
+                    document.querySelector('.qr-modal').style.display = 'none';
+                    document.getElementById("qr-code").innerHTML = '';
+                }, 300);
+            });
+
+            document.querySelector('.email-button').addEventListener('click', function (event) {
+                var url = window.location.href;
+                var subject = 'Clash VPN';
+                var body = 'Please install the Clash VPN by clicking the link below:\n\n' + url;
+                var mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+                window.location.href = mailto;
+            });
+        </script>
+    </body>
+</html>

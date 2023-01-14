@@ -1,0 +1,49 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+/>
+<form method="post" class="mt-5 px-3">
+    <div class="form-group">
+        <label class="form-check-label">
+            Route regional IPs directly (Without VPN)<br />
+        </label>
+    </div>
+    <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+        {% for country in route_direct_countries %}
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="route_direct_{{ country.id }}" id="route_direct_{{ country.id }}" {% if route_direct_country_enabled[country.id] %}checked{% endif %}>
+            <label class="form-check-label" for="route_direct_{{ country.id }}">
+                <span class="fi fi-{{ country.id }}"></span>  {{ country.name }}
+            </label>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="form-group mb-4">
+        <label for="concurrentIps">Default max concurrent IPs to connect</label>
+        <input type="number" class="form-control" id="concurrentIps" name="max_ips" value="{{ max_ips }}" style="max-width: 400px;">
+    </div>
+    <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" value="on" name="proxy_use_80" id="proxy_use_80" {% if proxy_use_80 %}checked{% endif %}>
+        <label class="form-check-label" for="proxy_use_80">
+            Use port 80 instead of 443 for secondary proxies<br />
+            <i style="opacity: 0.75">Recommended</i>
+        </label>
+    </div>
+    <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" value="on" name="single_file_clash" id="single_file_clash" {% if single_file_clash %}checked{% endif %}>
+        <label class="form-check-label" for="single_file_clash">
+            Use single-file clash configuration<br />(Disables one-click auto update for users)
+        </label>
+    </div>
+    <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" value="on" name="providers_from_all_endpoints" id="providers_from_all_endpoints" {% if providers_from_all_endpoints %}checked{% endif %}>
+        <label class="form-check-label" for="providers_from_all_endpoints">
+            Add all VPN endpoints as provider source URLs
+        </label>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+{% endblock %}

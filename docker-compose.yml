@@ -1,0 +1,85 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: libertea-mongodb
+    hostname: libertea-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=${PANEL_MONGODB_PASSWORD}
+    volumes:
+      - ./data/db:/data/db
+    restart: always
+    network_mode: host
+    logging:
+      options:
+        max-size: 10m
+  rsyslog:
+    build: ./syslog
+    hostname: libertea-rsyslog
+    container_name: libertea-rsyslog
+    restart: always
+    ports:
+      - "127.0.0.1:514:514/udp"
+    volumes:
+      - "./data/logs:/var/log/log"
+    cap_add:
+      - SYSLOG
+    logging:
+      options:
+        max-size: 10m
+  log-parser:
+    build: ./log-parser
+    container_name: libertea-log-parser
+    volumes:
+      - "./data/logs:/data/logs"
+      - "./data/usages:/data/usages"
+      - "./data/parsed-logs:/data/parsed-logs"
+    restart: always
+    logging:
+      options:
+        max-size: 10m
+  haproxy:
+    environment:
+      - CONN_VLESS_WS_URL=${CONN_VLESS_WS_URL}
+      - CONN_VLESS_WS_IP=${CONN_VLESS_WS_IP}
+      - CONN_TROJAN_WS_URL=${CONN_TROJAN_WS_URL}
+      - CONN_TROJAN_WS_IP=${CONN_TROJAN_WS_IP}
+      - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
+      - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
+      - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
+    build: ./haproxy
+    container_name: libertea-haproxy
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy/
+      - ./haproxy/script.lua:/haproxy-files/script.lua
+      - ./data/haproxy-lists:/haproxy-files/lists
+      - /etc/ssl/ha-certs:/etc/ssl/ha-certs
+      # - /var/lib/haproxy:/home/haproxy_stats
+    restart: always
+    network_mode: host
+    logging:
+      options:
+        max-size: 10m
+    depends_on:
+      # - panel
+      - log-parser
+  provider-trojan-ws:
+    image: teddysun/xray
+    network_mode: host
+    container_name: libertea-provider-trojan-ws
+    restart: always
+    volumes:
+      - './providers/trojan-ws/config.json:/etc/xray/config.json'
+      - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  provider-vless-ws:
+    image: teddysun/xray
+    network_mode: host
+    container_name: libertea-provider-vless-ws
+    restart: always
+    volumes:
+      - './providers/vless-ws/config.json:/etc/xray/config.json'
+      - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  

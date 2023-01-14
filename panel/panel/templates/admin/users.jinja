@@ -1,0 +1,104 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<div class="w-100 mt-4 px-3">
+    <div class="float-start mb-2">
+        Sort by
+        <div class="dropdown" style="display: inline">
+            <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="order-main-button-text">Created At (Last to first)</span>
+            </button>
+            <ul class="dropdown-menu order-items-list">
+                <li><a class="dropdown-item" href="#" data-sort-id="created-at-desc" data-sort-field="data-created-at" data-order="desc" onclick="sort_items(this)">Created At (Newest first)</a></li>
+                <li><a class="dropdown-item" href="#" data-sort-id="created-at-asc" data-sort-field="data-created-at" data-order="asc" onclick="sort_items(this)">Created At (Oldest first)</a></li>
+                <li><a class="dropdown-item" href="#" data-sort-id="traffic-desc" data-sort-field="data-traffic-this-month" data-order="desc" onclick="sort_items(this)">Traffic @ {{ month_name }} (Highest first)</a></li>
+                <li><a class="dropdown-item" href="#" data-sort-id="ips-desc" data-sort-field="data-ips-today" data-order="desc" onclick="sort_items(this)">IPs today (Highest first)</a></li>
+            </ul>
+        </div>
+    </div>
+    <div style="clear: both" class="d-block d-sm-none"></div>
+    <a class="btn btn-primary mb-2 float-start float-sm-end" href="/{{ admin_uuid }}/users/new/">
+        Create new user
+    </a>
+</div>
+<div style="clear: both"></div>
+{% if no_domain_warning %}
+<div class="w-100 mt-4 px-3">
+    ⚠️ Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
+</div>
+{% endif %}
+<div class="list-group list-group-flush mt-2 users-list">
+    {% for user in users %}
+        <a href="/{{ admin_uuid }}/users/{{ user.id }}/" 
+            class="list-group-item list-group-item-action" 
+            data-created-at="{{ user.created_at_timestamp }}" 
+            data-traffic-this-month="{{ user.traffic_this_month }}"
+            data-ips-today="{{ user.ips_today }}">
+            <div class="row">
+                <div class="col-7 list-item-title">
+                    {{ user.note }}
+                </div>
+                <div class="col-5 list-item-subtitle" style="text-align: right;">
+                    {{ user.traffic_this_month }} GB @ {{ month_name }}
+                </div>
+                <div class="col-7 list-item-subtitle">
+                    {{ user.id }}
+                </div>
+                <div class="col-5 list-item-subtitle" style="text-align: right;">
+                    {{ user.ips_today }} IPs today
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+<script>
+    function sort_items(sort_config) {
+        var sort_field = sort_config.getAttribute('data-sort-field');
+        var order = sort_config.getAttribute('data-order');
+        var sort_id = sort_config.getAttribute('data-sort-id');
+
+        localStorage.setItem('usersDefaultSort', sort_id);
+
+        console.log("Sorting by " + sort_field + " in " + order + " order");
+
+        var items = document.querySelectorAll('.users-list > a');
+        var itemsArr = [];
+        for (var i in items) {
+            if (items[i].nodeType == 1) { // get rid of the whitespace text nodes
+                itemsArr.push(items[i]);
+            }
+        }
+        itemsArr.sort(function(a, b) {
+            var a_val = a.getAttribute(sort_field);
+            var b_val = b.getAttribute(sort_field);
+            if (order == 'desc') {
+                return b_val - a_val;
+            } else {
+                return a_val - b_val;
+            }
+        });
+        var ul = document.querySelector('.users-list');
+        ul.innerHTML = '';
+        for (i = 0; i < itemsArr.length; ++i) {
+            ul.appendChild(itemsArr[i]);
+        }
+        var order_main_button = document.querySelector('.order-main-button-text');
+        order_main_button.innerHTML = sort_config.innerHTML;
+    }
+
+    function initialSort() {
+        var defaultSort = localStorage.getItem('usersDefaultSort');
+        if (defaultSort) {
+            var defaultSortConfig = document.querySelector('[data-sort-id="' + defaultSort + '"]');
+            if (defaultSortConfig) {
+                sort_items(defaultSortConfig);
+                return;
+            }
+        }
+        sort_items(document.querySelector('[data-sort-id="created-at-desc"]'));
+    }
+
+    initialSort();
+</script>
+
+{% endblock %}

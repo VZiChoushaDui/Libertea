@@ -1,0 +1,25 @@
+version: '3'
+services:
+  proxy-register:
+    environment:
+      - PROXY_REGISTER_ENDPOINT=${PROXY_REGISTER_ENDPOINT}
+      - PANEL_SECRET_KEY=${PANEL_SECRET_KEY}
+    build: ./proxy-register
+    container_name: libertea-proxy-register
+    restart: always
+    logging:
+      options:
+        max-size: 10m
+  haproxy:
+    build: ./proxy-haproxy
+    container_name: libertea-proxy-haproxy
+    environment:
+      - CONN_PROXY_IP=${CONN_PROXY_IP}
+    volumes:
+      - ./proxy-haproxy:/usr/local/etc/haproxy/
+      - /etc/ssl/ha-certs:/etc/ssl/ha-certs
+    restart: always
+    network_mode: host
+    logging:
+      options:
+        max-size: 10m

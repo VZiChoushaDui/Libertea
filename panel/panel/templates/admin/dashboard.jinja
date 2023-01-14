@@ -1,0 +1,76 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<!-- <h1 class="mt-5">Welcome, Admin!</h1> -->
+{% if active_domains_count == 0 or users_count == 0 %}
+<div class="section tutorial">
+    <div class="row">
+        <div class="col-12">
+            {% if active_domains_count == 0 %}
+            <div class="mt-2 mb-3">To get started, add a domain to your VPN.</div>
+            <div class="mb-3">We recommend you to use a new domain for VPN connection, so if it's blocked, users can still get updates from {{ panel_domain }}.</div>
+            <div class="mb-5">
+                <a class="btn btn-primary mb-2" href="/{{ admin_uuid }}/domains/new/?next=dashboard">
+                    Add new domain
+                </a>
+                <a class="btn btn-outline-primary mb-2" href="/{{ admin_uuid }}/domains/new/?domain={{ panel_domain }}&next=dashboard">
+                    I understand, use {{ panel_domain }}
+                </a>
+            </div>
+            {% endif %}
+            <div class="mt-3 mb-3">
+                After you've set up your domain, you can add users to your VPN.
+            </div>
+            <div class="mb-5">
+                <a class="btn btn-primary" href="/{{ admin_uuid }}/users/new/?next=dashboard">
+                    Add new user
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<hr />
+{% endif %}
+{% if active_domains_count == 1 %}
+<div class="w-100 mt-4 px-3">
+    ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
+</div>
+{% endif %}
+{% if proxies_count == 0 %}
+<div class="w-100 mt-4 px-3">
+    ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/proxies/?new=true">Add a secondary proxy</a>
+</div>
+{% endif %}
+{% if no_domain_warning %}
+<div class="w-100 mt-4 px-3">
+    ⚠️ Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
+</div>
+{% endif %}
+<div class="section stats">
+    <div class="row justify-content-center">
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ users_count }}</div>
+            <div class="stats-item-desc">Users</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ active_domains_count }}</div>
+            <div class="stats-item-desc">Active Domains</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ proxies_count }}</div>
+            <div class="stats-item-desc">Secondary proxies</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ ips_today }}</div>
+            <div class="stats-item-desc">IPs connected today</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ traffic_today }}</div>
+            <div class="stats-item-desc">Traffic today</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ traffic_this_month }}</div>
+            <div class="stats-item-desc">Traffic in {{ month_name }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

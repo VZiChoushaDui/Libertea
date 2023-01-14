@@ -1,0 +1,13 @@
+  - name: "{{name}}"
+    type: trojan
+    password: {{password}}
+    port: {{port}}
+    server: {{server}}
+    network: ws
+    sni: {{sni}}
+    skip-cert-verify: {{skip_cert_verify}}
+    udp: true
+    ws-opts:
+      path: "{{path}}"
+      headers:
+        Host: {{host}}

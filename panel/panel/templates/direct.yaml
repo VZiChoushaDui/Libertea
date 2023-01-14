@@ -1,0 +1,12 @@
+proxies:
+{% if cloudflare_exists %}
+{% for provider in providers %}
+{% if not provider.meta_only or meta %}
+{% if provider.entry_type == "SecondaryProxy" %}
+{% with name=provider.name, server=provider.server, port=provider.port, password=provider.password, sni=provider.sni, path=provider.path, host=provider.host, skip_cert_verify=provider.skip_cert_verify %}
+{% include ("providers/" + provider.type + ".yaml") %}
+{% endwith %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}

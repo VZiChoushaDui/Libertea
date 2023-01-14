@@ -1,0 +1,10 @@
+  - name: "{{name}}"
+    type: load-balance
+    strategy: round-robin
+    proxies:
+{% for provider in providers %}{% if not provider.meta_only or meta %}{% if provider.entry_type == entry_type %}
+      - {{ provider.name }}
+{% endif %}{% endif %}{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false

@@ -1,0 +1,4 @@
+payload:
+{% for country in ips_direct_countries %}
+{% include "rules/" + country + "-direct.yaml" %}
+{% endfor %}
