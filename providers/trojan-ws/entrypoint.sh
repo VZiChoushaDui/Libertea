@@ -26,6 +26,7 @@ iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp --dport 8080 -j ACCEPT # http
 iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp --dport 443 -j ACCEPT # https
 iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp --dport 8443 -j ACCEPT # https
 iptables -I OUTPUT -o $DOCKER_INTERFACE -p udp --dport 123 -j ACCEPT # ntp
+iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp --dport 3389 -j ACCEPT # rdp
 
 # run xray
 echo " ** Starting Xray..."
