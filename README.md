@@ -22,11 +22,13 @@ Easily install and manage Clash VPN.
 - Two domains behind a CDN (Cloudflare recommended), one for the panel/update and one for the VPN itself
 - An extra server for the secondary proxy
 
-## Installation and update
+## Installation
 
 To install, run the following command on your server:
 
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+
+## Update
 
 To update, run the following command on your server:
 

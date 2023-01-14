@@ -30,6 +30,13 @@
 </div>
 <hr />
 {% endif %}
+
+{% if update_available %}
+<div class="w-100 mt-4 px-3">
+    ⚠️ There's a new version of Libertea available. <a href="https://github.com/VZiChoushaDui/Libertea#update" target="_blank">Update now</a>
+</div>
+{% endif %}
+
 {% if active_domains_count == 1 %}
 <div class="w-100 mt-4 px-3">
     ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
