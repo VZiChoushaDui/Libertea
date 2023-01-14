@@ -1,5 +1,5 @@
-flask
+flask>=2.2
 waitress
 Paste
 pymongo
-jinja2
+jinja2>=3
