@@ -23,3 +23,12 @@ services:
     logging:
       options:
         max-size: 10m
+  asym-traffic:
+    build: ./proxy-fake-traffic
+    container_name: libertea-asym-traffic
+    restart: always
+    environment:
+      - CONN_PROXY_IP=${CONN_PROXY_IP}
+    logging:
+      options:
+        max-size: 10m
