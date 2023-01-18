@@ -1,0 +1,15 @@
+  - name: "{{name}}"
+    type: ss
+    server: {{server}}
+    port: {{port}}
+    cipher: chacha20-ietf-poly1305
+    password: {{password}}
+    plugin: v2ray-plugin
+    plugin-opts:
+      mode: websocket
+      tls: true
+      skip-cert-verify: {{skip_cert_verify}}
+      host: {{host}}
+      path: "{{path}}"
+      mux: 8
+    

@@ -45,6 +45,8 @@ services:
       - CONN_VLESS_WS_IP=${CONN_VLESS_WS_IP}
       - CONN_TROJAN_WS_URL=${CONN_TROJAN_WS_URL}
       - CONN_TROJAN_WS_IP=${CONN_TROJAN_WS_IP}
+      - CONN_SHADOWSOCKS_V2RAY_URL=${CONN_SHADOWSOCKS_V2RAY_URL}
+      - CONN_SHADOWSOCKS_V2RAY_IP=${CONN_SHADOWSOCKS_V2RAY_IP}
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
@@ -90,4 +92,14 @@ services:
       - './providers/vless-ws/config.json:/etc/xray/config.json'
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  provider-shadowsocks-v2ray:
+    build: ./providers/shadowsocks-v2ray
+    ports:
+      - "127.0.0.1:2003:2003"
+    cap_add:
+      - NET_ADMIN
+    container_name: libertea-provider-shadowsocks-v2ray
+    restart: always
+    volumes:
+      - './providers/shadowsocks-v2ray/config.env:/etc/xray/config.env'
   

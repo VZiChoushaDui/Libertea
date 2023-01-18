@@ -1,8 +1,10 @@
 __pycache__
 /data
 .env
+.env.bak
 .vscode
 providers/*/config.json
+providers/*/config.env
 /tools
 TODO
 .libertea.proxy

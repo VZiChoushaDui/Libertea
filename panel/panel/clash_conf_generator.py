@@ -73,6 +73,16 @@ def get_providers(connect_url):
             meta_only=True,
             entry_type=server_type_ex,
         ))
+        providers.append(init_provider_info(
+            type='ss-v2ray',
+            name='ssV-' + str(idx) + "-" + server,
+            server=server,
+            port=port,
+            password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
+            path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
+            meta_only=False,
+            entry_type=server_type_ex,
+        ))
         idx += 1
 
     return providers

@@ -49,6 +49,34 @@ if [ ! -f .env ]; then
             echo "$line$(openssl rand -hex 32)" >> .env
         fi
     done < sample.env
+else
+    echo " ** Updating .env..."
+
+    # If a variable is missing from .env, add it and fill it with value
+    while IFS= read -r line; do
+        if [[ $line != *"=" ]]; then
+            # line does not end with =, check if it's a predefined variable with regex, and add it to .env if not exists
+            if [[ $line =~ ^[a-zA-Z0-9_]+=[a-zA-Z0-9\.\-_]+$ ]]; then
+                var_name=$(echo "$line" | cut -d '=' -f 1)
+                if ! grep -q "$var_name=" .env; then
+                    echo "    - Adding $var_name to .env..."
+                    echo "$line" >> .env
+                fi
+            fi
+            continue
+        fi
+
+        if ! grep -q "$line" .env; then
+            echo "    - Adding $line to .env and filling it..."
+            if [[ $line == *"UUID"* ]]; then
+                echo "$line$(uuidgen)" >> .env
+            elif [[ $line == *"URL"* ]]; then
+                echo "$line$(openssl rand -hex 16)" >> .env
+            else
+                echo "$line$(openssl rand -hex 32)" >> .env
+            fi
+        fi
+    done < sample.env
 fi
 
 # if [ ! -f tools/flarectl ]; then
@@ -173,6 +201,8 @@ echo "    - trojan-ws..."
 ./providers/trojan-ws/init.sh 2001 12001 "$CONN_TROJAN_WS_URL" "$CONN_TROJAN_WS_AUTH_PASSWORD"
 echo "    - vless-ws..."
 ./providers/vless-ws/init.sh 2002 12002 "$CONN_VLESS_WS_URL" "$CONN_VLESS_WS_AUTH_UUID"
+echo "    - shadowsocks-v2ray..."
+./providers/shadowsocks-v2ray/init.sh 2003 "$CONN_SHADOWSOCKS_V2RAY_URL" "$CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD"
 
 echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/
