@@ -67,6 +67,9 @@ services:
       # - panel
       - log-parser
   provider-trojan-ws:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     build: ./providers/trojan-ws
     ports:
       - "127.0.0.1:2001:2001"
@@ -80,6 +83,9 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vless-ws:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     build: ./providers/vless-ws
     ports:
       - "127.0.0.1:2002:2002"
@@ -93,6 +99,9 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-shadowsocks-v2ray:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     build: ./providers/shadowsocks-v2ray
     ports:
       - "127.0.0.1:2003:2003"
@@ -102,4 +111,3 @@ services:
     restart: always
     volumes:
       - './providers/shadowsocks-v2ray/config.env:/etc/xray/config.env'
-  

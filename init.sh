@@ -56,7 +56,7 @@ else
     while IFS= read -r line; do
         if [[ $line != *"=" ]]; then
             # line does not end with =, check if it's a predefined variable with regex, and add it to .env if not exists
-            if [[ $line =~ ^[a-zA-Z0-9_]+=[a-zA-Z0-9\.\-_]+$ ]]; then
+            if [[ $line =~ ^[a-zA-Z0-9_]+=[a-zA-Z0-9\.\-_\(\)\:\"\ \t]+(\#.*)?$ ]]; then
                 var_name=$(echo "$line" | cut -d '=' -f 1)
                 if ! grep -q "$var_name=" .env; then
                     echo "    - Adding $var_name to .env..."
