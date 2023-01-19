@@ -1,10 +1,11 @@
+local socket = require("socket")
 local http = require("socket.http")
 local ltn12 = require("ltn12")
 
 core.Info("Hello HAProxy!\n")
 
-local flush_interval = 5 * 60 -- seconds
-local connected_ip_log_interval = 10 -- seconds
+local flush_interval = 2 * 60 -- seconds
+local connected_ip_log_interval = 60 -- seconds
 
 local function getTimestamp()
     return os.time(os.date("!*t"))
@@ -25,7 +26,6 @@ end
 
 
 local getMaxIps = function(txn, username)
-    -- get HOSTCONTROLLER_API_KEY from environment
     local HOSTCONTROLLER_API_KEY = txn.f:env("HOSTCONTROLLER_API_KEY")
 
     local body = {}
@@ -33,11 +33,16 @@ local getMaxIps = function(txn, username)
         url = "http://127.0.0.1:1000/api/maxIps?connId=" .. username,
         method = "GET",
         headers = { ["X-API-KEY"] = HOSTCONTROLLER_API_KEY },
-        sink = ltn12.sink.table(body)
+        sink = ltn12.sink.table(body),
+        create = function()
+            local req_sock = socket.tcp()
+            req_sock:settimeout(0.1, 't')
+            return req_sock
+        end
     }
     if r == nil then
         logWarn("Error while getting max ips for " .. username .. ": " .. msg)
-        return 3
+        return 9999
     end
     log("Max ips for " .. username .. ": " .. table.concat(body))
     return tonumber(table.concat(body))
@@ -123,14 +128,13 @@ local function auth_request(txn)
             return
         end
 
+        flush_if_needed()
 
         -- check if user is already in path_ips table, if not add a list of ips
         if path_ips[username] == nil then
             path_ips[username] = {}
         end
         
-        flush_if_needed()
-
         -- check if user ip is already in path_ips table, if not add the ip to the list
         if not setContains(path_ips[username], user_ip) then
             -- check if user has reached max number of ips
