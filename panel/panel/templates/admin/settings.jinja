@@ -7,6 +7,31 @@
 <form method="post" class="mt-5 px-3">
     <div class="form-group">
         <label class="form-check-label">
+            Protocols<br />
+        </label>
+    </div>
+    <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_trojanws" id="provider_trojanws" {% if provider_enabled.trojanws %}checked{% endif %}>
+            <label class="form-check-label" for="provider_trojanws">
+                Trojan (WS)
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_ssv2ray" id="provider_ssv2ray" {% if provider_enabled.ssv2ray %}checked{% endif %}>
+            <label class="form-check-label" for="provider_ssv2ray">
+                Shadowsocks+v2ray (WS)
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_vlessws" id="provider_vlessws" {% if provider_enabled.vlessws %}checked{% endif %}>
+            <label class="form-check-label" for="provider_vlessws">
+                VLESS (WS) <i style="opacity: 0.75; font-size: 12px;">Clash Meta and Stash only</i>
+            </label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-check-label">
             Route regional IPs directly (Without VPN)<br />
         </label>
     </div>

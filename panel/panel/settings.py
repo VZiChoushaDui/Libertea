@@ -45,6 +45,19 @@ def set_route_direct_country_enabled(country, val):
     db = client[config.MONGODB_DB_NAME]
     db.settings.update_one({"_id": "route_direct_country_enabled_" + country}, {"$set": {"value": val}}, upsert=True)
 
+def get_provider_enabled(provider_name):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "provider_enabled_" + provider_name})
+    if setting is None:
+        return True
+    return setting["value"]
+
+def set_provider_enabled(provider_name, val):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "provider_enabled_" + provider_name}, {"$set": {"value": val}}, upsert=True)
+
 def get_single_clash_file_configuration():
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]

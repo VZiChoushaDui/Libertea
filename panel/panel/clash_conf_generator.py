@@ -53,36 +53,39 @@ def get_providers(connect_url):
             else:
                 server_type_ex += '-Other'
 
-        providers.append(init_provider_info(
-            type='trojan-ws',
-            name='TrW-' + str(idx) + "-" + server,
-            server=server,
-            port=port,
-            password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
-            path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
-            meta_only=False,
-            entry_type=server_type_ex,
-        ))
-        providers.append(init_provider_info(
-            type='vless-ws',
-            name='VlW-' + str(idx) + "-" + server,
-            server=server,
-            port=port,
-            password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
-            path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
-            meta_only=True,
-            entry_type=server_type_ex,
-        ))
-        providers.append(init_provider_info(
-            type='ss-v2ray',
-            name='ssV-' + str(idx) + "-" + server,
-            server=server,
-            port=port,
-            password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
-            path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
-            meta_only=False,
-            entry_type=server_type_ex,
-        ))
+        if settings.get_provider_enabled('trojanws'):
+            providers.append(init_provider_info(
+                type='trojan-ws',
+                name='TrW-' + str(idx) + "-" + server,
+                server=server,
+                port=port,
+                password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
+                path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
+                meta_only=False,
+                entry_type=server_type_ex,
+            ))
+        if settings.get_provider_enabled('vlessws'):
+            providers.append(init_provider_info(
+                type='vless-ws',
+                name='VlW-' + str(idx) + "-" + server,
+                server=server,
+                port=port,
+                password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
+                path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
+                meta_only=True,
+                entry_type=server_type_ex,
+            ))
+        if settings.get_provider_enabled('ssv2ray'):
+            providers.append(init_provider_info(
+                type='ss-v2ray',
+                name='ssV-' + str(idx) + "-" + server,
+                server=server,
+                port=port,
+                password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
+                path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
+                meta_only=False,
+                entry_type=server_type_ex,
+            ))
         idx += 1
 
     return providers
