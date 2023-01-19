@@ -71,6 +71,10 @@
             <div class="stats-item-desc">IPs connected today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value ips-connected-right-now">⌛</div>
+            <div class="stats-item-desc">IPs connected right now</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value">{{ traffic_today }}</div>
             <div class="stats-item-desc">Traffic today</div>
         </div>
@@ -83,4 +87,23 @@
 <div class="mt-5" style="opacity: 0.5; font-size: 12px;">
     Libertea, version {{ cur_version }}
 </div>
+<script>
+    function get_ips_connected_right_now() {
+        fetch('/{{ admin_uuid }}/total-connected-ips-count')
+            .then(function(response) {
+                return response.text()
+            })
+            .then(function(data) {
+                if (Number.isInteger(parseInt(data))) {
+                    document.querySelector('.ips-connected-right-now').innerHTML = data;
+                } else {
+                    document.querySelector('.ips-connected-right-now').innerHTML = '-';
+                }
+            });
+    }
+
+    setInterval(get_ips_connected_right_now, 10000);
+    get_ips_connected_right_now();
+</script>
+
 {% endblock %}

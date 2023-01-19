@@ -165,5 +165,21 @@ local function connected_ips_count(applet)
     applet:send(response)
 end
 
+local function total_connected_ips_count(applet)
+    total_ips = 0
+    for username, ips in pairs(path_ips) do
+        total_ips = total_ips + getLength(ips)
+    end
+    
+    local response = total_ips
+
+    applet:set_status(200)
+    applet:add_header("Content-Type", "text/plain")
+    applet:add_header("Content-Length", string.len(response))
+    applet:start_response()
+    applet:send(response)
+end
+
 core.register_service("connected-ips-count", "http", connected_ips_count)
+core.register_service("total-connected-ips-count", "http", total_connected_ips_count)
 core.register_action("auth-request", { "http-req" }, auth_request, 0)
