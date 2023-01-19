@@ -100,7 +100,7 @@ def remove_domain(domain):
     sysops.haproxy_update_domains_list()
     return True
 
-def add_domain(domain):
+def add_domain(domain, dns_domain=None, sni=None):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
     domains = db.domains
@@ -109,9 +109,15 @@ def add_domain(domain):
     if domains.find_one({"_id": domain}) is not None:
         return 409
     
-    domains.insert_one({
-        "_id": domain,
-    })
+    new_domain = {
+        '_id': domain,
+    }
+    if dns_domain is not None:
+        new_domain["dns_domain"] = dns_domain
+    if sni is not None:
+        new_domain["sni"] = sni
+
+    domains.insert_one(new_domain)
     if not sysops.haproxy_update_domains_list():
         remove_domain(domain)
         return 500
@@ -129,6 +135,28 @@ def get_domains():
 
     all_domains = [domain["_id"] for domain in domains.find()]
     return all_domains
+
+def get_domain_dns_domain(domain):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    domain_entry = domains.find_one({"_id": domain})
+    if domain_entry is None:
+        return None
+    if not "dns_domain" in domain_entry:
+        return None
+    return domain_entry["dns_domain"]
+
+def get_domain_sni(domain):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    domain_entry = domains.find_one({"_id": domain})
+    if domain_entry is None:
+        return None
+    if not "sni" in domain_entry:
+        return None
+    return domain_entry["sni"]
 
 def get_active_domains():
     return [x for x in get_domains() if check_domain_set_properly(x) == 'active']

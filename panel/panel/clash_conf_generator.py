@@ -5,10 +5,13 @@ from . import config
 from . import settings
 from flask import render_template
 
-def init_provider_info(type, name, server, port, password, path, meta_only, entry_type):
+def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None):
+    if server is None:
+        server = host
+    if sni is None:
+        sni = host
+
     # if server is an ip address, sni and host are google.com, else sni and host are server
-    sni = server
-    host = server
     skip_cert_verify = "false"
     if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', server):
         sni = 'google.com'
@@ -45,7 +48,7 @@ def get_providers(connect_url):
 
     providers = []
     idx = 0
-    for server, port, server_type in servers:
+    for server, port, server_type in servers:      
         server_type_ex = server_type
         if server_type == 'CDNProxy':
             if utils.check_domain_cdn_provider(server) == 'Cloudflare':
@@ -57,34 +60,40 @@ def get_providers(connect_url):
             providers.append(init_provider_info(
                 type='trojan-ws',
                 name='TrW-' + str(idx) + "-" + server,
-                server=server,
                 port=port,
                 password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
                 path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
                 meta_only=False,
                 entry_type=server_type_ex,
+                sni=utils.get_domain_sni(server),
+                host=server,
+                server=utils.get_domain_dns_domain(server),
             ))
         if settings.get_provider_enabled('vlessws'):
             providers.append(init_provider_info(
                 type='vless-ws',
                 name='VlW-' + str(idx) + "-" + server,
-                server=server,
                 port=port,
                 password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
                 path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
                 meta_only=True,
                 entry_type=server_type_ex,
+                sni=utils.get_domain_sni(server),
+                host=server,
+                server=utils.get_domain_dns_domain(server),
             ))
         if settings.get_provider_enabled('ssv2ray'):
             providers.append(init_provider_info(
                 type='ss-v2ray',
                 name='ssV-' + str(idx) + "-" + server,
-                server=server,
                 port=port,
                 password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
                 path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
                 meta_only=False,
                 entry_type=server_type_ex,
+                sni=utils.get_domain_sni(server),
+                host=server,
+                server=utils.get_domain_dns_domain(server),
             ))
         idx += 1
 

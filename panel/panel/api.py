@@ -101,7 +101,24 @@ def add_domain():
     if domain == None or domain == "":
         return "", 400
 
-    result = utils.add_domain(domain)
+    dns_domain = None
+    sni = None
+    args = request.form.get('args')
+    try:
+        if args != None and args != '':
+            args_list = args.strip().split(',')
+            for arg in args_list:
+                if arg.startswith('dns_domain='):
+                    dns_domain = arg[11:]
+                    print("DNS Domain: " + dns_domain)
+                if arg.startswith('sni='):
+                    sni = arg[4:]
+                    print("SNI: " + sni)
+    except:
+        pass
+
+
+    result = utils.add_domain(domain, dns_domain=dns_domain, sni=sni)
     return "", result
     
 @blueprint.route('/api/removeDomain', methods=['POST'])

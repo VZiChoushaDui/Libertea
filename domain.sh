@@ -10,6 +10,7 @@ set +o allexport
 
 if [[ "$COMMAND" == "add" ]]; then
     DOMAIN="$2"
+    ARGS="$3"
     if [[ -z "$DOMAIN" ]]; then
         echo "Please provide a name for the new domain"
         exit 1
@@ -17,12 +18,15 @@ if [[ "$COMMAND" == "add" ]]; then
 
     echo "Adding domain: $DOMAIN"
 
+    # urlencode ARGS
+    ARGS=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$ARGS'))")
+
     # send a POST request to localhost:1000/api/addDomain with X-API-KEY header
     # and the domain as the form body, and get the response code
     # if response code is 200, then the domain was created successfully
     # if response code is 409, then the domain already exists
 
-    response_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "X-API-KEY: $HOSTCONTROLLER_API_KEY" -F "domain=$DOMAIN" http://localhost:1000/api/addDomain)
+    response_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "X-API-KEY: $HOSTCONTROLLER_API_KEY" -d "domain=$DOMAIN&args=$ARGS" http://localhost:1000/api/addDomain)
 
     if [[ "$response_code" == "200" ]]; then
         echo "Domain added successfully"
