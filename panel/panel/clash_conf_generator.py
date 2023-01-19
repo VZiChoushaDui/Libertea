@@ -13,7 +13,7 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
 
     # if server is an ip address, sni and host are google.com, else sni and host are server
     skip_cert_verify = "false"
-    if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', server):
+    if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', host):
         sni = 'google.com'
         host = 'google.com'
         skip_cert_verify = "true"
