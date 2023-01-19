@@ -149,5 +149,21 @@ local function auth_request(txn)
     end
 end
 
-core.register_action("auth-request", { "http-req" }, auth_request, 0)
 
+local function connected_ips_count(applet)
+    local username = string.sub(applet.path, 2, string.find(applet.path, "/", 2) - 1)
+
+    local response = "0"
+    if path_ips[username] ~= nil then
+        response = getLength(path_ips[username])
+    end
+
+    applet:set_status(200)
+    applet:add_header("Content-Type", "text/plain")
+    applet:add_header("Content-Length", string.len(response))
+    applet:start_response()
+    applet:send(response)
+end
+
+core.register_service("connected-ips-count", "http", connected_ips_count)
+core.register_action("auth-request", { "http-req" }, auth_request, 0)

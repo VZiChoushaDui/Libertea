@@ -36,15 +36,19 @@
 <hr />
 <div class="section stats">
     <div class="row">
-        <div class="col-6 col-sm-4 stats-item">
+        <div class="col-6 col-sm-3 stats-item">
             <div class="stats-item-value">{{ traffic_today }}</div>
             <div class="stats-item-desc">Traffic today</div>
         </div>
-        <div class="col-6 col-sm-4 stats-item">
+        <div class="col-6 col-sm-3 stats-item">
             <div class="stats-item-value">{{ traffic_this_month }}</div>
             <div class="stats-item-desc">Traffic in {{ month_name }}</div>
         </div>
-        <div class="col-6 col-sm-4 stats-item">
+        <div class="col-6 col-sm-3 stats-item">
+            <div class="stats-item-value ips-connected-right-now">⌛</div>
+            <div class="stats-item-desc">IPs connected right now</div>
+        </div>
+        <div class="col-6 col-sm-3 stats-item">
             <div class="stats-item-value">{{ ips_today }}</div>
             <div class="stats-item-desc">IPs connected today</div>
         </div>
@@ -173,6 +177,24 @@
             }
         });
         document.getElementById('max_ips_default').dispatchEvent(new Event('change'));
+
+
+        function get_ips_connected_right_now() {
+            fetch('/{{ user.connect_url }}/connected-ips-count')
+                .then(function(response) {
+                    return response.text()
+                })
+                .then(function(data) {
+                    if (Number.isInteger(parseInt(data))) {
+                        document.querySelector('.ips-connected-right-now').innerHTML = data;
+                    } else {
+                        document.querySelector('.ips-connected-right-now').innerHTML = '-';
+                    }
+                });
+        }
+
+        setInterval(get_ips_connected_right_now, 10000);
+        get_ips_connected_right_now();
     </script>
 </div>
 
