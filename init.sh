@@ -172,15 +172,15 @@ if ! command -v pip3 &> /dev/null; then
 fi
 
 echo "    - Installing python dependencies..."
-pip3 install -r panel/requirements.txt >/dev/null
+pip3 install -r panel/requirements.txt
 
 echo "    - Installing docker..."
 if ! command -v docker &> /dev/null; then
     curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
     sh /tmp/get-docker.sh >/dev/null
 fi
-echo " ** Installing docker compose..."
-apt-get install -qq docker-compose-plugin >/dev/null
+echo "    - Installing docker compose..."
+apt-get install -qq docker-compose-plugin
 
 # echo " ** Initializing certbot..."
 # ./haproxy/certbot-init.sh >/dev/null
