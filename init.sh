@@ -208,7 +208,13 @@ echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project
 sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-panel.service
+systemctl daemon-reload
+set +e
 systemctl enable libertea-panel.service
+pkill -9 -f uwsgi
+systemctl kill libertea-panel.service
+pkill -9 -f uwsgi
+set -e
 systemctl restart libertea-panel.service
 
 echo " ** Building docker containers..."

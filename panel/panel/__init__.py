@@ -2,6 +2,23 @@ from . import utils
 from . import config
 from . import sysops
 from flask import Flask
+from pymongo import MongoClient
+import uwsgidecorators
+
+@uwsgidecorators.timer(30)
+def periodic_update(signal):
+    print("CRON: Updating domains cache")
+    domains = utils.get_domains()
+    for domain in domains:
+        utils.update_domain_cache(domain)
+
+    print("CRON: Updating users stats cache")
+    users = utils.get_users()
+    for user in users:
+        utils.update_user_stats_cache(user['panel_id'])
+    print("CRON: done")
+
+
 
 def create_app():
     app = Flask(__name__)

@@ -51,8 +51,8 @@ def users():
         "id": user["_id"],
         "note": user["note"],
         "created_at_timestamp": user["created_at"].timestamp(),
-        "traffic_this_month": stats.get_gigabytes_this_month(user['_id']).replace(' GB', ''),
-        "ips_today": stats.get_ips_today(user['_id']),
+        "traffic_this_month": user["__cache_traffic_this_month"].replace(' GB', '') if "__cache_traffic_this_month" in user else "0",
+        "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
     } for user in users.find()]
 
     return render_template('admin/users.jinja', 
@@ -89,9 +89,9 @@ def user(user):
     return render_template('admin/user.jinja',
         back_to='users',
         no_domain_warning=not utils.has_active_endpoints(),
-        traffic_today=stats.get_gigabytes_today(user['_id']),
-        traffic_this_month=stats.get_gigabytes_this_month(user['_id']),
-        ips_today=stats.get_ips_today(user['_id']),
+        traffic_today=user['__cache_traffic_today'] if '__cache_traffic_today' in user else '-',
+        traffic_this_month=user['__cache_traffic_this_month'] if '__cache_traffic_this_month' in user else '-',
+        ips_today=user['__cache_ips_today'] if '__cache_ips_today' in user else '-',
         month_name=datetime.now().strftime("%B"),
         admin_uuid=config.get_admin_uuid(),
         max_ips_default=max_ips_default,
@@ -136,7 +136,7 @@ def domains():
 
     all_domains = [{
         "id": domain["_id"],
-        "status": utils.check_domain_set_properly(domain["_id"], force_check=True),
+        "status": utils.check_domain_set_properly(domain["_id"]),
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
     } for domain in domains.find()]
 
@@ -162,6 +162,7 @@ def domain(domain):
     if domain_entry is None:
         return '', 404
 
+    utils.update_domain_cache(domain_entry['_id'])
 
     return render_template('admin/domain.jinja', 
         back_to='domains',
@@ -169,7 +170,7 @@ def domain(domain):
         server_ip=config.SERVER_MAIN_IP,
         domain=domain_entry['_id'],
         same_domain_as_panel_warning=utils.top_level_domain_equivalent(domain_entry["_id"], config.get_panel_domain()),
-        status=utils.check_domain_set_properly(domain_entry['_id'], force_check=True),
+        status=utils.check_domain_set_properly(domain_entry['_id']),
         cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']))
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['POST'])

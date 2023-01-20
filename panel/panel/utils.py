@@ -2,13 +2,12 @@ import uuid
 import socket
 import pymongo
 import requests
+from . import stats
 from . import config
 from . import sysops
 from . import settings
 from datetime import datetime
 from pymongo import MongoClient
-
-online_routes = {}
 
 def create_user(note, referrer=None, max_ips=None):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
@@ -190,68 +189,115 @@ def get_user_max_ips(panel_id=None, conn_url=None):
 
 
 def online_route_ping(ip):
-    online_routes[ip] = datetime.now()
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    online_routes.update_one({"_id": ip}, {"$set": {"last_seen": datetime.now()}}, upsert=True)
+
 
 def online_route_get_last_seen(ip):
-    return online_routes.get(ip, None)
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    online_route = online_routes.find_one({"_id": ip})
+    if online_route is None:
+        return None
+
+    return online_route["last_seen"]
 
 def online_route_get_all(max_age_secs=300):
     # get all online routes (max last seen 5 minutes ago)
     now = datetime.now()
-    # return [ip for ip, last_seen in online_routes.items() if (now - last_seen).total_seconds() < max_age_secs]
+    
     ips = []
-    for ip, last_seen in online_routes.items():
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    for online_route in online_routes.find():
+        ip = online_route["_id"]
+        last_seen = online_route["last_seen"]
         if (now - last_seen).total_seconds() < max_age_secs:
             ips.append(ip)
-            print("online_route_get_all: ip", ip, "last seen", last_seen, "now", now, "diff", (now - last_seen).total_seconds())
+            # print("online_route_get_all: ip", ip, "last seen", last_seen, "now", now, "diff", (now - last_seen).total_seconds())
+
     return ips
 
-check_domain_set_properly_cache = {}
 check_domain_set_properly_cache_max_time = 60
-def check_domain_set_properly(domain, force_check=False):
-    if not force_check:
-        if domain in check_domain_set_properly_cache:
-            timestamp = check_domain_set_properly_cache[domain][0]
-            if (datetime.utcnow() - timestamp).total_seconds() < check_domain_set_properly_cache_max_time:
-                return check_domain_set_properly_cache[domain][1]
 
+def domain_cache_update(domain, status=None, cdn=None):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    if status is not None:
+        domains.update_one({"_id": domain}, {"$set": {"__cache_domain_timestamp": datetime.utcnow(), "__cache_domain_status": status}}, upsert=False)
+    if cdn is not None:
+        domains.update_one({"_id": domain}, {"$set": {"__cache_domain_cdn": cdn}}, upsert=False)
+
+
+def update_domain_cache(domain):
     # send a request to https://[domain]/[get_admin_uuid]/. It should return 401 unauthorized
-    try:
-        r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=1)
-        if r.status_code == 401:
-
-            # make sure domain does not resolve to config.SERVER_MAIN_IP
-            try:
-                ip = socket.gethostbyname(domain)
-                if ip == config.SERVER_MAIN_IP:
-                    check_domain_set_properly_cache[domain] = (datetime.utcnow(), 'cdn-disabled')
-                    return 'cdn-disabled'
-            except:
-                check_domain_set_properly_cache[domain] = (datetime.utcnow(), 'unknown')
-                return 'unknown'
-
-            check_domain_set_properly_cache[domain] = (datetime.utcnow(), 'active')
-            return 'active'
-    except Exception as e:
-        print(e)
-        check_domain_set_properly_cache[domain] = (datetime.utcnow(), 'inactive')
-        return 'inactive'
-
-    check_domain_set_properly_cache[domain] = (datetime.utcnow(), 'inactive')
-    return 'inactive'
-
-def check_domain_cdn_provider(domain):
-    # send a request to https://[domain]/[get_admin_uuid]/ and check headers
     try:
         r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=1)
         if r.status_code == 401:
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
-                return 'Cloudflare'
-    except Exception as e:
-        print(e)
-    return 'Unknown'
+                domain_cache_update(domain, cdn='cloudflare')
 
+            # make sure domain does not resolve to config.SERVER_MAIN_IP
+            try:
+                ip = socket.gethostbyname(domain)
+                if ip == config.SERVER_MAIN_IP:
+                    domain_cache_update(domain, status='cdn-disabled')
+                    return
+            except:
+                domain_cache_update(domain, status='unknown')
+                return
+
+            domain_cache_update(domain, status='active')
+            return
+    except Exception as e:
+        print("update_domain_cache error", e)
+        domain_cache_update(domain, status='inactive')
+
+    domain_cache_update(domain, status='inactive')
+
+def check_domain_set_properly(domain):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    domain_entry = domains.find_one({"_id": domain})
+    if domain_entry is not None:
+        if "__cache_domain_status" in domain_entry:
+            return domain_entry["__cache_domain_status"]
+    return '-'
+
+def check_domain_cdn_provider(domain):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    domain_entry = domains.find_one({"_id": domain})
+    if domain_entry is not None:
+        if "__cache_domain_cdn" in domain_entry:
+            return domain_entry["__cache_domain_cdn"]
+    return '-'
+
+def update_user_stats_cache(user_id):
+    client = MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    users = db.users
+    user = users.find_one({"_id": user_id})
+    if user is None:
+        return
+
+    traffic_today = stats.get_gigabytes_today(user['_id'])
+    traffic_this_month = stats.get_gigabytes_this_month(user['_id'])
+    ips_today = stats.get_ips_today(user['_id'])
+
+    users.update_one({"_id": user_id}, {"$set": {
+        "__cache_traffic_today": traffic_today, 
+        "__cache_traffic_this_month": traffic_this_month, 
+        "__cache_ips_today": ips_today}}, 
+    upsert=False)
 
 def has_active_endpoints():
     if len(online_route_get_all()) > 0:
