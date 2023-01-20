@@ -6,12 +6,14 @@ from pymongo import MongoClient
 import uwsgidecorators
 
 @uwsgidecorators.timer(30)
-def periodic_update(signal):
+def periodic_update_domains(signal):
     print("CRON: Updating domains cache")
     domains = utils.get_domains()
     for domain in domains:
         utils.update_domain_cache(domain)
 
+@uwsgidecorators.timer(5 * 60)
+def periodic_update_users_stats(signal):
     print("CRON: Updating users stats cache")
     users = utils.get_users()
     for user in users:
