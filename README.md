@@ -2,13 +2,13 @@
 
 # Libertea
 
-Easily install and manage a Clash VPN server; with auto fallback, auto update and user management. 
+Easily install and manage a Clash VPN server; with user management, auto fallback and auto update.
 
 ## Features
 
 - One-command installation and management
 - Auto select the best route on user's devices
-- TROJAN and VLESS protocols
+- TROJAN, Shadowsocks/v2ray and VLESS protocols
 - User management
 - Support multiple domains behind CDN
 - Secondary IPs for better availability
