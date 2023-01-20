@@ -241,7 +241,9 @@ def update_domain_cache(domain):
         if r.status_code == 401:
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
-                domain_cache_update(domain, cdn='cloudflare')
+                domain_cache_update(domain, cdn='Cloudflare')
+            else:
+                domain_cache_update(domain, cdn='Unknown')
 
             # make sure domain does not resolve to config.SERVER_MAIN_IP
             try:
