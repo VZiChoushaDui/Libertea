@@ -41,3 +41,13 @@ Easily install and manage a Clash VPN server; with user management, auto fallbac
 To update, just run the following command on your server:
 
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+
+## Frequently Asked Questions
+
+##### Does Libertea keep my domains and IPs safe from being blocked?
+
+No, Libertea uses SSL-based protocols, so the traffic is not distinguishable from normal HTTPS traffic. However, GFW may still block your domains and IPs based on usage after a period of time. It is recommended to use *multiple* domains and secondary proxies, and periodically change your secondary proxy IPs.
+
+##### Can I route regional traffic directly (without going through VPN)?
+
+Yes. In the admin panel, go to the *Settings* tab, and in the *Route regional IPs directly* section, select the countries you want to go through directly.
