@@ -221,7 +221,9 @@ echo " ** Building docker containers..."
 docker compose build
 
 echo " ** Starting docker containers..."
+set +e
 docker compose down >/dev/null
+set -e
 docker compose up -d
 
 panel_ip=$(dig +short "$PANEL_DOMAIN" | head -n 1)
