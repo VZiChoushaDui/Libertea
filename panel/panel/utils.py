@@ -224,7 +224,7 @@ def online_route_get_all(max_age_secs=300):
 
 check_domain_set_properly_cache_max_time = 60
 
-def domain_cache_update(domain, status=None, cdn=None):
+def domain_cache_update_db(domain, status=None, cdn=None):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
     domains = db.domains
@@ -234,34 +234,39 @@ def domain_cache_update(domain, status=None, cdn=None):
         domains.update_one({"_id": domain}, {"$set": {"__cache_domain_cdn": cdn}}, upsert=False)
 
 
-def update_domain_cache(domain):
+def update_domain_cache(domain, try_count=3):
     # send a request to https://[domain]/[get_admin_uuid]/. It should return 401 unauthorized
     try:
-        r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=1)
+        r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=3)
         if r.status_code == 401:
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
-                domain_cache_update(domain, cdn='Cloudflare')
+                domain_cache_update_db(domain, cdn='Cloudflare')
             else:
-                domain_cache_update(domain, cdn='Unknown')
+                domain_cache_update_db(domain, cdn='Unknown')
 
             # make sure domain does not resolve to config.SERVER_MAIN_IP
             try:
                 ip = socket.gethostbyname(domain)
                 if ip == config.SERVER_MAIN_IP:
-                    domain_cache_update(domain, status='cdn-disabled')
+                    domain_cache_update_db(domain, status='cdn-disabled')
                     return
             except:
-                domain_cache_update(domain, status='unknown')
+                domain_cache_update_db(domain, status='unknown')
                 return
 
-            domain_cache_update(domain, status='active')
+            domain_cache_update_db(domain, status='active')
             return
     except Exception as e:
         print("update_domain_cache error", e)
-        domain_cache_update(domain, status='inactive')
 
-    domain_cache_update(domain, status='inactive')
+        if try_count > 1:
+            update_domain_cache(domain, try_count=try_count-1)
+            return
+
+        domain_cache_update_db(domain, status='inactive')
+
+    domain_cache_update_db(domain, status='inactive')
 
 def check_domain_set_properly(domain):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())

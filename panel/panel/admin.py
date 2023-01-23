@@ -162,7 +162,7 @@ def domain(domain):
     if domain_entry is None:
         return '', 404
 
-    utils.update_domain_cache(domain_entry['_id'])
+    utils.update_domain_cache(domain_entry['_id'], try_count=1)
 
     return render_template('admin/domain.jinja', 
         back_to='domains',
