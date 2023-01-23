@@ -181,6 +181,7 @@ def get_user_max_ips(panel_id=None, conn_url=None):
 
     default_max_ips = settings.get_default_max_ips()
     max_ips = user.get("max_ips", default_max_ips)
+    max_ips = int(max_ips)
 
     if max_ips is None or max_ips <= 0:
         return default_max_ips
