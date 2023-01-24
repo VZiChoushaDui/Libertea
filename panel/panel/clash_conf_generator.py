@@ -35,7 +35,7 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
 def get_providers(connect_url):
     servers = []
     for server in utils.get_domains():
-        if utils.check_domain_set_properly(server) == 'active':
+        if settings.get_add_domains_even_if_inactive() or utils.check_domain_set_properly(server) == 'active':
             servers.append((server, 443, 'CDNProxy'))
     for secondary_route in utils.online_route_get_all():
         if settings.get_secondary_proxy_use_80_instead_of_443():
