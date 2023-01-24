@@ -63,6 +63,12 @@
         </label>
     </div>
     <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" value="on" name="add_domains_even_if_inactive" id="add_domains_even_if_inactive" {% if add_domains_even_if_inactive %}checked{% endif %}>
+        <label class="form-check-label" for="add_domains_even_if_inactive">
+            Add all domains to Clash config, even if they are not active or reachable from server
+        </label>
+    </div>
+    <div class="form-check mb-4">
         <input class="form-check-input" type="checkbox" value="on" name="providers_from_all_endpoints" id="providers_from_all_endpoints" {% if providers_from_all_endpoints %}checked{% endif %}>
         <label class="form-check-label" for="providers_from_all_endpoints">
             Add all VPN endpoints as provider source URLs

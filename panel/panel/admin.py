@@ -224,6 +224,7 @@ def app_settings():
         proxy_use_80=settings.get_secondary_proxy_use_80_instead_of_443(),
         single_file_clash=settings.get_single_clash_file_configuration(),
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
+        add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
         provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'ssv2ray']},
@@ -237,9 +238,12 @@ def app_settings_save():
     providers_from_all_endpoints = request.form.get('providers_from_all_endpoints', None)
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
     provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'ssv2ray']}
+    add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
+    if add_domains_even_if_inactive is not None:
+        settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
     settings.set_secondary_proxy_use_80_instead_of_443(proxy_use_80 == 'on')
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')

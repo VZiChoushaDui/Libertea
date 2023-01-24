@@ -83,3 +83,17 @@ def set_providers_from_all_endpoints(val):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
     db.settings.update_one({"_id": "providers_from_all_endpoints"}, {"$set": {"value": val}}, upsert=True)
+
+def get_add_domains_even_if_inactive():
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "add_domains_even_if_inactive"})
+    if setting is None:
+        return False
+    return setting["value"]
+
+def set_add_domains_even_if_inactive(val):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "add_domains_even_if_inactive"}, {"$set": {"value": val}}, upsert=True)
+    
