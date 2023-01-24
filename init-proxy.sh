@@ -64,7 +64,7 @@ cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 
 # proxy-docker-compose.yml
 echo " ** Building docker images..."
-docker compose -f proxy-docker-compose.yml build >/dev/null
+docker compose -f proxy-docker-compose.yml build
 
 echo " ** Starting docker containers..."
 docker compose -f proxy-docker-compose.yml down >/dev/null
