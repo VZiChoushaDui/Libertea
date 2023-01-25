@@ -5,7 +5,7 @@ export CAMOUFLAGE_HOST=$(head -n 1 /haproxy-files/lists/camouflage-hosts.lst | x
 export CAMOUFLAGE_PORT="443"
 
 if [ -z "$CAMOUFLAGE_HOST" ]; then
-    export CAMOUFLAGE_HOST="localhost"
+    export CAMOUFLAGE_HOST="127.0.0.1"
     export CAMOUFLAGE_PORT="11111"
 fi
 
