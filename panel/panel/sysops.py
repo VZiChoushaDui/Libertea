@@ -1,6 +1,7 @@
 import os
 import pymongo
 from . import config
+from . import settings
 
 def get_root_dir():
     # get current directory
@@ -17,7 +18,15 @@ def run_command(command):
     return result
 
 def haproxy_reload():
+    print("**** Reloading haproxy container ****")
     if run_command('docker kill -s HUP ' + config.HAPROXY_CONTAINER_NAME) == 0:
+        return True
+    
+    return False
+
+def haproxy_hard_reload():
+    print("**** Restarting haproxy container ****")
+    if run_command('docker restart ' + config.HAPROXY_CONTAINER_NAME) == 0:
         return True
     
     return False
@@ -69,3 +78,15 @@ def haproxy_update_domains_list():
 
     print("Wrote " + str(count) + " domains to haproxy-lists/domains.lst")
     return haproxy_reload()
+
+def haproxy_update_camouflage_list():
+    count = 0
+    with open(get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
+        camouflage_domain = settings.get_camouflage_domain()
+        if camouflage_domain and camouflage_domain.startswith('https://'):
+            camouflage_domain = camouflage_domain[8:]
+        f.write(camouflage_domain + '\n')
+        count += 1
+
+    print("Wrote " + str(count) + " domains to haproxy-lists/camouflage-hosts.lst")
+    return haproxy_hard_reload()

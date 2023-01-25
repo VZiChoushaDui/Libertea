@@ -1,3 +1,4 @@
+import urllib
 import requests
 from . import utils
 from . import stats
@@ -29,6 +30,7 @@ def dashboard():
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
+        no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
         traffic_today=stats.get_gigabytes_today_all(),
         traffic_this_month=stats.get_gigabytes_this_month_all(),
         ips_today=stats.get_ips_today_all(),
@@ -215,8 +217,45 @@ def proxies():
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
         admin_uuid=config.get_admin_uuid())
 
+def check_camouflage_domain(camouflage_domain):
+    try:
+        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True)
+        if r.status_code == 200:
+            if not r.url.startswith('https://'):
+                # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_https&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+                return "camouflage_domain_not_https", camouflage_domain
+
+            camouflage_domain = 'https://' + r.url.split('/')[2]
+        else:
+            settings.set_camouflage_domain("")
+            print("Error while checking camouflage domain: Got response " + str(r.status_code) + " from " + camouflage_domain)
+            # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+            return "camouflage_domain_not_reachable", camouflage_domain
+    except Exception as e:
+        settings.set_camouflage_domain("")
+        print("Error while checking camouflage domain " + camouflage_domain + ": " + str(e))
+        # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+        return "camouflage_domain_not_reachable", camouflage_domain
+
+    return "", camouflage_domain
+
+
 @blueprint.route(root_url + 'settings/', methods=['GET'])
 def app_settings():
+    camouflage_error = request.args.get('camouflage_error', None)
+    camouflage_domain = request.args.get('camouflage_domain', None)
+
+    if camouflage_domain is None:
+        saved_camouflage_domain = settings.get_camouflage_domain()
+        if saved_camouflage_domain is None or saved_camouflage_domain == "":
+            camouflage_domain = "https://"
+        else:
+            camouflage_domain = saved_camouflage_domain
+            camouflage_domain_status, camouflage_domain = check_camouflage_domain(camouflage_domain)
+            if camouflage_domain_status != "":
+                camouflage_error = camouflage_domain_status
+        
+    
     return render_template('admin/settings.jinja',
         page='settings',
         admin_uuid=config.get_admin_uuid(),
@@ -225,6 +264,8 @@ def app_settings():
         single_file_clash=settings.get_single_clash_file_configuration(),
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
+        camouflage_domain=camouflage_domain,
+        camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
         provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'ssv2ray']},
@@ -239,6 +280,7 @@ def app_settings_save():
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
     provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'ssv2ray']}
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
+    camouflage_domain = request.form.get('camouflage_domain', None)
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
@@ -255,6 +297,20 @@ def app_settings_save():
     # if none of trojanws and ssv2ray is enabled, enable trojanws
     if not settings.get_provider_enabled('trojanws') and not settings.get_provider_enabled('ssv2ray'):
         settings.set_provider_enabled('trojanws', True)
+
+    if camouflage_domain is not None:
+        if camouflage_domain == '' or camouflage_domain == 'https://':
+            settings.set_camouflage_domain("")
+        else:
+            if not camouflage_domain.startswith('http'):
+                camouflage_domain = 'https://' + camouflage_domain
+
+            # check if domain is reachable
+            camouflage_domain_status, camouflage_domain = check_camouflage_domain(camouflage_domain)
+            if camouflage_domain_status == "":
+                settings.set_camouflage_domain(camouflage_domain)
+            else:
+                redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 
     return redirect(url_for('admin.app_settings'))
 

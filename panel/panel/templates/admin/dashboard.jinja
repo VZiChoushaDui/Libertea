@@ -37,6 +37,16 @@
 </div>
 {% endif %}
 
+{% if no_domain_warning %}
+<div class="w-100 mt-4 px-3">
+    🚨 Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.<br /><a href="/{{ admin_uuid }}/domains/new/?next=dashboard">Add a domain</a>
+</div>
+{% endif %}
+{% if no_camouflage_warning %}
+<div class="w-100 mt-4 px-3">
+    🚨 Warning: You don't have a camouflage domain set up, this increases the chance of your VPN being blocked.<br /><a href="/{{ admin_uuid }}/settings/">Set up a camouflage domain</a>
+</div>
+{% endif %}
 {% if active_domains_count == 1 %}
 <div class="w-100 mt-4 px-3">
     ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
@@ -45,11 +55,6 @@
 {% if proxies_count == 0 %}
 <div class="w-100 mt-4 px-3">
     ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/proxies/?new=true">Add a secondary proxy</a>
-</div>
-{% endif %}
-{% if no_domain_warning %}
-<div class="w-100 mt-4 px-3">
-    ⚠️ Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
 </div>
 {% endif %}
 <div class="section stats">

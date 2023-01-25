@@ -1,9 +1,13 @@
+import requests
 from . import utils
 from . import config
 from . import sysops
+import uwsgidecorators
 from flask import Flask
 from pymongo import MongoClient
-import uwsgidecorators
+from urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 @uwsgidecorators.timer(30)
 def periodic_update_domains(signal):
@@ -28,6 +32,7 @@ def create_app():
     print("Updating HAProxy lists")
     sysops.haproxy_update_users_list()
     sysops.haproxy_update_domains_list()
+    sysops.haproxy_update_camouflage_list()
 
     from .admin import blueprint as admin_blueprint
     app.register_blueprint(admin_blueprint)

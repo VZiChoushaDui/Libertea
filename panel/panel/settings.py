@@ -1,7 +1,9 @@
+import time
 import uuid
 import socket
 import pymongo
 import requests
+import threading
 from . import config
 from . import sysops
 from datetime import datetime
@@ -96,4 +98,29 @@ def set_add_domains_even_if_inactive(val):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
     db.settings.update_one({"_id": "add_domains_even_if_inactive"}, {"$set": {"value": val}}, upsert=True)
+
+def get_camouflage_domain():
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "camouflage_domain"})
+    if setting is None:
+        return ""
+    return setting["value"]
+
+def set_camouflage_domain(val):
+    if get_camouflage_domain() == val:
+        print("camouflage domain is already set to " + val)
+        return
+
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "camouflage_domain"}, {"$set": {"value": val}}, upsert=True)
+    
+    def run_haproxy_update_camouflage_list():
+        time.sleep(2)
+        sysops.haproxy_update_camouflage_list()
+    t = threading.Thread(target=run_haproxy_update_camouflage_list)
+    t.start()
+
+    
     

@@ -5,6 +5,24 @@
   href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
 />
 <form method="post" class="mt-5 px-3">
+    <div class="form-group mb-4">
+        <label for="camouflage_domain">Camouflage Domain</label>
+        <input type="text" class="form-control" id="camouflage_domain" name="camouflage_domain" value="{{ camouflage_domain }}" style="max-width: 400px;" placeholder="https://">
+
+        {% if camouflage_error != None %}
+            {% if camouflage_error == "camouflage_domain_not_https" %}
+            <small class="form-text text-danger">Camouflage domain must start with https://</small>
+            {% elif camouflage_error == "camouflage_domain_not_reachable" %}
+            <small class="form-text text-danger">Camouflage domain is not reachable</small>
+            {% else %}
+            <small class="form-text text-danger">{{ camouflage_error }}</small>
+            {% endif %}
+            <br />
+        {% endif %}
+
+        <small class="form-text text-muted">When you visit the home page of your domains, contents of this domain will be shown instead.</small><br />
+        <small class="form-text text-muted">Be creative in choosing your domain, so the chance of your domains being blocked decreases.</small>
+    </div>
     <div class="form-group">
         <label class="form-check-label">
             Protocols<br />

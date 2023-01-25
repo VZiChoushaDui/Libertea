@@ -7,3 +7,8 @@ RUN setcap 'cap_net_bind_service=+ep' /usr/local/sbin/haproxy
 
 # RUN mkdir -p /home/haproxy_stats
 # RUN chown -R haproxy:haproxy /home/haproxy_stats
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
