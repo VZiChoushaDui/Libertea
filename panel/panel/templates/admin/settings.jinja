@@ -13,7 +13,7 @@
             {% if camouflage_error == "camouflage_domain_not_https" %}
             <small class="form-text text-danger">Camouflage domain must start with https://</small>
             {% elif camouflage_error == "camouflage_domain_not_reachable" %}
-            <small class="form-text text-danger">Camouflage domain is not reachable</small>
+            <small class="form-text text-danger">Camouflage domain is not reachable. Please check the domain name, or use another one.</small>
             {% else %}
             <small class="form-text text-danger">{{ camouflage_error }}</small>
             {% endif %}

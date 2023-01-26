@@ -219,7 +219,10 @@ def proxies():
 
 def check_camouflage_domain(camouflage_domain):
     try:
-        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True)
+        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
+            })
         if r.status_code == 200:
             if not r.url.startswith('https://'):
                 # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_https&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
@@ -310,7 +313,7 @@ def app_settings_save():
             if camouflage_domain_status == "":
                 settings.set_camouflage_domain(camouflage_domain)
             else:
-                redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+                return redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 
     return redirect(url_for('admin.app_settings'))
 
