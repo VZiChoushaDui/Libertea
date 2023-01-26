@@ -9,4 +9,17 @@ if [ -z "$CAMOUFLAGE_HOST" ]; then
     export CAMOUFLAGE_PORT="11111"
 fi
 
-haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg
+pidfile=/var/run/haproxy.pid
+
+function reload
+{
+    echo "Reloading haproxy..."
+    haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile -sf $(cat $pidfile) &
+    wait
+}
+
+
+trap reload SIGHUP
+trap "kill -TERM $(cat $pidfile) || exit 1" SIGTERM SIGINT
+haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile &
+wait
