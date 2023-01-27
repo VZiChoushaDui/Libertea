@@ -157,6 +157,22 @@ def get_domain_sni(domain):
         return None
     return domain_entry["sni"]
 
+def update_domain(domain, dns_domain=None, sni=None):
+    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+
+    if domains.find_one({"_id": domain}) is None:
+        return False
+
+    if dns_domain is not None:
+        domains.update_one({"_id": domain}, {"$set": {"dns_domain": dns_domain}})
+
+    if sni is not None:
+        domains.update_one({"_id": domain}, {"$set": {"sni": sni}})
+
+    return True
+
 def get_active_domains():
     return [x for x in get_domains() if check_domain_set_properly(x) == 'active']
 

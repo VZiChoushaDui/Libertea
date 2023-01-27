@@ -58,12 +58,24 @@
         </div>
     </div>
     {% endif %}
+
+    <form method="post" class="mt-5">
+        <h5 class="mb-4">Advanced options</h5>
+        <div class="form-group mb-4">
+            <label for="ip_override">IP override</label>
+            <input type="text" class="form-control" id="ip_override" name="ip_override" value="{% if ip_override != None %}{{ ip_override }}{% endif %}" placeholder="Leave empty to use the domain IP itself">
+        </div>
+        
+        <button type="submit" class="mt-4 btn btn-primary">Save</button>
+        <button class="mt-4 btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            Delete domain
+        </button>
+    </form>
+
+
+
     <div class="row mt-5">
         <div class="col-12">
-            <button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                Delete domain
-            </button>
-    
             <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">

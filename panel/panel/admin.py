@@ -170,6 +170,7 @@ def domain(domain):
         back_to='domains',
         admin_uuid=config.get_admin_uuid(),
         server_ip=config.SERVER_MAIN_IP,
+        ip_override=utils.get_domain_dns_domain(domain_entry['_id']),
         domain=domain_entry['_id'],
         same_domain_as_panel_warning=utils.top_level_domain_equivalent(domain_entry["_id"], config.get_panel_domain()),
         status=utils.check_domain_set_properly(domain_entry['_id']),
@@ -193,7 +194,15 @@ def domain_save(domain):
             return redirect(url_for('admin.dashboard'))
         
         return redirect(url_for('admin.domain', domain=domain))
-    return '', 404
+
+    ip_override = request.form.get('ip_override', None)
+    if ip_override is not None:
+        ip_override = ip_override.strip()
+        if ip_override == '':
+            ip_override = None
+
+        utils.update_domain(domain, dns_domain=ip_override)
+    return redirect(url_for('admin.domains'))
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
 def domain_delete(domain):
