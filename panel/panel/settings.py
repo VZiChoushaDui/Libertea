@@ -115,12 +115,4 @@ def set_camouflage_domain(val):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
     db.settings.update_one({"_id": "camouflage_domain"}, {"$set": {"value": val}}, upsert=True)
-    
-    def run_haproxy_update_camouflage_list():
-        time.sleep(2)
-        sysops.haproxy_update_camouflage_list()
-    t = threading.Thread(target=run_haproxy_update_camouflage_list)
-    t.start()
-
-    
-    
+    sysops.haproxy_update_camouflage_list() 

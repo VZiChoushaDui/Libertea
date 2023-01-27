@@ -24,13 +24,6 @@ def haproxy_reload():
     
     return False
 
-def haproxy_hard_reload():
-    print("**** Restarting haproxy container ****")
-    if run_command('docker restart ' + config.HAPROXY_CONTAINER_NAME) == 0:
-        return True
-    
-    return False
-
 def haproxy_renew_certs():
     if run_command('./haproxy/certbot.sh') == 0:
         return True
@@ -89,4 +82,4 @@ def haproxy_update_camouflage_list():
         count += 1
 
     print("Wrote " + str(count) + " domains to haproxy-lists/camouflage-hosts.lst")
-    return haproxy_hard_reload()
+    return haproxy_reload()
