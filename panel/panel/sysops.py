@@ -30,8 +30,14 @@ def haproxy_renew_certs():
     
     return False
 
+def haproxy_ensure_folder():
+    folder = get_root_dir() + 'data/haproxy-lists'
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
 def haproxy_update_users_list():
     count = 0
+    haproxy_ensure_folder()
     with open(get_root_dir() + 'data/haproxy-lists/valid-user-endpoints.lst', 'w') as f:
         client = pymongo.MongoClient(config.get_mongodb_connection_string())
         db = client[config.MONGODB_DB_NAME]
@@ -60,6 +66,7 @@ def haproxy_update_users_list():
 
 def haproxy_update_domains_list():
     count = 0
+    haproxy_ensure_folder()
     with open(get_root_dir() + 'data/haproxy-lists/domains.lst', 'w') as f:
         client = pymongo.MongoClient(config.get_mongodb_connection_string())
         db = client[config.MONGODB_DB_NAME]
@@ -74,6 +81,7 @@ def haproxy_update_domains_list():
 
 def haproxy_update_camouflage_list():
     count = 0
+    haproxy_ensure_folder()
     with open(get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
         camouflage_domain = settings.get_camouflage_domain()
         if camouflage_domain and camouflage_domain.startswith('https://'):
