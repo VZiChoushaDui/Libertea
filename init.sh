@@ -27,6 +27,14 @@ ufw allow http >/dev/null
 ufw allow https >/dev/null
 yes | ufw enable >/dev/null
 
+# check if cpu supports avx2, or true
+if [[ ! $(grep avx2 /proc/cpuinfo) ]] || [[ true ]]; then 
+    echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
+    echo "    Please consider upgrading your CPU to support AVX2."
+    # change docker-compose.yml to use compatibility image
+    sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
+fi
+
 echo " ** Getting public IP..."
 my_ip=$(curl -s https://api.ipify.org)
 
@@ -216,14 +224,6 @@ systemctl kill libertea-panel.service
 pkill -9 -f uwsgi
 set -e
 systemctl restart libertea-panel.service
-
-# check if cpu supports avx2, or true
-if [[ ! $(grep avx2 /proc/cpuinfo) ]] || [[ true ]]; then 
-    echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
-    echo "    Please consider upgrading your CPU to support AVX2."
-    # change docker-compose.yml to use compatibility image
-    sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
-fi
 
 echo " ** Building docker containers..."
 docker compose build
