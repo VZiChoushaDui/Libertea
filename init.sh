@@ -28,7 +28,7 @@ ufw allow https >/dev/null
 yes | ufw enable >/dev/null
 
 # check if cpu supports avx2, or true
-if [[ ! $(grep avx2 /proc/cpuinfo) ]] || [[ true ]]; then 
+if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
     echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
     echo "    Please consider upgrading your CPU to support AVX2."
     # change docker-compose.yml to use compatibility image
