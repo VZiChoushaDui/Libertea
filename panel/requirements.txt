@@ -4,3 +4,4 @@ Paste
 pymongo
 jinja2>=3
 uwsgi
+requests
