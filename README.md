@@ -15,7 +15,7 @@ Easily install and manage a Clash VPN server; with user management, auto fallbac
 
 ## Requirements
 
-- At least one server with Ubuntu 20.04 or higher (Ubuntu 22.04 recommended)
+- At least one server with Ubuntu 20.04+ or Debian 11+ (Ubuntu 22.04 recommended)
 - At least one domain behind a CDN (such as Cloudflare)
 
 
