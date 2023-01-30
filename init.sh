@@ -65,8 +65,9 @@ apt-get install -qq -y build-essential >/dev/null
 
 echo "    - Installing python..."
 if ! command -v python3 &> /dev/null; then
-    apt-get install -qq -y python3 python3-dev >/dev/null
+    apt-get install -qq -y python3 >/dev/null
 fi
+apt-get install -qq -y python3-dev >/dev/null
 if ! command -v pip3 &> /dev/null; then
     apt-get install -qq -y python3-pip >/dev/null
 fi
