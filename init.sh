@@ -21,11 +21,73 @@ fi
 
 touch .libertea.main
 
+
+echo " ** Installing dependencies..."
+apt-get update >/dev/null
+
+# if ! command -v certbot &> /dev/null; then
+#     echo "    - Installing certbot..."
+#     if [ "$(lsb_release -rs)" == "20.04" ]; then
+#         # if ubuntu version is 20.04, add certbot repository
+#         add-apt-repository -y ppa:certbot/certbot > /dev/null
+#     fi
+#     sudo apt-get update > /dev/null
+#     sudo apt-get install -qq -y certbot > /dev/null
+# fi
+
+if ! command -v ufw &> /dev/null; then
+    echo "    - Installing ufw..."
+    apt-get install -qq -y ufw >/dev/null
+fi
+
+if ! command -v sed &> /dev/null; then
+    echo "    - Installing sed..."
+    apt-get install -qq -y sed >/dev/null
+fi
+
+if ! command -v uuidgen &> /dev/null; then
+    echo "    - Installing uuidgen..."
+    apt-get install -qq -y uuid-runtime >/dev/null
+fi
+
+if ! command -v openssl &> /dev/null; then
+    echo "    - Installing openssl..."
+    apt-get install -qq -y openssl >/dev/null
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "    - Installing jq..."
+    apt-get install -qq -y jq >/dev/null
+fi
+
+echo "    - Installing build tools..."
+apt-get install -qq -y build-essential >/dev/null
+
+echo "    - Installing python..."
+if ! command -v python3 &> /dev/null; then
+    apt-get install -qq -y python3 python3-dev >/dev/null
+fi
+if ! command -v pip3 &> /dev/null; then
+    apt-get install -qq -y python3-pip >/dev/null
+fi
+
+echo "    - Installing python dependencies..."
+pip3 install -r panel/requirements.txt | sed 's/^/        /'
+
+echo "    - Installing docker..."
+if ! command -v docker &> /dev/null; then
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sh /tmp/get-docker.sh | sed 's/^/        /' >/dev/null
+fi
+echo "    - Installing docker compose..."
+apt-get install -qq docker-compose-plugin | sed 's/^/        /'
+
+
 echo " ** Initializing firewall..."
-ufw allow ssh >/dev/null
-ufw allow http >/dev/null
-ufw allow https >/dev/null
-yes | ufw enable >/dev/null
+ufw allow ssh | sed 's/^/    /' >/dev/null
+ufw allow http | sed 's/^/    /' >/dev/null
+ufw allow https | sed 's/^/    /' >/dev/null
+yes | ufw enable | sed 's/^/    /' >/dev/null
 
 # check if cpu supports avx2, or true
 if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
@@ -145,50 +207,6 @@ echo " ** Loading environment variables..."
 set -a
 . .env
 set +a
-
-echo " ** Installing dependencies..."
-apt-get update >/dev/null
-
-
-# if ! command -v certbot &> /dev/null; then
-#     echo "    - Installing certbot..."
-#     if [ "$(lsb_release -rs)" == "20.04" ]; then
-#         # if ubuntu version is 20.04, add certbot repository
-#         add-apt-repository -y ppa:certbot/certbot > /dev/null
-#     fi
-#     sudo apt-get update > /dev/null
-#     sudo apt-get install -qq -y certbot > /dev/null
-# fi
-
-
-if ! command -v openssl &> /dev/null; then
-    echo "    - Installing openssl..."
-    apt-get install -qq -y openssl >/dev/null
-fi
-
-if ! command -v jq &> /dev/null; then
-    echo "    - Installing jq..."
-    apt-get install -qq -y jq >/dev/null
-fi
-
-echo "    - Installing python..."
-if ! command -v python3 &> /dev/null; then
-    apt-get install -qq -y python3 >/dev/null
-fi
-if ! command -v pip3 &> /dev/null; then
-    apt-get install -qq -y python3-pip >/dev/null
-fi
-
-echo "    - Installing python dependencies..."
-pip3 install -r panel/requirements.txt
-
-echo "    - Installing docker..."
-if ! command -v docker &> /dev/null; then
-    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-    sh /tmp/get-docker.sh >/dev/null
-fi
-echo "    - Installing docker compose..."
-apt-get install -qq docker-compose-plugin
 
 # echo " ** Initializing certbot..."
 # ./haproxy/certbot-init.sh >/dev/null
