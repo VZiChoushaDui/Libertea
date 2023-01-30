@@ -2,6 +2,9 @@ import requests
 from . import utils
 from . import config
 from . import sysops
+from . import admin
+from . import user
+from . import api
 import uwsgidecorators
 from flask import Flask
 from pymongo import MongoClient
@@ -34,13 +37,8 @@ def create_app():
     sysops.haproxy_update_domains_list()
     sysops.haproxy_update_camouflage_list()
 
-    from .admin import blueprint as admin_blueprint
-    app.register_blueprint(admin_blueprint)
-    
-    from .user import blueprint as user_blueprint
-    app.register_blueprint(user_blueprint)
-
-    from .api import blueprint as api_blueprint
-    app.register_blueprint(api_blueprint)
+    app.register_blueprint(admin.blueprint)
+    app.register_blueprint(user.blueprint)
+    app.register_blueprint(api.blueprint)
 
     return app
