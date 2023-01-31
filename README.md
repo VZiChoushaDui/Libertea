@@ -2,27 +2,28 @@
 
 # Libertea
 
-Easily install and manage a Clash VPN server; with user management, auto fallback and auto update.
+Easily install and manage a multi-protocol VPN server; with user management, auto fallback and auto update.
 
 ## Features
 
-- One-command installation and management
-- Auto select the best route on user's devices
 - TROJAN, Shadowsocks/v2ray and VLESS protocols
+- One-command installation and management
+- Camouflage domains with a real website to reduce the risk of being blocked by probing
+- Auto select the best route on user's devices
 - User management
 - Support multiple domains behind CDN
 - Secondary IPs for better availability
 
 ## Requirements
 
-- At least one server with Ubuntu 20.04+ or Debian 11+ (Ubuntu 22.04 recommended)
+- A server with at least 1 GB RAM
+- Ubuntu 20.04+ or Debian 11+ (Ubuntu 22.04 recommended)
 - At least one domain behind a CDN (such as Cloudflare)
-
 
 ## Recommended configuration
 
 - Two domains behind a CDN (such as Cloudflare), one for the panel/update and one for the VPN itself
-- An extra server for the secondary proxy
+- At least one extra server for the secondary proxy (512MB RAM is enough for secondary proxies)
 
 ## Installation
 
@@ -46,7 +47,7 @@ To update, just run the following command on your server:
 
 ##### Does Libertea keep my domains and IPs safe from being blocked?
 
-No, Libertea uses SSL-based protocols, so the traffic is not distinguishable from normal HTTPS traffic. However, GFW may still block your domains and IPs based on usage after a period of time. It is recommended to use *multiple* domains and secondary proxies, and periodically change your secondary proxy IPs.
+Libertea uses SSL-based protocols, so the traffic is not distinguishable from normal HTTPS traffic. Also by setting a Camouflage domain to your Libertea installation, the risk of active probing gets reduced. However, GFW may still block your domains and IPs based on usage after a period of time. It is recommended to use *multiple* domains and secondary proxies, and periodically change your secondary proxy IPs.
 
 ##### Can I route regional traffic directly (without going through VPN)?
 
