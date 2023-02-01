@@ -44,7 +44,7 @@ proxy-groups:
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group"
     type: url-test
-    tolerance: 100
+    tolerance: 300
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group
@@ -59,7 +59,7 @@ proxy-groups:
 {% if cdn_other_exists %}
   - name: "tier2-group"
     type: url-test
-    tolerance: 100
+    tolerance: 300
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group
@@ -71,9 +71,10 @@ proxy-groups:
 
 {% if cloudflare_exists %}
 {% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare" %}
-{% include "groups/loadbalance.yaml" %}
+{% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
+
 
 {% if cdn_other_exists %}
 {% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other" %}

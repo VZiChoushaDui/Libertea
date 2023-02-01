@@ -73,7 +73,7 @@ proxy-groups:
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group"
     type: url-test
-    tolerance: 100
+    tolerance: 300
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group
@@ -88,7 +88,7 @@ proxy-groups:
 {% if cdn_other_exists %}
   - name: "tier2-group"
     type: url-test
-    tolerance: 100
+    tolerance: 300
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group
@@ -100,7 +100,7 @@ proxy-groups:
 
 {% if cloudflare_exists %}
   - name: "cloudflare-group"
-    type: load-balance
+    type: url-test
     strategy: round-robin
     use:
 {% for domain in domains %}
