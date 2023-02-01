@@ -3,7 +3,9 @@ import re
 from . import utils
 from . import config
 from . import settings
+from pymongo import MongoClient
 from flask import render_template
+from datetime import datetime, timedelta
 
 def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None):
     if server is None:
@@ -32,13 +34,14 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
         'entry_type': entry_type,
     }
 
-def get_providers(connect_url):
+def get_providers(connect_url, db):
     servers = []
-    for server in utils.get_domains():
-        if settings.get_add_domains_even_if_inactive() or utils.check_domain_set_properly(server) == 'active':
+
+    for server in utils.get_domains(db=db):
+        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) == 'active':
             servers.append((server, 443, 'CDNProxy'))
-    for secondary_route in utils.online_route_get_all():
-        if settings.get_secondary_proxy_use_80_instead_of_443():
+    for secondary_route in utils.online_route_get_all(db=db):
+        if settings.get_secondary_proxy_use_80_instead_of_443(db=db):
             servers.append((secondary_route, 80, 'SecondaryProxy'))
         else:
             servers.append((secondary_route, 443, 'SecondaryProxy'))
@@ -51,51 +54,56 @@ def get_providers(connect_url):
     for server, port, server_type in servers:      
         server_type_ex = server_type
         if server_type == 'CDNProxy':
-            if utils.check_domain_cdn_provider(server) == 'Cloudflare':
+            if utils.check_domain_cdn_provider(server, db=db) == 'Cloudflare':
                 server_type_ex += '-Cloudflare'
             else:
                 server_type_ex += '-Other'
 
-        if settings.get_provider_enabled('trojanws'):
-            providers.append(init_provider_info(
-                type='trojan-ws',
-                name='TrW-' + str(idx) + "-" + server,
-                port=port,
-                password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
-                path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
-                meta_only=False,
-                entry_type=server_type_ex,
-                sni=utils.get_domain_sni(server),
-                host=server,
-                server=utils.get_domain_dns_domain(server),
-            ))
-        if settings.get_provider_enabled('vlessws'):
-            providers.append(init_provider_info(
-                type='vless-ws',
-                name='VlW-' + str(idx) + "-" + server,
-                port=port,
-                password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
-                path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
-                meta_only=True,
-                entry_type=server_type_ex,
-                sni=utils.get_domain_sni(server),
-                host=server,
-                server=utils.get_domain_dns_domain(server),
-            ))
-        if settings.get_provider_enabled('ssv2ray'):
-            providers.append(init_provider_info(
-                type='ss-v2ray',
-                name='ssV-' + str(idx) + "-" + server,
-                port=port,
-                password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
-                path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
-                meta_only=False,
-                entry_type=server_type_ex,
-                sni=utils.get_domain_sni(server),
-                host=server,
-                server=utils.get_domain_dns_domain(server),
-            ))
-        idx += 1
+        server_ips_str = utils.get_domain_dns_domain(server, db=db)
+        server_ips = [server_ips_str]
+        if server_ips_str is not None and ',' in server_ips_str:
+            server_ips = server_ips_str.split(',')
+        for s in server_ips:
+            if settings.get_provider_enabled('trojanws', db=db):
+                providers.append(init_provider_info(
+                    type='trojan-ws',
+                    name='TrW-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
+                    meta_only=False,
+                    entry_type=server_type_ex,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                ))
+            if settings.get_provider_enabled('vlessws', db=db):
+                providers.append(init_provider_info(
+                    type='vless-ws',
+                    name='VlW-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
+                    meta_only=True,
+                    entry_type=server_type_ex,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                ))
+            if settings.get_provider_enabled('ssv2ray', db=db):
+                providers.append(init_provider_info(
+                    type='ss-v2ray',
+                    name='ssV-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
+                    meta_only=False,
+                    entry_type=server_type_ex,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                ))
+            idx += 1
 
     return providers
 
@@ -103,7 +111,10 @@ def generate_conf_singlefile(connect_url, meta=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    providers = get_providers(connect_url)
+    client = MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+
+    providers = get_providers(connect_url, db)
 
     cloudflare_exists = False
     direct_exists = False
@@ -115,14 +126,14 @@ def generate_conf_singlefile(connect_url, meta=False):
             cdn_other_exists = True
         elif provider['entry_type'] == 'SecondaryProxy':
             direct_exists = True
-
+    
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
         country_id = country['id']
-        if settings.get_route_direct_country_enabled(country_id):
+        if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
-
-    return render_template('main-singlefile.yaml', 
+    
+    result = render_template('main-singlefile.yaml', 
         providers=providers,
         meta=meta,
         ips_direct_countries=ips_direct_countries,
@@ -131,6 +142,8 @@ def generate_conf_singlefile(connect_url, meta=False):
         cdn_other_exists=cdn_other_exists,
     )
 
+    return result
+
 def generate_conf(file_name, user_id, connect_url, meta=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
@@ -138,7 +151,10 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
     if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'rules.yaml']:
         return ""
 
-    providers = get_providers(connect_url)
+    client = MongoClient(config.get_mongodb_connection_string())
+    db = client[config.MONGODB_DB_NAME]
+    
+    providers = get_providers(connect_url, db=db)
 
     cloudflare_exists = False
     direct_exists = False
@@ -154,12 +170,12 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
         country_id = country['id']
-        if settings.get_route_direct_country_enabled(country_id):
+        if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
 
     domains = set([config.get_panel_domain()])
-    if settings.get_providers_from_all_endpoints():
-        domains = set(utils.get_active_domains())
+    if settings.get_providers_from_all_endpoints(db=db):
+        domains = set(utils.get_active_domains(db=db))
         domains.add(config.get_panel_domain())
     
     return render_template(file_name, 

@@ -127,17 +127,19 @@ def add_domain(domain, dns_domain=None, sni=None):
 
     return 200
 
-def get_domains():
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_domains(db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
     all_domains = [domain["_id"] for domain in domains.find()]
     return all_domains
 
-def get_domain_dns_domain(domain):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_domain_dns_domain(domain, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
     if domain_entry is None:
@@ -146,9 +148,10 @@ def get_domain_dns_domain(domain):
         return None
     return domain_entry["dns_domain"]
 
-def get_domain_sni(domain):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_domain_sni(domain, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
     if domain_entry is None:
@@ -157,9 +160,10 @@ def get_domain_sni(domain):
         return None
     return domain_entry["sni"]
 
-def update_domain(domain, dns_domain=None, sni=None):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def update_domain(domain, dns_domain=None, sni=None, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
     if domains.find_one({"_id": domain}) is None:
@@ -173,18 +177,19 @@ def update_domain(domain, dns_domain=None, sni=None):
 
     return True
 
-def get_active_domains():
-    return [x for x in get_domains() if check_domain_set_properly(x) == 'active']
+def get_active_domains(db=None):
+    return [x for x in get_domains(db=db) if check_domain_set_properly(x, db=db) == 'active']
 
-def get_user_max_ips(panel_id=None, conn_url=None):
+def get_user_max_ips(panel_id=None, conn_url=None, db=None):
     if panel_id is None and conn_url is None:
         return 0
 
     if panel_id is not None and conn_url is not None:
         raise Exception("Both panel_id and conn_url are not None")
 
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     users = db.users
 
     if panel_id is not None:
@@ -205,16 +210,18 @@ def get_user_max_ips(panel_id=None, conn_url=None):
     return max_ips
 
 
-def online_route_ping(ip):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def online_route_ping(ip, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     online_routes.update_one({"_id": ip}, {"$set": {"last_seen": datetime.now()}}, upsert=True)
 
 
-def online_route_get_last_seen(ip):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def online_route_get_last_seen(ip, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     online_route = online_routes.find_one({"_id": ip})
     if online_route is None:
@@ -222,13 +229,14 @@ def online_route_get_last_seen(ip):
 
     return online_route["last_seen"]
 
-def online_route_get_all(max_age_secs=300):
+def online_route_get_all(max_age_secs=300, db=None):
     # get all online routes (max last seen 5 minutes ago)
     now = datetime.now()
     
     ips = []
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     for online_route in online_routes.find():
         ip = online_route["_id"]
@@ -241,9 +249,10 @@ def online_route_get_all(max_age_secs=300):
 
 check_domain_set_properly_cache_max_time = 60
 
-def domain_cache_update_db(domain, status=None, cdn=None):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def domain_cache_update_db(domain, status=None, cdn=None, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     if status is not None:
         domains.update_one({"_id": domain}, {"$set": {"__cache_domain_timestamp": datetime.utcnow(), "__cache_domain_status": status}}, upsert=False)
@@ -251,43 +260,44 @@ def domain_cache_update_db(domain, status=None, cdn=None):
         domains.update_one({"_id": domain}, {"$set": {"__cache_domain_cdn": cdn}}, upsert=False)
 
 
-def update_domain_cache(domain, try_count=3):
+def update_domain_cache(domain, try_count=3, db=None):
     # send a request to https://[domain]/[get_admin_uuid]/. It should return 401 unauthorized
     try:
         r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=3)
         if r.status_code == 401:
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
-                domain_cache_update_db(domain, cdn='Cloudflare')
+                domain_cache_update_db(domain, cdn='Cloudflare', db=db)
             else:
-                domain_cache_update_db(domain, cdn='Unknown')
+                domain_cache_update_db(domain, cdn='Unknown', db=db)
 
             # make sure domain does not resolve to config.SERVER_MAIN_IP
             try:
                 ip = socket.gethostbyname(domain)
                 if ip == config.SERVER_MAIN_IP:
-                    domain_cache_update_db(domain, status='cdn-disabled')
+                    domain_cache_update_db(domain, status='cdn-disabled', db=db)
                     return
             except:
-                domain_cache_update_db(domain, status='unknown')
+                domain_cache_update_db(domain, status='unknown', db=db)
                 return
 
-            domain_cache_update_db(domain, status='active')
+            domain_cache_update_db(domain, status='active', db=db)
             return
     except Exception as e:
         print("update_domain_cache error", e)
 
         if try_count > 1:
-            update_domain_cache(domain, try_count=try_count-1)
+            update_domain_cache(domain, try_count=try_count-1, db=db)
             return
 
-        domain_cache_update_db(domain, status='inactive')
+        domain_cache_update_db(domain, status='inactive', db=db)
 
-    domain_cache_update_db(domain, status='inactive')
+    domain_cache_update_db(domain, status='inactive', db=db)
 
-def check_domain_set_properly(domain):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def check_domain_set_properly(domain, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
     if domain_entry is not None:
@@ -295,9 +305,10 @@ def check_domain_set_properly(domain):
             return domain_entry["__cache_domain_status"]
     return '-'
 
-def check_domain_cdn_provider(domain):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def check_domain_cdn_provider(domain, db=None):
+    if db is None:
+        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
     if domain_entry is not None:
@@ -305,17 +316,18 @@ def check_domain_cdn_provider(domain):
             return domain_entry["__cache_domain_cdn"]
     return '-'
 
-def update_user_stats_cache(user_id):
-    client = MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def update_user_stats_cache(user_id, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
     if user is None:
         return
 
-    traffic_today = stats.get_gigabytes_today(user['_id'])
-    traffic_this_month = stats.get_gigabytes_this_month(user['_id'])
-    ips_today = stats.get_ips_today(user['_id'])
+    traffic_today = stats.get_gigabytes_today(user['_id'], db=db)
+    traffic_this_month = stats.get_gigabytes_this_month(user['_id'], db=db)
+    ips_today = stats.get_ips_today(user['_id'], db=db)
 
     users.update_one({"_id": user_id}, {"$set": {
         "__cache_traffic_today": traffic_today, 
@@ -323,12 +335,13 @@ def update_user_stats_cache(user_id):
         "__cache_ips_today": ips_today}}, 
     upsert=False)
 
-def has_active_endpoints():
+def has_active_endpoints(db=None):
     if len(online_route_get_all()) > 0:
         return True
 
-    client = MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
     all_domains = [{

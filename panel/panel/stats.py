@@ -37,36 +37,40 @@ def ___get_total_ips(file_name, conn_url):
     except:
         return '-'
 
-def get_gigabytes_today(user_id):
-    client = MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_gigabytes_today(user_id, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
     file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
     return ___get_total_gigabytes(file_name, conn_url)
 
-def get_gigabytes_this_month(user_id):
-    client = MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_gigabytes_this_month(user_id, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
     file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
     return ___get_total_gigabytes(file_name, conn_url)
 
-def get_ips_today(user_id):
-    client = MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_ips_today(user_id, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
     file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
     return ___get_total_ips(file_name, conn_url)
 
-def get_ips_this_month(user_id):
-    client = MongoClient(config.get_mongodb_connection_string())
-    db = client[config.MONGODB_DB_NAME]
+def get_ips_this_month(user_id, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']

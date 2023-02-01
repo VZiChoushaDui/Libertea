@@ -63,7 +63,8 @@
         <h5 class="mb-4">Advanced options</h5>
         <div class="form-group mb-4">
             <label for="ip_override">IP override</label>
-            <input type="text" class="form-control" id="ip_override" name="ip_override" value="{% if ip_override != None %}{{ ip_override }}{% endif %}" placeholder="Leave empty to use the domain IP itself">
+            <input type="text" class="form-control" id="ip_override" name="ip_override" value="{% if ip_override != None %}{{ ip_override }}{% endif %}" placeholder="IP Address (for example 10.20.30.40)">
+            <small class="form-text text-muted">Leave empty to use the domain IP itself; and if you want to use multiple IPs, separate them with a comma (,).</small>
         </div>
         
         <button type="submit" class="mt-4 btn btn-primary">Save</button>

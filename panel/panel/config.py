@@ -68,7 +68,7 @@ ROUTE_IP_LISTS = [
 ROUTE_IP_LISTS = sorted(ROUTE_IP_LISTS, key=lambda k: k['name'])
 
 
-SERVER_MAIN_IP = requests.get('https://api.ipify.org').content.decode('utf8')
+SERVER_MAIN_IP = requests.get('https://api.ipify.org', timeout=5).content.decode('utf8')
 
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
     raise Exception("couldn't fetch SERVER_MAIN_IP")
