@@ -33,7 +33,7 @@ Easily install and manage a multi-protocol VPN server; with user management, aut
 
 3. run the following command on your server and follow the instructions.
 
-        curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+       curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
     *The installation may take a few minutes.*
 
@@ -42,6 +42,12 @@ Easily install and manage a multi-protocol VPN server; with user management, aut
 To update, just run the following command on your server:
 
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+
+## Uninstall
+
+If you want to uninstall Liberta or Liberta-secondary-proxy from your server for any reason, run the following command on your server:
+
+    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
 
 ## Frequently Asked Questions
 
