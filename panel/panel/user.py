@@ -34,8 +34,14 @@ def user_dashboard(id):
     conf_url = request.url_root.replace('http://', 'https://') + str(id) + '/config.yaml'
     name = config.get_panel_domain() + "-" + user['_id'][0:8]
 
+    manual_conf_url = request.url_root.replace('http://', 'https://') + str(id) + '/mconfig.yaml'
+
     clash_conf_url = "clash://install-config?url=" + urllib.parse.quote_plus(conf_url) + "&name=" + urllib.parse.quote(name)
-    return render_template('user.jinja', user=user, clash_conf_url=clash_conf_url)
+    return render_template('user.jinja', 
+        user=user, 
+        clash_conf_url=clash_conf_url,
+        clash_manual_conf_url=manual_conf_url
+    )
 
 @blueprint.route('/<id>/<file_name>.yaml')
 def user_config(id, file_name):
@@ -45,6 +51,16 @@ def user_config(id, file_name):
 
     ua = request.headers.get('User-Agent')
     is_meta = 'Clash' in ua and ('Meta' in ua or 'Stash' in ua)
+
+    if file_name == 'mconfig':
+        conf = clash_conf_generator.generate_conf_singlefile(user['connect_url'], 
+            meta=is_meta)
+
+        # don't show in browser, use a header to force download
+        return conf, 200, {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Content-Disposition': 'attachment; filename="' + config.get_panel_domain() + "-" + str(id) + '.yaml"',
+        }
 
     if settings.get_single_clash_file_configuration() and file_name == 'config':
         conf = clash_conf_generator.generate_conf_singlefile(user['connect_url'], 
