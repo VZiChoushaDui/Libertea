@@ -65,6 +65,11 @@ if ! command -v jq &> /dev/null; then
     apt-get install -qq -y jq >/dev/null
 fi
 
+if ! command -v cut &> /dev/null; then
+    echo "    - Installing coreutils..."
+    apt-get install -qq -y coreutils >/dev/null
+fi
+
 echo "    - Installing build tools..."
 apt-get install -qq -y build-essential >/dev/null
 
@@ -88,6 +93,12 @@ fi
 echo "    - Installing docker compose..."
 apt-get install -qq docker-compose-plugin | sed 's/^/        /'
 
+# if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
+if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
+    echo "    - Applying apparmor fix..."
+    apt-get install -y apparmor apparmor-utils
+    service docker restart
+fi
 
 echo " ** Initializing firewall..."
 ufw allow ssh | sed 's/^/    /' >/dev/null
