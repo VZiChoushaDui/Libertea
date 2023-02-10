@@ -15,7 +15,7 @@ def new_getaddrinfo(*args, **kwargs):
             if response[0] == socket.AF_INET]
 socket.getaddrinfo = new_getaddrinfo
 
-LIBERTEA_VERSION = 1016
+LIBERTEA_VERSION = 1018
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/version.txt"
 
 HAPROXY_CONTAINER_NAME = 'libertea-haproxy'
@@ -73,7 +73,7 @@ SERVER_MAIN_IP = requests.get('https://api.ipify.org', timeout=5).content.decode
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
     raise Exception("couldn't fetch SERVER_MAIN_IP")
 
-print("SERVER_MAIN_IP: " + SERVER_MAIN_IP)
+# print("SERVER_MAIN_IP: " + SERVER_MAIN_IP)
 
 def get_mongodb_password():
     return os.environ.get('PANEL_MONGODB_PASSWORD')
