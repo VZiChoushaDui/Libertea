@@ -96,7 +96,7 @@ apt-get install -qq docker-compose-plugin | sed 's/^/        /'
 # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
 if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
     echo "    - Applying apparmor fix..."
-    apt-get install -y apparmor apparmor-utils
+    apt-get install -qq -y apparmor apparmor-utils >/dev/null
     service docker restart
 fi
 
