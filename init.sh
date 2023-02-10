@@ -45,6 +45,11 @@ if ! command -v sed &> /dev/null; then
     apt-get install -qq -y sed >/dev/null
 fi
 
+if ! command -v dig &> /dev/null; then
+    echo "    - Installing dnsutils..."
+    apt-get install -qq -y dnsutils >/dev/null
+fi
+
 if ! command -v uuidgen &> /dev/null; then
     echo "    - Installing uuidgen..."
     apt-get install -qq -y uuid-runtime >/dev/null
@@ -252,6 +257,68 @@ set +e
 docker compose down >/dev/null
 set -e
 docker compose up -d
+
+touch ./data/haproxy-lists/camouflage-hosts.lst
+touch ./data/haproxy-lists/domains.lst
+touch ./data/haproxy-lists/valid-panel-endpoints.lst
+touch ./data/haproxy-lists/valid-user-endpoints.lst
+
+echo " ** Waiting for services to start..."
+
+# check status of the docker containers with name starting with "libertea" (max 30 seconds) and log each one that has been up for at least 5 seconds
+containers=$(docker ps --format "{{.Names}}" | grep -E "^libertea")
+
+# move libertea-haproxy to the end of the list
+containers=$(echo "$containers" | grep -v "libertea-haproxy")
+containers="$containers libertea-haproxy"
+
+start_time=$(date +%s)
+for container in $containers; do
+    echo -ne "    ⌛ $container\r"
+    # check if the container is running and has been up for at least 5 seconds
+    while [ "$(docker inspect -f '{{.State.Running}}' "$container")" != "true" ] || \
+        [ $(( $(date -d "$(docker inspect -f '{{.State.StartedAt}}' $container)" +%s) - $(date +%s) + 5 )) -gt 0 ]; do
+        sleep 1
+        if [ $(( $(date +%s) - start_time )) -gt 45 ]; then
+            echo "*******************************************************"
+            echo "ERROR: Timeout while waiting for $container to start."
+            echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
+            echo "       and include the following information:"
+            echo "       - component name: $container"
+            echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
+            echo "       - OS version: $(cat /etc/os-release | grep -E "^VERSION_ID=" | cut -d "=" -f 2)"
+            echo "       - Docker version: $(docker --version)"
+            echo "       Also include the output of the following command:"
+            echo "           docker logs $container | tail -n 100"
+            echo ""
+            exit 1
+        fi
+    done
+    echo "    ✅ $container started"
+done
+
+# wait for the panel to start 
+# while ! curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/"; do
+# it should return 200
+echo -ne "    ⌛ libertea-panel\r"
+while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)" != "200" ]; do
+    sleep 1
+    if [ $(( $(date +%s) - start_time )) -gt 45 ]; then
+        echo "*******************************************************"
+        echo "ERROR: Timeout while waiting for panel to start."
+        echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
+        echo "       and include the following information:"
+        echo "       - component name: libertea-panel"
+        echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
+        echo "       - OS version: $(cat /etc/os-release | grep -E "^VERSION_ID=" | cut -d "=" -f 2)"
+        echo "       - Docker version: $(docker --version)"
+        echo "       Also include the output of the following command:"
+        echo "           tail -n 100 /tmp/libertea-panel.log"
+        echo ""
+        exit 1
+    fi
+done
+echo "    ✅ libertea-panel started"
 
 panel_ip=$(dig +short "$PANEL_DOMAIN" | head -n 1)
 panel_ip=$(echo "$panel_ip" | tr -d '[:space:]')
