@@ -4,43 +4,8 @@
     },
     "inbounds": [
         {
-            "port": {port},
-            "protocol": "vmess",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "{uuid}",
-                        "alterId": 0,
-                        "email": "me@example.com"
-                    }
-                ],
-                "fallbacks": [
-                    {
-                        "path": "/{url}",
-                        "dest": {port-internal},
-                        "xver": 1
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "tcp",
-                "security": "tls",
-                "tlsSettings": {
-                    "alpn": [
-                        "http/1.1"
-                    ],
-                    "certificates": [
-                        {
-                            "certificateFile": "/etc/xray/cert.pem",
-                            "keyFile": "/etc/xray/privkey.pem"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "port": {port-internal},
             "listen": "127.0.0.1",
+            "port": {port},
             "protocol": "vmess",
             "settings": {
                 "clients": [
@@ -53,7 +18,15 @@
             },
             "streamSettings": {
                 "network": "ws",
-                "security": "none",
+                "security": "tls",
+                "tlsSettings": {
+                    "certificates": [
+                        {
+                            "certificateFile": "/etc/xray/cert.pem",
+                            "keyFile": "/etc/xray/privkey.pem"
+                        }
+                    ]
+                },
                 "wsSettings": {
                     "acceptProxyProtocol": true,
                     "path": "/{url}"
