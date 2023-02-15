@@ -1,8 +1,9 @@
 import os
 import re
 import socket
-import requests
 from datetime import timedelta
+
+import requests
 
 print("Initializing...")
 
@@ -99,4 +100,4 @@ def get_hostcontroller_api_key():
     return os.environ.get('HOSTCONTROLLER_API_KEY')
 
 def get_bootstrap_script_url():
-    return "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh"
+    return "https://raw.githubusercontent.com/iRHonin/Libertea/master/bootstrap.sh"
