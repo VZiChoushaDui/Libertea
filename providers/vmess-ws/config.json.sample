@@ -10,8 +10,8 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "email": "me@example.com",
-                        "alterId": 0
+                        "alterId": 0,
+                        "email": "me@example.com"
                     }
                 ],
                 "fallbacks": [
@@ -27,8 +27,7 @@
                 "security": "tls",
                 "tlsSettings": {
                     "alpn": [
-                        "http/1.1",
-                        "h2",
+                        "http/1.1"
                     ],
                     "certificates": [
                         {
@@ -64,8 +63,7 @@
     ],
     "outbounds": [
         {
-            "protocol": "freedom",
-            "settings": {}
+            "protocol": "freedom"
         }
     ]
 }
