@@ -28,7 +28,7 @@
                 "tlsSettings": {
                     "alpn": [
                         "http/1.1",
-                        "h2",
+                        "h2"
                     ],
                     "certificates": [
                         {
