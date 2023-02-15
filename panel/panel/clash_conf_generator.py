@@ -45,13 +45,13 @@ def get_providers(connect_url, db):
             servers.append((secondary_route, 80, 'SecondaryProxy'))
         else:
             servers.append((secondary_route, 443, 'SecondaryProxy'))
-    
+
     # # DEBUG ONLY
     # servers.append((config.SERVER_MAIN_IP, 443))
 
     providers = []
     idx = 0
-    for server, port, server_type in servers:      
+    for server, port, server_type in servers:
         server_type_ex = server_type
         if server_type == 'CDNProxy':
             if utils.check_domain_cdn_provider(server, db=db) == 'Cloudflare':
@@ -84,6 +84,19 @@ def get_providers(connect_url, db):
                     port=port,
                     password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
+                    meta_only=True,
+                    entry_type=server_type_ex,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                ))
+            if settings.get_provider_enabled('vmessws', db=db):
+                providers.append(init_provider_info(
+                    type='vmess-ws',
+                    name='VMlW-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_VMESS_WS_AUTH_UUID'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_WS_URL'),
                     meta_only=True,
                     entry_type=server_type_ex,
                     sni=utils.get_domain_sni(server, db=db),
@@ -126,14 +139,14 @@ def generate_conf_singlefile(connect_url, meta=False):
             cdn_other_exists = True
         elif provider['entry_type'] == 'SecondaryProxy':
             direct_exists = True
-    
+
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
         country_id = country['id']
         if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
-    
-    result = render_template('main-singlefile.yaml', 
+
+    result = render_template('main-singlefile.yaml',
         providers=providers,
         meta=meta,
         ips_direct_countries=ips_direct_countries,
@@ -153,7 +166,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
 
     client = MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
-    
+
     providers = get_providers(connect_url, db=db)
 
     cloudflare_exists = False
@@ -177,8 +190,8 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
     if settings.get_providers_from_all_endpoints(db=db):
         domains = set(utils.get_active_domains(db=db))
         domains.add(config.get_panel_domain())
-    
-    return render_template(file_name, 
+
+    return render_template(file_name,
         providers=providers,
         meta=meta,
         cloudflare_exists=cloudflare_exists,

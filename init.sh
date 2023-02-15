@@ -107,7 +107,7 @@ ufw allow https | sed 's/^/    /' >/dev/null
 yes | ufw enable | sed 's/^/    /' >/dev/null
 
 # check if cpu supports avx2, or true
-if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
+if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then
     echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
     echo "    Please consider upgrading your CPU to support AVX2."
     # change docker-compose.yml to use compatibility image
@@ -206,7 +206,7 @@ if [ "$COMMAND" != "update" ]; then
         read -r panel_domain
     done
     sed -i "s|PANEL_DOMAIN=.*|PANEL_DOMAIN=$panel_domain|g" .env
-    
+
     echo "Please enter a password for admin user:"
     read -r admin_password
     # check it is not empty and is at least 8 characters long
@@ -215,7 +215,7 @@ if [ "$COMMAND" != "update" ]; then
         read -r admin_password
     done
     sed -i "s|PANEL_ADMIN_PASSWORD=.*|PANEL_ADMIN_PASSWORD=$admin_password|g" .env
-    
+
     echo ""
 fi
 
@@ -246,6 +246,8 @@ echo "    - vless-ws..."
 ./providers/vless-ws/init.sh 2002 12002 "$CONN_VLESS_WS_URL" "$CONN_VLESS_WS_AUTH_UUID"
 echo "    - shadowsocks-v2ray..."
 ./providers/shadowsocks-v2ray/init.sh 2003 "$CONN_SHADOWSOCKS_V2RAY_URL" "$CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD"
+echo "    - vmess-v2ray..."
+./providers/vmess-ws/init.sh 2004 12003 "$CONN_VMESS_WS_URL" "$CONN_VMESS_WS_AUTH_UUID"
 
 echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/
@@ -308,7 +310,7 @@ for container in $containers; do
     echo "    ✅ $container started"
 done
 
-# wait for the panel to start 
+# wait for the panel to start
 # while ! curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/"; do
 # it should return 200
 echo -ne "    ⌛ libertea-panel\r"

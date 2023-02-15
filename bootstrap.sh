@@ -11,7 +11,7 @@ fi
 # This file is downloaded via curl and executed by user in a single command
 # It's intended to be used as a bootstrap script for the whole Libertea project.
 
-REPO_URL="https://github.com/VZiChoushaDui/Libertea.git"
+REPO_URL="https://github.com/iRhonin/Libertea.git"
 PROJECT_NAME="libertea"
 COMMAND="$1"
 
@@ -42,7 +42,7 @@ if [ "$COMMAND" != "uninstall" ]; then
         git checkout master >/dev/null
         git reset --hard >/dev/null
         git clean -fd >/dev/null
-        
+
         git pull --rebase >/dev/null
     else
         echo " ** Cloning repository..."
@@ -79,7 +79,7 @@ elif [ "$COMMAND" = "uninstall" ]; then
         echo "   - $container_name"
         docker rm -f "$container_name" >/dev/null
     done
-    
+
 
     echo " ** Stopping systemd service..."
     pkill -9 -f uwsgi
