@@ -10,11 +10,10 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "level": 0,
-                        "email": "me@example.com"
+                        "email": "me@example.com",
+                        "alterId": 0
                     }
                 ],
-                "decryption": "none",
                 "fallbacks": [
                     {
                         "path": "/{url}",
@@ -28,7 +27,8 @@
                 "security": "tls",
                 "tlsSettings": {
                     "alpn": [
-                        "http/1.1"
+                        "http/1.1",
+                        "h2",
                     ],
                     "certificates": [
                         {
@@ -47,11 +47,10 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "level": 0,
+                        "alterId": 0,
                         "email": "me@example.com"
                     }
                 ],
-                "decryption": "none"
             },
             "streamSettings": {
                 "network": "ws",
@@ -65,7 +64,8 @@
     ],
     "outbounds": [
         {
-            "protocol": "freedom"
+            "protocol": "freedom",
+            "settings": {}
         }
     ]
 }
