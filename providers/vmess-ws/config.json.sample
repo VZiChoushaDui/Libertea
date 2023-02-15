@@ -28,7 +28,7 @@
                 "tlsSettings": {
                     "alpn": [
                         "http/1.1",
-                        "h2"
+                        "h2",
                     ],
                     "certificates": [
                         {
@@ -50,7 +50,7 @@
                         "alterId": 0,
                         "email": "me@example.com"
                     }
-                ],
+                ]
             },
             "streamSettings": {
                 "network": "ws",
