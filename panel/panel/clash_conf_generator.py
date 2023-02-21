@@ -133,6 +133,8 @@ def generate_conf_singlefile(connect_url, meta=False):
         if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
     
+    udp_exists = settings.get_provider_enabled('trojanws', db=db)
+
     result = render_template('main-singlefile.yaml', 
         providers=providers,
         meta=meta,
@@ -140,6 +142,7 @@ def generate_conf_singlefile(connect_url, meta=False):
         cloudflare_exists=cloudflare_exists,
         direct_exists=direct_exists,
         cdn_other_exists=cdn_other_exists,
+        udp_exists=udp_exists,
     )
 
     return result
@@ -148,7 +151,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'rules.yaml']:
+    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml']:
         return ""
 
     client = MongoClient(config.get_mongodb_connection_string())
@@ -178,6 +181,8 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
         domains = set(utils.get_active_domains(db=db))
         domains.add(config.get_panel_domain())
     
+    udp_exists = settings.get_provider_enabled('trojanws', db=db)
+
     return render_template(file_name, 
         providers=providers,
         meta=meta,
@@ -187,4 +192,5 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
         ips_direct_countries=ips_direct_countries,
         user_id=user_id,
         domains=list(domains),
+        udp_exists=udp_exists,
     )

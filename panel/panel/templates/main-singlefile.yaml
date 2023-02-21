@@ -70,31 +70,101 @@ proxy-groups:
 {% endif %}
 
 {% if cloudflare_exists %}
-{% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare" %}
+{% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare", udp_only=False %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
 
-
 {% if cdn_other_exists %}
-{% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other" %}
+{% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other", udp_only=False %}
 {% include "groups/loadbalance.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% if direct_exists %}
-{% with name="direct-group", proxies=providers, entry_type="SecondaryProxy" %}
+{% with name="direct-group", proxies=providers, entry_type="SecondaryProxy", udp_only=False %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
+{% endif %}
+
+
+
+{% if udp_exists %}
+  - name: "main-group-udp"
+    type: fallback
+    proxies:
+{% if direct_exists or cloudflare_exists %}
+      - tier1-group-udp
+{% endif %}{% if cdn_other_exists %}
+      - tier2-group-udp
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    global-default: true
+    lazy: false
+
+{% if direct_exists or cloudflare_exists %}
+  - name: "tier1-group-udp"
+    type: url-test
+    tolerance: 300
+    proxies:
+{% if cloudflare_exists %}
+      - cloudflare-group-udp
+{% endif %}{% if direct_exists %}
+      - direct-group-udp
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% if cdn_other_exists %}
+  - name: "tier2-group-udp"
+    type: url-test
+    tolerance: 300
+    proxies:
+{% if cdn_other_exists %}
+      - cdn-other-group-udp
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% if cloudflare_exists %}
+{% with name="cloudflare-group-udp", proxies=providers, entry_type="CDNProxy-Cloudflare", udp_only=True %}
+{% include "groups/urltest.yaml" %}
+{% endwith %}
+{% endif %}
+
+{% if cdn_other_exists %}
+{% with name="cdn-other-group-udp", proxies=providers, entry_type="CDNProxy-Other", udp_only=True %}
+{% include "groups/loadbalance.yaml" %}
+{% endwith %}
+{% endif %}
+
+{% if direct_exists %}
+{% with name="direct-group-udp", proxies=providers, entry_type="SecondaryProxy", udp_only=True %}
+{% include "groups/urltest.yaml" %}
+{% endwith %}
+{% endif %}
+
 {% endif %}
 
 mixed-port: 1096
 redir-port: 7892
 external-controller: 127.0.0.1:9090
 
+script:
+  shortcuts:
+    udpnetwork: network == 'udp'
+
 rules:
 {% for country in ips_direct_countries %}
 {% include "rules/" + country + "-direct.yaml" %}
 {% endfor %}
 
+{% if udp_exists %}
+  - SCRIPT,udpnetwork,main-group-udp
+{% endif %}
   - MATCH,main-group
