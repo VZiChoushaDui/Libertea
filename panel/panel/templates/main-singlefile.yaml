@@ -70,23 +70,32 @@ proxy-groups:
 {% endif %}
 
 {% if cloudflare_exists %}
-{% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare" %}
+{% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare", panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
 
 
 {% if cdn_other_exists %}
-{% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other" %}
+{% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other", panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/loadbalance.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% if direct_exists %}
-{% with name="direct-group", proxies=providers, entry_type="SecondaryProxy" %}
+{% with name="direct-group", proxies=providers, entry_type="SecondaryProxy", panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
+
+{% for provider in providers %}
+{% if not provider.meta_only or meta %}
+{% with name=provider.name, server=provider.server, sni=provider.sni, host=provider.host, type=provider.type, entry_type=provider.entry_type, panel_domain=panel_domain, user_id=user_id %}
+{% include ("groups/singleserver.yaml") %}
+{% endwith %}
+{% endif %}
+{% endfor %}
+
 
 mixed-port: 1096
 redir-port: 7892

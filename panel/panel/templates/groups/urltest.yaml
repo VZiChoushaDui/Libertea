@@ -3,8 +3,8 @@
     tolerance: 250
     proxies:
 {% for provider in providers %}{% if not provider.meta_only or meta %}{% if provider.entry_type == entry_type %}
-      - {{ provider.name }}
+      - {{ provider.name }}-g
 {% endif %}{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 30
+    interval: 15
     lazy: false

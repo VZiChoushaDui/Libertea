@@ -107,7 +107,7 @@ def get_providers(connect_url, db):
 
     return providers
 
-def generate_conf_singlefile(connect_url, meta=False):
+def generate_conf_singlefile(user_id, connect_url, meta=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -140,6 +140,8 @@ def generate_conf_singlefile(connect_url, meta=False):
         cloudflare_exists=cloudflare_exists,
         direct_exists=direct_exists,
         cdn_other_exists=cdn_other_exists,
+        user_id=user_id,
+        panel_domain=config.get_panel_domain(),
     )
 
     return result
@@ -186,5 +188,6 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
         cdn_other_exists=cdn_other_exists,
         ips_direct_countries=ips_direct_countries,
         user_id=user_id,
+        panel_domain=config.get_panel_domain(),
         domains=list(domains),
     )

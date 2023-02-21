@@ -1,6 +1,8 @@
 import urllib.parse
 from . import config
 from . import settings
+from . import health_check
+from datetime import datetime
 from pymongo import MongoClient
 from . import clash_conf_generator
 from flask import Blueprint, render_template, redirect, url_for, flash, request
@@ -53,7 +55,7 @@ def user_config(id, file_name):
     is_meta = 'Clash' in ua and ('Meta' in ua or 'Stash' in ua)
 
     if file_name == 'mconfig':
-        conf = clash_conf_generator.generate_conf_singlefile(user['connect_url'], 
+        conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
             meta=is_meta)
 
         # don't show in browser, use a header to force download
@@ -63,7 +65,7 @@ def user_config(id, file_name):
         }
 
     if settings.get_single_clash_file_configuration() and file_name == 'config':
-        conf = clash_conf_generator.generate_conf_singlefile(user['connect_url'], 
+        conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
             meta=is_meta)
     else:
         if file_name == 'config':
@@ -79,3 +81,20 @@ def user_config(id, file_name):
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Disposition': 'inline; filename="' + config.get_panel_domain() + "-" + str(id) + '.yaml"',
     }
+
+@blueprint.route('/<id>/health')
+def user_health(id):
+    user = get_user(id)
+    if user is None:
+        return "", 404
+    
+    # get GET parameters
+    protocol = request.args.get('protocol')
+    domain = request.args.get('domain')
+    domain_dns = request.args.get('domain_dns')
+    if protocol is None or domain is None or domain_dns is None:
+        return "", 404
+
+    health_check.register_data(user['_id'], domain, domain_dns, protocol)
+
+    return "", 200

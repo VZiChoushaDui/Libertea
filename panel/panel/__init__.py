@@ -1,6 +1,7 @@
 import requests
 from . import utils
 from . import config
+from . import health_check
 from . import sysops
 from . import admin
 from . import user
@@ -27,6 +28,11 @@ def periodic_update_users_stats(signal):
         utils.update_user_stats_cache(user['panel_id'])
     print("CRON: done")
 
+@uwsgidecorators.timer(5 * 60)
+def periodic_health_check_parse(signal):
+    print("CRON: Health check parse")
+    health_check.parse()
+    print("CRON: done")
 
 
 def create_app():
