@@ -38,9 +38,9 @@ def parse():
         }
     })
 
-    interval = timedelta(hours=1)
+    interval = timedelta(hours=3)
     start_time = datetime.utcnow() - timedelta(days=1) - interval
-    start_time = start_time.replace(minute=0, second=0, microsecond=0)
+    start_time = start_time.replace(hour=start_time.hour - (start_time.hour % 3), minute=0, second=0, microsecond=0)
     final_time = datetime.utcnow()
 
     while start_time + interval < final_time:
