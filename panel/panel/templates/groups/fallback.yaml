@@ -1,9 +1,9 @@
   - name: "{{name}}"
     type: fallback
     proxies:
-{% for provider in providers %}{% if not provider.meta_only or meta %}{% if provider.entry_type == entry_type %}
+{% for provider in providers %}{% if not provider.meta_only or meta %}{% if provider.entry_type == entry_type %}{% if not udp_only or provider.type == 'trojan-ws' %}
       - {{ provider.name }}-g
-{% endif %}{% endif %}{% endfor %}
+{% endif %}{% endif %}{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
     interval: 30
     lazy: false

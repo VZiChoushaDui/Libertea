@@ -62,12 +62,21 @@ cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/cert
 mkdir -p /etc/ssl/ha-certs
 cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 
-# proxy-docker-compose.yml
-echo " ** Building docker images..."
-docker compose -f proxy-docker-compose.yml build
+if [ "$ENVIRONMENT" == "dev" ]; then
+    echo " ** Building docker images..."
+    docker compose -f proxy-docker-compose.dev.yml build
 
-echo " ** Starting docker containers..."
-docker compose -f proxy-docker-compose.yml down >/dev/null
-docker compose -f proxy-docker-compose.yml up -d
+    echo " ** Starting docker containers..."
+    docker compose -f proxy-docker-compose.dev.yml down >/dev/null
+    docker compose -f proxy-docker-compose.dev.yml up -d
+else
+    echo " ** Pulling docker images..."
+    docker compose -f proxy-docker-compose.yml pull
+    docker compose -f proxy-docker-compose.yml build
+
+    echo " ** Starting docker containers..."
+    docker compose -f proxy-docker-compose.yml down >/dev/null
+    docker compose -f proxy-docker-compose.yml up -d
+fi
 
 echo " ** Done! The proxy is now running and connected to your main Libertea server at $CONN_PROXY_IP."

@@ -1,3 +1,4 @@
+import json
 import urllib
 import requests
 from . import utils
@@ -88,6 +89,9 @@ def user(user):
 
     user['panel_url'] = "https://" + config.get_panel_domain() + "/" + user['_id'] + "/"
 
+    connected_ips_over_time = stats.get_connected_ips_over_time(user['_id'], datetime.utcnow().year, datetime.utcnow().month)
+    connected_ips_over_time = json.dumps(connected_ips_over_time)
+
     return render_template('admin/user.jinja',
         back_to='users',
         no_domain_warning=not utils.has_active_endpoints(),
@@ -98,6 +102,7 @@ def user(user):
         admin_uuid=config.get_admin_uuid(),
         max_ips_default=max_ips_default,
         default_max_ips_count=settings.get_default_max_ips(),
+        connected_ips_over_time=connected_ips_over_time,
         user=user)
 
 

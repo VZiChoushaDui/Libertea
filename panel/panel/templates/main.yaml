@@ -26,6 +26,14 @@ proxy-providers:
     url: https://{{ domain }}/{{ user_id }}/cloudflare.yaml
     path: ./{{ domain }}-files/cloudflare.yaml
     interval: 3600
+
+{% if udp_exists %}
+  cloudflare-udp-{{domain}}:
+    type: http
+    url: https://{{ domain }}/{{ user_id }}/cloudflare-udp.yaml
+    path: ./{{ domain }}-files/cloudflare-udp.yaml
+    interval: 3600
+{% endif %}
 {% endif %}
 
 {% if direct_exists %}
@@ -34,6 +42,14 @@ proxy-providers:
     url: https://{{ domain }}/{{ user_id }}/direct.yaml
     path: ./{{ domain }}-files/direct.yaml
     interval: 3600
+
+{% if udp_exists %}
+  direct-udp-{{ domain }}:
+    type: http
+    url: https://{{ domain }}/{{ user_id }}/direct-udp.yaml
+    path: ./{{ domain }}-files/direct-udp.yaml
+    interval: 3600
+{% endif %}
 {% endif %}
 
 {% if cdn_other_exists %}
@@ -42,6 +58,15 @@ proxy-providers:
     url: https://{{ domain }}/{{ user_id }}/cdn-other.yaml
     path: ./{{ domain }}-files/cdn-other.yaml
     interval: 3600
+
+{% if udp_exists %}
+  cdn-other-udp-{{ domain }}:
+    type: http
+    url: https://{{ domain }}/{{ user_id }}/cdn-other-udp.yaml
+    path: ./{{ domain }}-files/cdn-other-udp.yaml
+    interval: 3600
+
+{% endif %}
 {% endif %}
 {% endfor %}
 
@@ -137,12 +162,106 @@ proxy-groups:
     lazy: false
 {% endif %}
 
+{% if udp_exists %}
+
+  - name: "main-group-udp"
+    type: fallback
+    proxies:
+{% if direct_exists or cloudflare_exists %}
+      - tier1-group-udp
+{% endif %}{% if cdn_other_exists %}
+      - tier2-group-udp
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    global-default: true
+    lazy: false
+
+{% if direct_exists or cloudflare_exists %}
+  - name: "tier1-group-udp"
+    type: url-test
+    tolerance: 300
+    proxies:
+{% if cloudflare_exists %}
+      - cloudflare-group-udp
+{% endif %}{% if direct_exists %}
+      - direct-group-udp
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% if cdn_other_exists %}
+  - name: "tier2-group-udp"
+    type: url-test
+    tolerance: 300
+    proxies:
+{% if cdn_other_exists %}
+      - cdn-other-group-udp
+{% endif %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% if cloudflare_exists %}
+  - name: "cloudflare-group-udp"
+    type: url-test
+    strategy: round-robin
+    use:
+{% for domain in domains %}
+      - cloudflare-udp-{{ domain }}
+{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% if cdn_other_exists %}
+  - name: "cdn-other-group-udp"
+    type: load-balance
+    strategy: round-robin
+    use:
+{% for domain in domains %}
+      - cdn-other-udp-{{ domain }}
+{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% if direct_exists %}
+  - name: "direct-group-udp"
+    type: load-balance
+    strategy: round-robin
+    use:
+{% for domain in domains %}
+      - direct-udp-{{ domain }}
+{% endfor %}
+    url: 'https://www.google.com/generate_204'
+    interval: 15
+    lazy: false
+{% endif %}
+
+{% endif %}
+
+
+
+
 mixed-port: 1096
 redir-port: 7892
 external-controller: 127.0.0.1:9090
+
+script:
+  shortcuts:
+    udpnetwork: network == 'udp'
 
 rules:
 {% for domain in domains %}
   - RULE-SET,excludedips-{{ domain }},DIRECT
 {% endfor %}
+{% if udp_exists %}
+  - SCRIPT,udpnetwork,main-group-udp
+{% endif %}
   - MATCH,main-group

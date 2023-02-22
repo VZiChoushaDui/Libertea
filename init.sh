@@ -139,6 +139,11 @@ if [ ! -f .env ]; then
 else
     echo " ** Updating .env..."
 
+    if grep -q "FIREWALL_OUTBOUND_TCP_PORTS=\"22 53 80 8080 443 8443 3389\"" .env; then
+        echo "    - Removing old default FIREWALL_OUTBOUND_TCP_PORTS from .env..."
+        sed -i '/FIREWALL_OUTBOUND_TCP_PORTS="22 53 80 8080 443 8443 3389"/d' .env
+    fi
+
     # If a variable is missing from .env, add it and fill it with value
     while IFS= read -r line; do
         if [[ $line != *"=" ]]; then
@@ -260,14 +265,26 @@ pkill -9 -f uwsgi
 set -e
 systemctl restart libertea-panel.service
 
-echo " ** Building docker containers..."
-docker compose build
+if [ "$ENVIRONMENT" == "dev" ]; then
+    echo " ** Building docker containers..."
+    docker compose -f docker-compose.dev.yml build
 
-echo " ** Starting docker containers..."
-set +e
-docker compose down >/dev/null
-set -e
-docker compose up -d
+    echo " ** Starting docker containers..."
+    set +e
+    docker compose -f docker-compose.dev.yml down >/dev/null
+    set -e
+    docker compose -f docker-compose.dev.yml up -d
+else
+    echo " ** Pulling docker containers..."
+    docker compose pull
+    docker compose build
+
+    echo " ** Starting docker containers..."
+    set +e
+    docker compose down >/dev/null
+    set -e
+    docker compose up -d
+fi
 
 touch ./data/haproxy-lists/camouflage-hosts.lst
 touch ./data/haproxy-lists/domains.lst

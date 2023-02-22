@@ -4,14 +4,14 @@ services:
     environment:
       - PROXY_REGISTER_ENDPOINT=${PROXY_REGISTER_ENDPOINT}
       - PANEL_SECRET_KEY=${PANEL_SECRET_KEY}
-    image: libertea/proxy-register
+    build: ./proxy-register
     container_name: libertea-proxy-register
     restart: always
     logging:
       options:
         max-size: 10m
   haproxy:
-    image: libertea/proxy-haproxy
+    build: ./proxy-haproxy
     container_name: libertea-proxy-haproxy
     environment:
       - CONN_PROXY_IP=${CONN_PROXY_IP}
@@ -24,7 +24,7 @@ services:
       options:
         max-size: 10m
   asym-traffic:
-    image: libertea/proxy-fake-traffic
+    build: ./proxy-fake-traffic
     container_name: libertea-asym-traffic
     restart: always
     environment:
