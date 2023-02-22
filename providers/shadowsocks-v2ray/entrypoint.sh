@@ -36,7 +36,7 @@ done
 echo " ** Starting shadowsocks..."
 
 # load variables from config.env
-. /config.env
+. /etc/xray/config.env
 
 ssservice server \
       -s $SS_SERVER_ADDR \

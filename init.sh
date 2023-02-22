@@ -265,14 +265,26 @@ pkill -9 -f uwsgi
 set -e
 systemctl restart libertea-panel.service
 
-echo " ** Building docker containers..."
-docker compose build
+if [ "$ENVIRONMENT" == "dev" ]; then
+    echo " ** Building docker containers..."
+    docker compose -f docker-compose.dev.yml build
 
-echo " ** Starting docker containers..."
-set +e
-docker compose down >/dev/null
-set -e
-docker compose up -d
+    echo " ** Starting docker containers..."
+    set +e
+    docker compose -f docker-compose.dev.yml down >/dev/null
+    set -e
+    docker compose -f docker-compose.dev.yml up -d
+else
+    echo " ** Pulling docker containers..."
+    docker compose pull
+    docker compose build
+
+    echo " ** Starting docker containers..."
+    set +e
+    docker compose down >/dev/null
+    set -e
+    docker compose up -d
+fi
 
 touch ./data/haproxy-lists/camouflage-hosts.lst
 touch ./data/haproxy-lists/domains.lst
