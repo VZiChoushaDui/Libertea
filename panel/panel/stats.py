@@ -94,7 +94,7 @@ def get_ips_this_month_all():
     file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
     return ___get_total_ips(file_name, '[total]')
     
-def get_ips_right_now(user_id, db=None):
+def get_connected_ips_right_now(user_id, db=None):
     if db is None:
         client = MongoClient(config.get_mongodb_connection_string())
         db = client[config.MONGODB_DB_NAME]
@@ -109,7 +109,7 @@ def get_ips_right_now(user_id, db=None):
     except:
         pass
 
-    return None 
+    return None
 
 def save_connected_ips_count(db=None):
     if db is None:
@@ -121,9 +121,9 @@ def save_connected_ips_count(db=None):
     user_ids = list(users.find({}, {'_id': 1}))
     for user_id in user_ids:
         user_id = user_id['_id']
-        connected_ips = get_ips_right_now(user_id, db)
+        connected_ips = get_connected_ips_right_now(user_id, db)
         if connected_ips is not None:
-            entry_key = str(user_id) + datetime.now().strftime('%Y-%m')
+            entry_key = str(user_id) + '--' + str(datetime.utcnow().year) + '-' + str(datetime.utcnow().month) 
             connected_ips_log.update_one(
                 {'_id': entry_key},
                 {'$set': {
@@ -133,3 +133,16 @@ def save_connected_ips_count(db=None):
                 }},
                 upsert=True
             )
+
+def get_connected_ips_over_time(user_id, year, month, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
+
+    connected_ips_log = db.connected_ips_log
+    entry_key = str(user_id) + '--' + str(year) + '-' + str(month)
+
+    try:
+        return dict(connected_ips_log.find_one({'_id': entry_key}))
+    except Exception as e:
+        return {}
