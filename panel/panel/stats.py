@@ -102,9 +102,12 @@ def get_ips_right_now(user_id, db=None):
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
     
-    req = requests.get(f'https://localhost/{ conn_url }/connected-ips-count', verify=False)
-    if req.status_code == 200:
-        return req.text
+    try:
+        req = requests.get(f'https://localhost/{ conn_url }/connected-ips-count', verify=False, timeout=0.1)
+        if req.status_code == 200:
+            return req.text
+    except:
+        pass
 
     return None 
 
