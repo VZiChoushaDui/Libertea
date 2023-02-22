@@ -127,9 +127,7 @@ def save_connected_ips_count(db=None):
             connected_ips_log.update_one(
                 {'_id': entry_key},
                 {'$set': {
-                    datetime.now().strftime('%Y-%m-%d'): {
-                        datetime.now().strftime('%H:%M'): connected_ips
-                    }
+                    datetime.now().strftime('%Y-%m-%d-%H:%M'): connected_ips,
                 }},
                 upsert=True
             )
