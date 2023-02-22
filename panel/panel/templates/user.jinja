@@ -8,7 +8,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <style>
             body {
-                padding-bottom: 100px;
+                padding-bottom: 30px;
             }
 
             h1 {
@@ -79,6 +79,15 @@
 
             .btn i {
                 margin-right: 4px;
+            }
+
+            a.libertea-link, a.libertea-link:visited {
+                color: black;
+                text-decoration: none;
+            }
+
+            a.libertea-link:hover {
+                text-decoration: underline;
             }
         </style>
     </head>
@@ -315,6 +324,28 @@
                 </div>
             </div>
         </div>
+
+        <div class="step" style="margin-top: 70px;">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <div style="font-size: 18px; font-weight: 500;">
+                        <a href="https://github.com/VZiChoushaDui/Libertea" target="_blank" class="libertea-link">
+                            Powered by
+                            <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" style="display: inline; height: 26px; margin-top: -4px;">
+                        </a>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div style="font-size: 12px; font-weight: 300; opacity: 0.75;">
+                        <a href="https://github.com/VZiChoushaDui/Libertea" target="_blank" class="libertea-link">
+                            The Ultimate Solution to Create Robust V2Ray VPNs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
 
         <script>
             document.querySelector('.qr-button').addEventListener('click', function (event) {
