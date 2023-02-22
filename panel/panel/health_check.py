@@ -49,7 +49,10 @@ def parse():
 
         print(f"Health check parse: parsing from {start_time} to {end_time}")
 
-        oldest_timestamp = health_checks_raw.find_one(sort=[('timestamp', 1)])['timestamp']
+        oldest_timestamp = health_checks_raw.find_one(sort=[('timestamp', 1)])
+        if oldest_timestamp is None:
+            continue
+        oldest_timestamp = oldest_timestamp['timestamp']
 
         # get distinct domains
         domains = health_checks_raw.distinct('domain')
