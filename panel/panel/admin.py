@@ -1,3 +1,4 @@
+import re
 import json
 import urllib
 import requests
@@ -5,8 +6,8 @@ from . import utils
 from . import stats
 from . import config
 from . import settings
-from datetime import datetime
 from pymongo import MongoClient
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
 blueprint = Blueprint('admin', __name__)
@@ -24,6 +25,21 @@ def dashboard():
     except:
         pass
 
+    
+    connected_ips_over_time_xs = []
+    connected_ips_over_time_ys = []
+
+    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
+    cur_date = datetime.utcnow() - timedelta(days=7, seconds=1)
+    while cur_date <= datetime.utcnow():
+        connected_ips_over_time_raw = stats.get_all_connected_ips_over_time(cur_date.year, cur_date.month, cur_date.day)
+        day_str = cur_date.strftime("%m-%d")
+        for key in connected_ips_over_time_raw:
+            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
+                connected_ips_over_time_xs.append(day_str + " " + key)
+                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
+        cur_date += timedelta(days=1)
+
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
         users_count=len(utils.get_users()),
@@ -35,10 +51,17 @@ def dashboard():
         traffic_today=stats.get_gigabytes_today_all(),
         traffic_this_month=stats.get_gigabytes_this_month_all(),
         ips_today=stats.get_ips_today_all(),
+        users_today=stats.get_connected_users_today(),
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
         update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
+        connected_ips_over_time = {
+            "x": connected_ips_over_time_xs,
+            "y": connected_ips_over_time_ys,
+        },
+        cpu_percent=stats.get_system_stats_cpu(),
+        ram_percent=stats.get_system_stats_ram(),
     )
 
 
@@ -89,8 +112,19 @@ def user(user):
 
     user['panel_url'] = "https://" + config.get_panel_domain() + "/" + user['_id'] + "/"
 
-    connected_ips_over_time = stats.get_connected_ips_over_time(user['_id'], datetime.utcnow().year, datetime.utcnow().month)
-    connected_ips_over_time = json.dumps(connected_ips_over_time)
+    connected_ips_over_time_xs = []
+    connected_ips_over_time_ys = []
+
+    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
+    cur_date = datetime.utcnow() - timedelta(days=7, seconds=1)
+    while cur_date <= datetime.utcnow():
+        connected_ips_over_time_raw = stats.get_connected_ips_over_time(user['_id'], cur_date.year, cur_date.month, cur_date.day)
+        day_str = cur_date.strftime("%m-%d")
+        for key in connected_ips_over_time_raw:
+            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
+                connected_ips_over_time_xs.append(day_str + " " + key)
+                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
+        cur_date += timedelta(days=1)
 
     return render_template('admin/user.jinja',
         back_to='users',
@@ -102,7 +136,10 @@ def user(user):
         admin_uuid=config.get_admin_uuid(),
         max_ips_default=max_ips_default,
         default_max_ips_count=settings.get_default_max_ips(),
-        connected_ips_over_time=connected_ips_over_time,
+        connected_ips_over_time = {
+            "x": connected_ips_over_time_xs,
+            "y": connected_ips_over_time_ys,
+        },
         user=user)
 
 

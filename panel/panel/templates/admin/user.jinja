@@ -56,6 +56,11 @@
 </div>
 <hr />
 <div class="section">
+    <h6>Connection stats in the past 7 days</h6>
+    <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
+</div>
+<hr />
+<div class="section">
     <form method="post" class="mt-5">
         <div class="form-group mb-4">
             <label for="userId">User Id</label>
@@ -195,11 +200,28 @@
 
         setInterval(get_ips_connected_right_now, 10000);
         get_ips_connected_right_now();
-    </script>
 
-    <!-- 
-{{ connected_ips_over_time}} 
-    -->
+
+        const ctx = document.getElementById('connectionChart');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+            labels: {{ connected_ips_over_time.x }},
+            datasets: [{
+                label: 'IPs connected',
+                data: {{ connected_ips_over_time.y }},
+                borderWidth: 1
+            }]
+            },
+            options: {
+            scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }
+        });
+    </script>
 </div>
 
 {% endblock %}

@@ -101,10 +101,10 @@ if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
 fi
 
 echo " ** Initializing firewall..."
-ufw allow ssh | sed 's/^/    /' >/dev/null
-ufw allow http | sed 's/^/    /' >/dev/null
-ufw allow https | sed 's/^/    /' >/dev/null
-yes | ufw enable | sed 's/^/    /' >/dev/null
+ufw allow ssh >/dev/null
+ufw allow http >/dev/null
+ufw allow https >/dev/null
+yes | ufw enable >/dev/null
 
 # check if cpu supports avx2, or true
 if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
