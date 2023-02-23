@@ -23,6 +23,7 @@ services:
       - "127.0.0.1:514:514/udp"
     volumes:
       - "./data/logs:/var/log/log"
+      - /etc/timezone:/etc/timezone:ro
     cap_add:
       - SYSLOG
     logging:
