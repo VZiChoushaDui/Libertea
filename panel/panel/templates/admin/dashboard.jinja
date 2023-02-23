@@ -75,11 +75,11 @@
             <div class="stats-item-desc">Secondary proxies</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ cpu_percent }}</div>
+            <div class="stats-item-value cpu-percent">⌛</div>
             <div class="stats-item-desc">Current CPU usage</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ ram_percent }}</div>
+            <div class="stats-item-value ram-percent">⌛</div>
             <div class="stats-item-desc">Current RAM usage</div>
         </div>
     </div>
@@ -138,9 +138,22 @@
             });
     }
 
-    setInterval(get_ips_connected_right_now, 10000);
+    function get_system_stats() {
+        fetch('/{{ admin_uuid }}/stats/system')
+            .then(function(response) {
+                return response.json()
+            })
+            .then(function(data) {
+                document.querySelector('.cpu-percent').innerHTML = data.cpu;
+                document.querySelector('.ram-percent').innerHTML = data.ram;
+            });
+    }
+
+    setInterval(get_ips_connected_right_now, 5000);
     get_ips_connected_right_now();
 
+    setInterval(get_system_stats, 5000);
+    get_system_stats();
     
     const ctx = document.getElementById('connectionChart');
 

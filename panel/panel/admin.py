@@ -60,10 +60,15 @@ def dashboard():
             "x": connected_ips_over_time_xs,
             "y": connected_ips_over_time_ys,
         },
-        cpu_percent=stats.get_system_stats_cpu(),
-        ram_percent=stats.get_system_stats_ram(),
     )
 
+
+@blueprint.route(root_url + "stats/system", methods=['GET'])
+def system_stats():
+    return {
+        'cpu': stats.get_system_stats_cpu(),
+        'ram': stats.get_system_stats_ram(),
+    }
 
 @blueprint.route(root_url + 'users/')
 def users():
@@ -141,7 +146,6 @@ def user(user):
             "y": connected_ips_over_time_ys,
         },
         user=user)
-
 
 @blueprint.route(root_url + 'users/<user>/', methods=['POST'])
 def user_save(user):
