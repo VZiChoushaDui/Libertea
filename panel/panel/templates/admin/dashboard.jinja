@@ -115,7 +115,7 @@
 <div class="section stats">
     <div class="row">
         <div class="col-12">
-            <h6 class="bordered">Connected IPs in the past 7 days</h6>
+            <h6 class="bordered">Connected IPs in the past 3 days</h6>
             <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
         </div>
     </div>
@@ -149,41 +149,52 @@
             });
     }
 
-    setInterval(get_ips_connected_right_now, 5000);
-    get_ips_connected_right_now();
+    function updateConnectionChart() {
+        fetch('/{{ admin_uuid }}/stats/connections?days=3')
+            .then(function(response) {
+                return response.json()
+            })
+            .then(function(data) {
+                const ctx = document.getElementById('connectionChart');
+                ctx.innerHTML = "";
 
-    setInterval(get_system_stats, 5000);
-    get_system_stats();
-    
-    const ctx = document.getElementById('connectionChart');
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: {{ connected_ips_over_time.x }},
-            datasets: [{
-                label: 'IPs connected',
-                data: {{ connected_ips_over_time.y }},
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: "Connected IPs",
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.x,
+                        datasets: [{
+                            label: 'IPs connected',
+                            data: data.y,
+                            borderWidth: 1
+                        }]
                     },
-                    beginAtZero: true,
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false,
-                }
-            },
-        }
-    });
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: "Connected IPs",
+                                },
+                                beginAtZero: true,
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false,
+                            }
+                        },
+                    }
+                });
+            });
+    }
+
+    setInterval(get_ips_connected_right_now, 5000);
+    setInterval(get_system_stats, 5000);
+    
+    get_ips_connected_right_now();
+    get_system_stats();
+    updateConnectionChart();
+    
 </script>
 
 {% endblock %}

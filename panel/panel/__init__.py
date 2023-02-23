@@ -35,7 +35,7 @@ def periodic_health_check_parse(signal):
     health_check.parse()
     print("CRON: done")
 
-@uwsgidecorators.cron(-15, -1, -1, -1, -1)
+@uwsgidecorators.cron(-10, -1, -1, -1, -1)
 def save_connected_ips(signal):
     print("CRON: Saving connected IPs")
     stats.save_connected_ips_count()

@@ -1,5 +1,6 @@
 import os
 import re
+import random
 import socket
 import requests
 from datetime import timedelta
@@ -67,8 +68,16 @@ ROUTE_IP_LISTS = [
 ]
 ROUTE_IP_LISTS = sorted(ROUTE_IP_LISTS, key=lambda k: k['name'])
 
+def get_ip_api_url():
+    return random.choice([
+        'https://api.ipify.org',
+        'https://ifconfig.io/ip',
+        'http://ifconfig.io/ip',
+        'https://ipecho.net/plain',
+        'http://ipecho.net/plain'
+    ])
 
-SERVER_MAIN_IP = requests.get('https://api.ipify.org', timeout=5).content.decode('utf8')
+SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
 
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
     raise Exception("couldn't fetch SERVER_MAIN_IP")

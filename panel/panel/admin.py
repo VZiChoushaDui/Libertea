@@ -25,21 +25,6 @@ def dashboard():
     except:
         pass
 
-    
-    connected_ips_over_time_xs = []
-    connected_ips_over_time_ys = []
-
-    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
-    cur_date = datetime.now() - timedelta(days=7, seconds=1)
-    while cur_date <= datetime.now():
-        connected_ips_over_time_raw = stats.get_all_connected_ips_over_time(cur_date.year, cur_date.month, cur_date.day)
-        day_str = cur_date.strftime("%m-%d")
-        for key in connected_ips_over_time_raw:
-            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
-                connected_ips_over_time_xs.append(day_str + " " + key)
-                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
-        cur_date += timedelta(days=1)
-
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
         users_count=len(utils.get_users()),
@@ -56,10 +41,6 @@ def dashboard():
         month_name=datetime.now().strftime("%B"),
         update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
-        connected_ips_over_time = {
-            "x": connected_ips_over_time_xs,
-            "y": connected_ips_over_time_ys,
-        },
     )
 
 
@@ -68,6 +49,58 @@ def system_stats():
     return {
         'cpu': stats.get_system_stats_cpu(),
         'ram': stats.get_system_stats_ram(),
+    }
+
+@blueprint.route(root_url + "stats/connections", methods=['GET'])
+def connection_stats():
+    connected_ips_over_time_xs = []
+    connected_ips_over_time_ys = []
+
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
+    cur_date = datetime.now() - timedelta(days=days, seconds=1)
+    while cur_date <= datetime.now():
+        connected_ips_over_time_raw = stats.get_all_connected_ips_over_time(cur_date.year, cur_date.month, cur_date.day)
+        day_str = cur_date.strftime("%m-%d")
+        for key in connected_ips_over_time_raw:
+            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
+                connected_ips_over_time_xs.append(day_str + " " + key)
+                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
+        cur_date += timedelta(days=1)
+
+    return {
+        "x": connected_ips_over_time_xs,
+        "y": connected_ips_over_time_ys,
+    }
+
+@blueprint.route(root_url + "stats/connections/<user_id>", methods=['GET'])
+def connection_stats_user(user_id):
+    connected_ips_over_time_xs = []
+    connected_ips_over_time_ys = []
+    
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
+    cur_date = datetime.now() - timedelta(days=7, seconds=1)
+    while cur_date <= datetime.now():
+        connected_ips_over_time_raw = stats.get_connected_ips_over_time(user_id, cur_date.year, cur_date.month, cur_date.day)
+        day_str = cur_date.strftime("%m-%d")
+        for key in connected_ips_over_time_raw:
+            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
+                connected_ips_over_time_xs.append(day_str + " " + key)
+                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
+        cur_date += timedelta(days=1)
+
+    return {
+        "x": connected_ips_over_time_xs,
+        "y": connected_ips_over_time_ys,
     }
 
 @blueprint.route(root_url + 'users/')
@@ -117,20 +150,6 @@ def user(user):
 
     user['panel_url'] = "https://" + config.get_panel_domain() + "/" + user['_id'] + "/"
 
-    connected_ips_over_time_xs = []
-    connected_ips_over_time_ys = []
-
-    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
-    cur_date = datetime.now() - timedelta(days=7, seconds=1)
-    while cur_date <= datetime.now():
-        connected_ips_over_time_raw = stats.get_connected_ips_over_time(user['_id'], cur_date.year, cur_date.month, cur_date.day)
-        day_str = cur_date.strftime("%m-%d")
-        for key in connected_ips_over_time_raw:
-            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
-                connected_ips_over_time_xs.append(day_str + " " + key)
-                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
-        cur_date += timedelta(days=1)
-
     return render_template('admin/user.jinja',
         back_to='users',
         no_domain_warning=not utils.has_active_endpoints(),
@@ -141,10 +160,6 @@ def user(user):
         admin_uuid=config.get_admin_uuid(),
         max_ips_default=max_ips_default,
         default_max_ips_count=settings.get_default_max_ips(),
-        connected_ips_over_time = {
-            "x": connected_ips_over_time_xs,
-            "y": connected_ips_over_time_ys,
-        },
         user=user)
 
 @blueprint.route(root_url + 'users/<user>/', methods=['POST'])
