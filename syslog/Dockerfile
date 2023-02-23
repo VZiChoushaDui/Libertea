@@ -8,8 +8,7 @@ $template RemoteStore, "/var/log/log/event.log-%$year%%$Month%%$Day%-%$Hour%.log
 :source, !isequal, "localhost" -?RemoteStore \n\
 :source, isequal, "last" ~ ' > /etc/rsyslog.conf
 
-# set timezone from /etc/timezone file
+COPY ./entrypoint.sh /entrypoint.sh
 
-
-ENTRYPOINT ["export TZ=$(cat /etc/timezone) && rsyslogd -n"]
+ENTRYPOINT ["/entrypoint.sh"]
 
