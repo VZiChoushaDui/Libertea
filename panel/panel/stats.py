@@ -143,16 +143,37 @@ def save_connected_ips_count(db=None):
     entry_key = 'ALL--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
     connected_ips_log.update_one(
         {'_id': entry_key},
-        {'$set': {
-            cur_hour_min: total_connected_ips,
-        }},
+        {
+            '$setOnInsert': {
+                'connected_users': [],
+            }
+        },
         upsert=True
     )
+
     connected_ips_log.update_one(
-        {'_id': "ALL--Today"},
-        {'$set': {
-            "total_connected_users": total_connected_users,
-        }},
+        {'_id': entry_key},
+        {
+            '$set': {
+                cur_hour_min: total_connected_ips,
+            },
+            '$addToSet': {
+                'connected_users': {
+                    '$each': user_ids
+                }
+            }
+        },
+        upsert=True
+    )
+
+    connected_ips_log.update_one(
+        {'_id': "ALL--Recent"},
+        {
+            '$set': {
+                "total_connected_ips": total_connected_ips,
+                "total_connected_users": total_connected_users,
+            }
+        },
         upsert=True
     )
     
@@ -173,6 +194,19 @@ def get_connected_ips_over_time(user_id, year, month, day, db=None):
 def get_all_connected_ips_over_time(year, month, day, db=None):
     return get_connected_ips_over_time('ALL', year, month, day, db)
 
+def get_connected_users_now(db=None):
+    try:
+        if db is None:
+            client = MongoClient(config.get_mongodb_connection_string())
+            db = client[config.MONGODB_DB_NAME]
+
+        connected_ips_log = db.connected_ips_log
+        entry_key = "ALL--Recent"
+        res = connected_ips_log.find_one({'_id': entry_key})
+        return int(res['total_connected_users'])
+    except Exception as e:
+        return '-'
+
 def get_connected_users_today(db=None):
     try:
         if db is None:
@@ -180,11 +214,12 @@ def get_connected_users_today(db=None):
             db = client[config.MONGODB_DB_NAME]
 
         connected_ips_log = db.connected_ips_log
-        entry_key = "ALL--Today"
+        entry_key = 'ALL--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
         res = connected_ips_log.find_one({'_id': entry_key})
-        return int(res['total_connected_users'])
+        return len(list(res['connected_users']))
     except Exception as e:
         return '-'
+
 
 def get_system_stats_cpu():
     try:

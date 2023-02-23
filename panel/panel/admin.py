@@ -6,6 +6,7 @@ from . import utils
 from . import stats
 from . import config
 from . import settings
+from . import health_check
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
@@ -42,6 +43,19 @@ def dashboard():
         update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
     )
+
+
+@blueprint.route(root_url + "health/<domain>", methods=['GET'])
+def health_domain(domain):
+    hours = int(str(request.args.get('hours', '24')))
+    return health_check.get_health_data(domain, hours=hours)
+
+
+@blueprint.route(root_url + "stats/user", methods=['GET'])
+def user_stats():
+    return {
+        'users_now': stats.get_connected_users_now(),
+    }
 
 
 @blueprint.route(root_url + "stats/system", methods=['GET'])
@@ -249,6 +263,10 @@ def domain_save(domain):
                 domain = domain[8:]
             if domain.startswith('www.'):
                 domain = domain[4:]
+
+            if len(domain) == 0:
+                return redirect(url_for('admin.dashboard'))
+            
             utils.add_domain(domain)
 
         if request.form.get('next', None) == 'dashboard':

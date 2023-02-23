@@ -95,12 +95,16 @@
             <div class="stats-item-desc">IPs connected right now</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ users_today }}</div>
-            <div class="stats-item-desc">Users connected today</div>
+            <div class="stats-item-value users-connected-right-now">⌛</div>
+            <div class="stats-item-desc">Users connected right now</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value">{{ ips_today }}</div>
             <div class="stats-item-desc">IPs connected today</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">{{ users_today }}</div>
+            <div class="stats-item-desc">Users connected today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value">{{ traffic_today }}</div>
@@ -149,6 +153,16 @@
             });
     }
 
+    function get_user_stats() {
+        fetch('/{{ admin_uuid }}/stats/user')
+            .then(function(response) {
+                return response.json()
+            })
+            .then(function(data) {
+                document.querySelector('.users-connected-right-now').innerHTML = data.users_now;
+            });
+    }
+
     function updateConnectionChart() {
         fetch('/{{ admin_uuid }}/stats/connections?days=3')
             .then(function(response) {
@@ -190,9 +204,11 @@
 
     setInterval(get_ips_connected_right_now, 5000);
     setInterval(get_system_stats, 5000);
+    setInterval(get_user_stats, 5000);
     
     get_ips_connected_right_now();
     get_system_stats();
+    get_user_stats();
     updateConnectionChart();
     
 </script>

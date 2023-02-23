@@ -136,18 +136,59 @@ def parse():
         # save domain_success_rates to db
         health_checks = db.health_checks
         for domain, domain_dns, protocol in hit_counts:
-            if not (domain, domain_dns, protocol) in success_rates:
-                continue
-            health_checks.update_one({
-                'domain': domain,
-                'domain_dns': domain_dns,
-                'protocol': protocol,
-                'time_slice': start_time,
-            }, {
-                '$set': {
-                    'success_rate': success_rates[(domain, domain_dns, protocol)],
-                    'calculate_timestamp': datetime.utcnow(),
-                }
-            }, upsert=True)
+            if (domain, domain_dns, protocol) in success_rates:
+                health_checks.update_one({
+                    'domain': domain,
+                    'domain_dns': domain_dns,
+                    'protocol': protocol,
+                    'time_slice': start_time,
+                }, {
+                    '$set': {
+                        'success_rate': success_rates[(domain, domain_dns, protocol)],
+                        'calculate_timestamp': datetime.utcnow(),
+                    }
+                }, upsert=True)
+            else:
+                health_checks.update_one({
+                    'domain': domain,
+                    'domain_dns': domain_dns,
+                    'protocol': protocol,
+                    'time_slice': start_time,
+                }, {
+                    '$setOnInsert': {
+                        'success_rate': None,
+                        'calculate_timestamp': datetime.utcnow(),
+                    }
+                }, upsert=True)
 
+def get_health_data(domain, hours=24, db=None):
+    if db is None:
+        client = MongoClient(config.get_mongodb_connection_string())
+        db = client[config.MONGODB_DB_NAME]
 
+    health_checks = db.health_checks
+
+    health_check_items = health_checks.find({
+        'domain': domain,
+        'time_slice': {
+            "$gt": datetime.now() - timedelta(hours=hours),
+        },
+    })
+
+    items = []
+    for item in health_check_items:
+        items.append({
+            'domain': item['domain'],
+            'time_slice': item['time_slice'],
+            'domain_dns': item['domain_dns'],
+            'protocol': item['protocol'],
+            'success_rate': item['success_rate'],
+        })
+
+    items.sort(key=lambda x: x['time_slice'])
+    for item in items:
+        item['time_slice'] = item['time_slice'].strftime("%Y-%m-%d %H:%M:%S")
+
+    print(items)
+
+    return items
