@@ -206,19 +206,28 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-            labels: {{ connected_ips_over_time.x }},
-            datasets: [{
-                label: 'IPs connected',
-                data: {{ connected_ips_over_time.y }},
-                borderWidth: 1
-            }]
+                labels: {{ connected_ips_over_time.x }},
+                datasets: [{
+                    label: 'IPs connected',
+                    data: {{ connected_ips_over_time.y }},
+                    borderWidth: 1
+                }]
             },
             options: {
-            scales: {
-                y: {
-                  beginAtZero: true
-                }
-              }
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Connected IPs",
+                        },
+                        beginAtZero: true,
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                },
             }
         });
     </script>
