@@ -1,5 +1,6 @@
 import os
 import time
+import random
 import socket
 import requests
 from datetime import datetime
@@ -13,8 +14,15 @@ def new_getaddrinfo(*args, **kwargs):
             if response[0] == socket.AF_INET]
 socket.getaddrinfo = new_getaddrinfo
 
-
-SERVER_MAIN_IP = requests.get('https://api.ipify.org').content.decode('utf8')
+def get_ip_api_url():
+    return random.choice([
+        'https://api.ipify.org',
+        'https://ifconfig.io/ip',
+        'http://ifconfig.io/ip',
+        'https://ipecho.net/plain',
+        'http://ipecho.net/plain'
+    ])
+SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
 
 REGISTER_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT')
 API_KEY = os.environ.get('PANEL_SECRET_KEY')
