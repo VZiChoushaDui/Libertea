@@ -8,9 +8,4 @@ $template RemoteStore, "/var/log/log/event.log-%$year%%$Month%%$Day%-%$Hour%.log
 :source, !isequal, "localhost" -?RemoteStore \n\
 :source, isequal, "last" ~ ' > /etc/rsyslog.conf
 
-# COPY ./entrypoint.sh /entrypoint.sh
-# RUN chmod +x /entrypoint.sh
-
-# ENTRYPOINT ["/entrypoint.sh"]
-
-ENTRYPOINT {"rsyslogd", "-n"}
+ENTRYPOINT ["rsyslogd", "-n"]

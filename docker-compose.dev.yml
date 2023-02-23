@@ -37,6 +37,8 @@ services:
       - "./data/logs:/data/logs"
       - "./data/usages:/data/usages"
       - "./data/parsed-logs:/data/parsed-logs"
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     restart: always
     logging:
       options:

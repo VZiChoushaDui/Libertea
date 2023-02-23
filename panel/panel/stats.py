@@ -123,6 +123,7 @@ def save_connected_ips_count(db=None):
     total_connected_ips = 0
     total_connected_users = 0
     user_ids = list(users.find({}, {'_id': 1}))
+    connected_user_ids = []
     for user_id in user_ids:
         user_id = user_id['_id']
         connected_ips = get_connected_ips_right_now(user_id, db)
@@ -131,6 +132,7 @@ def save_connected_ips_count(db=None):
                 connected_ips = int(connected_ips)
                 if connected_ips > 0:
                     total_connected_users += 1
+                    connected_user_ids.append(user_id)
                 entry_key = str(user_id) + '--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
                 connected_ips_log.update_one(
                     {'_id': entry_key},
@@ -159,7 +161,7 @@ def save_connected_ips_count(db=None):
             },
             '$addToSet': {
                 'connected_users': {
-                    '$each': user_ids
+                    '$each': connected_user_ids
                 }
             }
         },
