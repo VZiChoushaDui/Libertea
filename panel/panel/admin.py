@@ -30,8 +30,8 @@ def dashboard():
     connected_ips_over_time_ys = []
 
     connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
-    cur_date = datetime.utcnow() - timedelta(days=7, seconds=1)
-    while cur_date <= datetime.utcnow():
+    cur_date = datetime.now() - timedelta(days=7, seconds=1)
+    while cur_date <= datetime.now():
         connected_ips_over_time_raw = stats.get_all_connected_ips_over_time(cur_date.year, cur_date.month, cur_date.day)
         day_str = cur_date.strftime("%m-%d")
         for key in connected_ips_over_time_raw:
@@ -116,8 +116,8 @@ def user(user):
     connected_ips_over_time_ys = []
 
     connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
-    cur_date = datetime.utcnow() - timedelta(days=7, seconds=1)
-    while cur_date <= datetime.utcnow():
+    cur_date = datetime.now() - timedelta(days=7, seconds=1)
+    while cur_date <= datetime.now():
         connected_ips_over_time_raw = stats.get_connected_ips_over_time(user['_id'], cur_date.year, cur_date.month, cur_date.day)
         day_str = cur_date.strftime("%m-%d")
         for key in connected_ips_over_time_raw:

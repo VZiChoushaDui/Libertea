@@ -131,7 +131,7 @@ def save_connected_ips_count(db=None):
                 connected_ips = int(connected_ips)
                 if connected_ips > 0:
                     total_connected_users += 1
-                entry_key = str(user_id) + '--' + str(datetime.utcnow().year) + '-' + str(datetime.utcnow().month) + '-' + str(datetime.utcnow().day)
+                entry_key = str(user_id) + '--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
                 connected_ips_log.update_one(
                     {'_id': entry_key},
                     {'$set': {
@@ -140,7 +140,7 @@ def save_connected_ips_count(db=None):
                     upsert=True
                 )
                 total_connected_ips += connected_ips
-    entry_key = 'ALL--' + str(datetime.utcnow().year) + '-' + str(datetime.utcnow().month) + '-' + str(datetime.utcnow().day)
+    entry_key = 'ALL--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
     connected_ips_log.update_one(
         {'_id': entry_key},
         {'$set': {
