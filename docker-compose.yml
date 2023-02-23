@@ -24,6 +24,7 @@ services:
     volumes:
       - "./data/logs:/var/log/log"
       - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     cap_add:
       - SYSLOG
     logging:
