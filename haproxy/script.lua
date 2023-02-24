@@ -84,7 +84,7 @@ local function flush_if_needed()
         last_connected_ip_log = now
         total_ips = 0
         logWarn("*** Connected ips ***\n")
-        for username, ips in pairs(path_ips) do
+        for username, ips in pairs(path_ips_long) do
             total_ips = total_ips + getLength(ips)
             logWarn("   " .. username .. " connected ips: " .. getLength(ips) .. "\n")
             -- for ip, _ in pairs(ips) do
@@ -182,6 +182,16 @@ local function total_connected_ips_count(applet)
     end
     
     local response = total_ips
+
+    applet:set_status(200)
+    applet:add_header("Content-Type", "text/plain")
+    applet:add_header("Content-Length", string.len(response))
+    applet:start_response()
+    applet:send(response)
+end
+
+local function total_connected_users_count(applet)
+    local response = getLength(path_ips_long)
 
     applet:set_status(200)
     applet:add_header("Content-Type", "text/plain")
