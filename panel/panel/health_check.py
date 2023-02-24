@@ -1,21 +1,47 @@
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from . import config
+import threading
 
-def register_data(user_id, domain, domain_dns, protocol):
-    # print(f"Health check from {user_id} for {protocol}://{domain} ({domain_dns})")
+___health_checks = []
+___health_checks_last_save = datetime.utcnow()
+___health_checks_save_interval = timedelta(seconds=60)
 
-    # save to database
+def ___save_to_database():
+    global ___health_checks
+
+    if len(___health_checks) == 0:
+        return
+
+    print(f"Saving {len(___health_checks)} health checks to database")
+
     client = MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
     health_checks_raw = db.health_checks_raw
-    health_checks_raw.insert_one({
+    health_checks_raw.insert_many(___health_checks)
+    ___health_checks = []
+
+def register_data(user_id, domain, domain_dns, protocol):
+    global ___health_checks
+    global ___health_checks_last_save
+    global ___health_checks_save_interval
+    
+    # print(f"Health check from {user_id} for {protocol}://{domain} ({domain_dns})")
+
+    data_obj = {
         'user_id': user_id,
         'protocol': protocol,
         'domain': domain,
         'domain_dns': domain_dns,
         'timestamp': datetime.utcnow(),
-    })
+    }
+    ___health_checks.append(data_obj)
+
+    if datetime.utcnow() - ___health_checks_last_save > ___health_checks_save_interval:
+        ___health_checks_last_save = datetime.utcnow()
+        t = threading.Thread(target=___save_to_database)
+        t.start()
+    
 
 def parse():
     client = MongoClient(config.get_mongodb_connection_string())
