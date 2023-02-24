@@ -263,7 +263,7 @@ rules:
 {% endfor %}
 {% if udp_exists %}
 {% if meta %}
-  - (NETWORK,UDP),main-group-udp
+  - AND,((NETWORK,UDP)),main-group-udp
 {% else %}
   - SCRIPT,udpnetwork,main-group-udp
 {% endif %}
