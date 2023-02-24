@@ -34,6 +34,8 @@ def create_user(note, referrer=None, max_ips=None):
 
     users.insert_one(new_user)
 
+    users.create_index('connect_url')
+
     if sysops.haproxy_update_users_list():
         return panel_id, connect_url
 
@@ -200,7 +202,7 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
     if user is None:
         return 0
 
-    default_max_ips = settings.get_default_max_ips()
+    default_max_ips = settings.get_default_max_ips(db)
     max_ips = user.get("max_ips", default_max_ips)
     max_ips = int(max_ips)
 
