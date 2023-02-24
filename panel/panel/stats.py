@@ -206,18 +206,15 @@ def get_connected_ips_over_time(user_id, year, month, day, db=None):
 def get_all_connected_ips_over_time(year, month, day, db=None):
     return get_connected_ips_over_time('ALL', year, month, day, db)
 
-def get_connected_users_now(db=None):
+def get_connected_users_now():
     try:
-        if db is None:
-            client = MongoClient(config.get_mongodb_connection_string())
-            db = client[config.MONGODB_DB_NAME]
+        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-users-count', verify=False, timeout=0.1)
+        if req.status_code == 200:
+            return int(req.text)
+    except:
+        pass
 
-        connected_ips_log = db.connected_ips_log
-        entry_key = "ALL--Recent"
-        res = connected_ips_log.find_one({'_id': entry_key})
-        return int(res['total_connected_users'])
-    except Exception as e:
-        return '-'
+    return None
 
 def get_connected_users_today(db=None):
     try:
