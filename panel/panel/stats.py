@@ -116,7 +116,7 @@ def get_total_connected_ips_right_now():
     try:
         req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-ips-count', verify=False, timeout=0.1)
         if req.status_code == 200:
-            return req.text
+            return int(req.text)
     except:
         pass
 
