@@ -56,10 +56,16 @@ def user_stats():
     ips_today = stats.get_ips_today_all()
     users_today = stats.get_connected_users_today()
 
-    if users_now > users_today:
-        users_today = users_now
-    if ips_today.isdigit() and ips_now > int(ips_today):
-        ips_today = ips_now
+    try:
+        if int(users_now) > int(users_today):
+            users_today = users_now
+    except:
+        pass
+    try:
+        if int(ips_now) > int(ips_today):
+            ips_today = ips_now
+    except:
+        pass
 
     return {
         'ips_now': ips_now,
