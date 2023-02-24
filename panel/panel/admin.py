@@ -58,7 +58,7 @@ def user_stats():
 
     if users_now > users_today:
         users_today = users_now
-    if ips_today.isdigit() and ips_now > ips_today:
+    if ips_today.isdigit() and ips_now > int(ips_today):
         ips_today = ips_now
 
     return {
