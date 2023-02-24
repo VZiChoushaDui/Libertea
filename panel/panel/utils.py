@@ -9,6 +9,41 @@ from . import settings
 from datetime import datetime
 from pymongo import MongoClient
 
+___max_ips = {}
+___max_ips_updated_at = None
+___default_max_ips = None
+
+def ___update_max_ips_cache(db=None):
+    global ___max_ips
+    global ___max_ips_updated_at
+    global ___default_max_ips
+
+    if ___max_ips_updated_at is None or (datetime.utcnow() - ___max_ips_updated_at).total_seconds() > 60:
+        print("Updating max_ips cache")
+
+        if db is None:
+            client = pymongo.MongoClient(config.get_mongodb_connection_string())
+            db = client[config.MONGODB_DB_NAME]
+
+        ___max_ips = {}
+        for user in db.users.find():
+            ___max_ips[user["_id"]] = user.get("max_ips", settings.get_default_max_ips(db))
+            ___max_ips[user["connect_url"]] = user.get("max_ips", settings.get_default_max_ips(db))
+        ___max_ips_updated_at = datetime.utcnow()
+
+        ___default_max_ips = settings.get_default_max_ips(db)
+
+    return ___max_ips
+
+def ___get_max_ips(panel_id_or_connect_url, db=None):
+    global ___max_ips
+
+    ___update_max_ips_cache(db)
+    user_max_ips = ___max_ips.get(panel_id_or_connect_url, ___default_max_ips)
+    if user_max_ips <= 0:
+        return ___default_max_ips
+    return user_max_ips
+
 def create_user(note, referrer=None, max_ips=None):
     client = pymongo.MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
@@ -189,27 +224,10 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
     if panel_id is not None and conn_url is not None:
         raise Exception("Both panel_id and conn_url are not None")
 
-    if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
-        db = client[config.MONGODB_DB_NAME]
-    users = db.users
-
     if panel_id is not None:
-        user = users.find_one({"_id": panel_id})
+        return ___get_max_ips(panel_id, db=db)
     else:
-        user = users.find_one({"connect_url": conn_url})
-
-    if user is None:
-        return 0
-
-    default_max_ips = settings.get_default_max_ips(db)
-    max_ips = user.get("max_ips", default_max_ips)
-    max_ips = int(max_ips)
-
-    if max_ips is None or max_ips <= 0:
-        return default_max_ips
-
-    return max_ips
+        return ___get_max_ips(conn_url, db=db)
 
 
 def online_route_ping(ip, db=None):
