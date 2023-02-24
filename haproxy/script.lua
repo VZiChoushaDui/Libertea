@@ -136,8 +136,8 @@ local function auth_request(txn)
         if path_ips[username] == nil then
             path_ips[username] = {}
         end
-        if path_ips_long[username] ~= nil then
-            path_ips_long[username] = nil
+        if path_ips_long[username] == nil then
+            path_ips_long[username] = {}
         end
         
         -- check if user ip is already in path_ips table, if not add the ip to the list
@@ -202,4 +202,5 @@ end
 
 core.register_service("connected-ips-count", "http", connected_ips_count)
 core.register_service("total-connected-ips-count", "http", total_connected_ips_count)
+core.register_service("total-connected-users-count", "http", total_connected_users_count)
 core.register_action("auth-request", { "http-req" }, auth_request, 0)
