@@ -34,10 +34,6 @@ def dashboard():
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
         no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
-        traffic_today=stats.get_gigabytes_today_all(),
-        traffic_this_month=stats.get_gigabytes_this_month_all(),
-        ips_today=stats.get_ips_today_all(),
-        users_today=stats.get_connected_users_today(),
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
         update_available=update_available,
@@ -53,10 +49,26 @@ def health_domain(domain):
 
 @blueprint.route(root_url + "stats/user", methods=['GET'])
 def user_stats():
-    return {
-        'users_now': stats.get_connected_users_now(),
-    }
+    ips_now = stats.get_total_connected_ips_right_now()
+    users_now = stats.get_connected_users_now()
+    traffic_today = stats.get_gigabytes_today_all()
+    traffic_this_month = stats.get_gigabytes_this_month_all()
+    ips_today = stats.get_ips_today_all()
+    users_today = stats.get_connected_users_today()
 
+    if users_now > users_today:
+        users_today = users_now
+    if ips_now > ips_today:
+        ips_today = ips_now
+
+    return {
+        'ips_now': ips_now,
+        'users_now': users_now,
+        'traffic_today': traffic_today,
+        'traffic_this_month': traffic_this_month,
+        'ips_today': ips_today,
+        'users_today': users_today,
+    }
 
 @blueprint.route(root_url + "stats/system", methods=['GET'])
 def system_stats():

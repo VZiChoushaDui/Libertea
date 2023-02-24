@@ -99,19 +99,19 @@
             <div class="stats-item-desc">Users connected right now</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ ips_today }}</div>
+            <div class="stats-item-value ips-connected-today">⌛</div>
             <div class="stats-item-desc">IPs connected today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ users_today }}</div>
+            <div class="stats-item-value users-connected-today">⌛</div>
             <div class="stats-item-desc">Users connected today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ traffic_today }}</div>
+            <div class="stats-item-value traffic-today">⌛</div>
             <div class="stats-item-desc">Traffic today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ traffic_this_month }}</div>
+            <div class="stats-item-value traffic-this-month">⌛</div>
             <div class="stats-item-desc">Traffic in {{ month_name }}</div>
         </div>
     </div>
@@ -128,20 +128,6 @@
     Libertea, version {{ cur_version }}
 </div>
 <script>
-    function get_ips_connected_right_now() {
-        fetch('/{{ admin_uuid }}/total-connected-ips-count')
-            .then(function(response) {
-                return response.text()
-            })
-            .then(function(data) {
-                if (Number.isInteger(parseInt(data))) {
-                    document.querySelector('.ips-connected-right-now').innerHTML = data;
-                } else {
-                    document.querySelector('.ips-connected-right-now').innerHTML = '-';
-                }
-            });
-    }
-
     function get_system_stats() {
         fetch('/{{ admin_uuid }}/stats/system')
             .then(function(response) {
@@ -160,6 +146,11 @@
             })
             .then(function(data) {
                 document.querySelector('.users-connected-right-now').innerHTML = data.users_now;
+                document.querySelector('.users-connected-today').innerHTML = data.users_today;
+                document.querySelector('.traffic-today').innerHTML = data.traffic_today;
+                document.querySelector('.traffic-this-month').innerHTML = data.traffic_this_month;
+                document.querySelector('.ips-connected-today').innerHTML = data.ips_today;
+                document.querySelector('.ips-connected-right-now').innerHTML = data.ips_now;
             });
     }
 
@@ -202,11 +193,9 @@
             });
     }
 
-    setInterval(get_ips_connected_right_now, 5000);
     setInterval(get_system_stats, 5000);
     setInterval(get_user_stats, 5000);
     
-    get_ips_connected_right_now();
     get_system_stats();
     get_user_stats();
     updateConnectionChart();

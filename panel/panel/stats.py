@@ -112,6 +112,16 @@ def get_connected_ips_right_now(user_id, db=None):
 
     return None
 
+def get_total_connected_ips_right_now():
+    try:
+        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-ips-count', verify=False, timeout=0.1)
+        if req.status_code == 200:
+            return req.text
+    except:
+        pass
+
+    return None
+
 def save_connected_ips_count(db=None):
     if db is None:
         client = MongoClient(config.get_mongodb_connection_string())
