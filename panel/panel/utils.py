@@ -26,9 +26,10 @@ def ___update_max_ips_cache(db=None):
             db = client[config.MONGODB_DB_NAME]
 
         ___max_ips = {}
+        default_max_ips = int(settings.get_default_max_ips(db))
         for user in db.users.find():
-            ___max_ips[user["_id"]] = user.get("max_ips", settings.get_default_max_ips(db))
-            ___max_ips[user["connect_url"]] = user.get("max_ips", settings.get_default_max_ips(db))
+            ___max_ips[user["_id"]] = int(user.get("max_ips", default_max_ips))
+            ___max_ips[user["connect_url"]] = int(user.get("max_ips", default_max_ips))
         ___max_ips_updated_at = datetime.utcnow()
 
         ___default_max_ips = settings.get_default_max_ips(db)
