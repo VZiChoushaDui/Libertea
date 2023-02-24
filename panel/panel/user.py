@@ -9,6 +9,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 
 blueprint = Blueprint('user', __name__)
 
+existing_users = set()
+
 def get_user(id):
     client = MongoClient(config.get_mongodb_connection_string())
     db = client[config.MONGODB_DB_NAME]
@@ -18,6 +20,18 @@ def get_user(id):
     if len(user) == 0:
         return None
     return user[0]
+
+def check_user_exists(id):
+    global existing_users
+    if id in existing_users:
+        return True
+
+    user = get_user(id)
+    if user is None:
+        return False
+    
+    existing_users.add(id)
+    return True
     
 
 @blueprint.route('/<id>/')
@@ -84,8 +98,7 @@ def user_config(id, file_name):
 
 @blueprint.route('/<id>/health')
 def user_health(id):
-    user = get_user(id)
-    if user is None:
+    if not check_user_exists(id):
         return "", 404
     
     # get GET parameters
@@ -95,6 +108,6 @@ def user_health(id):
     if protocol is None or domain is None or domain_dns is None:
         return "", 404
 
-    health_check.register_data(user['_id'], domain, domain_dns, protocol)
+    health_check.register_data(id, domain, domain_dns, protocol)
 
     return "", 200
