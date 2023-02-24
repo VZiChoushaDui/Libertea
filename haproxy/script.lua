@@ -4,8 +4,8 @@ local ltn12 = require("ltn12")
 
 core.Info("Hello HAProxy!\n")
 
-local flush_interval = 60 -- seconds
-local connected_ip_log_interval = 60 -- seconds
+local flush_interval = 150 -- seconds
+local connected_ip_log_interval = 10 * 60 -- seconds
 
 local function getTimestamp()
     return os.time(os.date("!*t"))
