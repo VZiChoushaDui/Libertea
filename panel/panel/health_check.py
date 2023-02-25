@@ -88,16 +88,16 @@ def parse():
 
         # get first timestamp for each domain, if it's not older than 23 hours, skip that domain
         for domain in domains:
-            # first_timestamp_entry = health_checks_raw.find_one({
-            #     'domain': domain,
-            #     'timestamp': {
-            #         '$gt': start_time,
-            #         '$lt': end_time,
-            #     }
-            # }, sort=[('timestamp', 1)])
-            # if first_timestamp_entry is None or first_timestamp_entry['timestamp'] > oldest_timestamp + timedelta(hours=1):
-            #     print(f"Health check parse: {domain} skipped")
-            #     continue
+            first_timestamp_entry = health_checks_raw.find_one({
+                'domain': domain,
+                'timestamp': {
+                    '$gt': start_time,
+                    '$lt': end_time,
+                }
+            }, sort=[('timestamp', 1)])
+            if first_timestamp_entry is None or first_timestamp_entry['timestamp'] > start_time + timedelta(hours=1):
+                print(f"Health check parse: {domain} skipped")
+                continue
 
             # # get count of health checks received for domain
             # hit_counts[domain] = health_checks_raw.count_documents({
