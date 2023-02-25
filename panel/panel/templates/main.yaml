@@ -262,6 +262,10 @@ rules:
   - RULE-SET,excludedips-{{ domain }},DIRECT
 {% endfor %}
 {% if udp_exists %}
+{% if meta %}
+  - AND,((NETWORK,UDP)),main-group-udp
+{% else %}
   - SCRIPT,udpnetwork,main-group-udp
+{% endif %}
 {% endif %}
   - MATCH,main-group
