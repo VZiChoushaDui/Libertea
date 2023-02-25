@@ -9,9 +9,7 @@
             "settings": {
                 "clients": [
                     {
-                        "id": "{uuid}",
-                        "alterId": 0,
-                        "security": "auto"
+                        "id": "{uuid}"
                     }
                 ],
                 "fallbacks": [
@@ -45,9 +43,7 @@
             "settings": {
                 "clients": [
                     {
-                        "id": "{uuid}",
-                        "alterId": 0,
-                        "security": "auto"
+                        "id": "{uuid}"
                     }
                 ]
             },
