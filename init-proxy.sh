@@ -28,6 +28,15 @@ fi
 
 touch .libertea.proxy
 
+
+echo " ** Installing dependencies..."
+apt-get update >/dev/null
+
+if ! command -v ufw &> /dev/null; then
+    echo "    - Installing ufw..."
+    apt-get install -qq -y ufw >/dev/null
+fi
+
 echo " ** Initializing firewall..."
 ufw allow ssh >/dev/null
 ufw allow http >/dev/null
