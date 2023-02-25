@@ -11,7 +11,7 @@ fi
 # This file is downloaded via curl and executed by user in a single command
 # It's intended to be used as a bootstrap script for the whole Libertea project.
 
-REPO_URL="https://github.com/VZiChoushaDui/Libertea.git"
+REPO_URL="https://github.com/notsafetoknow/Libertea.git"
 PROJECT_NAME="libertea"
 COMMAND="$1"
 
