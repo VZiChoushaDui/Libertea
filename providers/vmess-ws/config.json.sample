@@ -1,6 +1,6 @@
 {
     "log": {
-        "loglevel": "warning"
+        "loglevel": "info"
     },
     "inbounds": [
         {
@@ -11,7 +11,7 @@
                     {
                         "id": "{uuid}",
                         "alterId": 0,
-                        "email": "me@example.com"
+                        "security": "auto"
                     }
                 ],
                 "fallbacks": [
