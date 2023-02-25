@@ -111,7 +111,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
 
     providers = get_providers(connect_url, db)
@@ -156,7 +156,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
     if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml']:
         return ""
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     
     providers = get_providers(connect_url, db=db)

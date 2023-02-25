@@ -12,7 +12,7 @@ blueprint = Blueprint('user', __name__)
 existing_users = set()
 
 def get_user(id):
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 

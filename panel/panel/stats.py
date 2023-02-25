@@ -41,7 +41,7 @@ def ___get_total_ips(file_name, conn_url):
 
 def get_gigabytes_today(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -51,7 +51,7 @@ def get_gigabytes_today(user_id, db=None):
 
 def get_gigabytes_this_month(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -61,7 +61,7 @@ def get_gigabytes_this_month(user_id, db=None):
 
 def get_ips_today(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -71,7 +71,7 @@ def get_ips_today(user_id, db=None):
 
 def get_ips_this_month(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -97,7 +97,7 @@ def get_ips_this_month_all():
     
 def get_connected_ips_right_now(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -124,7 +124,7 @@ def get_total_connected_ips_right_now():
 
 def save_connected_ips_count(db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     connected_ips_log = db.connected_ips_log
@@ -192,7 +192,7 @@ def save_connected_ips_count(db=None):
 
 def get_connected_ips_over_time(user_id, year, month, day, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
 
     connected_ips_log = db.connected_ips_log
@@ -219,7 +219,7 @@ def get_connected_users_now():
 def get_connected_users_today(db=None):
     try:
         if db is None:
-            client = MongoClient(config.get_mongodb_connection_string())
+            client = config.get_mongo_client()
             db = client[config.MONGODB_DB_NAME]
 
         connected_ips_log = db.connected_ips_log

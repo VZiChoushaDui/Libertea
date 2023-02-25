@@ -137,7 +137,7 @@ def connection_stats_user(user_id):
 
 @blueprint.route(root_url + 'users/')
 def users():
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -167,7 +167,7 @@ def user(user):
             max_ips=settings.get_default_max_ips()
         )
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -225,7 +225,7 @@ def user_delete(user):
 
 @blueprint.route(root_url + 'domains/')
 def domains():
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
@@ -263,7 +263,7 @@ def domain(domain):
             admin_uuid=config.get_admin_uuid(),
         )
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domain_entry = db.domains.find_one({"_id": domain})
 

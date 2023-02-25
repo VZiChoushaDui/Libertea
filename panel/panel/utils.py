@@ -22,7 +22,7 @@ def ___update_max_ips_cache(db=None):
         print("Updating max_ips cache")
 
         if db is None:
-            client = pymongo.MongoClient(config.get_mongodb_connection_string())
+            client = config.get_mongo_client()
             db = client[config.MONGODB_DB_NAME]
 
         ___max_ips = {}
@@ -46,7 +46,7 @@ def ___get_max_ips(panel_id_or_connect_url, db=None):
     return user_max_ips
 
 def create_user(note, referrer=None, max_ips=None):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -78,7 +78,7 @@ def create_user(note, referrer=None, max_ips=None):
     raise Exception("Failed to update HAProxy users list")
 
 def update_user(panel_id, note=None, max_ips=None, referrer=None):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -92,7 +92,7 @@ def update_user(panel_id, note=None, max_ips=None, referrer=None):
     return sysops.haproxy_update_users_list()
 
 def get_panel_id_from_note(note):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -102,7 +102,7 @@ def get_panel_id_from_note(note):
     return user["_id"]
 
 def delete_user(panel_id):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -114,7 +114,7 @@ def delete_user(panel_id):
     return sysops.haproxy_update_users_list()
 
 def get_users():
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -126,7 +126,7 @@ def get_users():
     return all_users
 
 def remove_domain(domain):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
@@ -138,7 +138,7 @@ def remove_domain(domain):
     return True
 
 def add_domain(domain, dns_domain=None, sni=None):
-    client = pymongo.MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
@@ -167,7 +167,7 @@ def add_domain(domain, dns_domain=None, sni=None):
 
 def get_domains(db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
@@ -176,7 +176,7 @@ def get_domains(db=None):
 
 def get_domain_dns_domain(domain, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
@@ -188,7 +188,7 @@ def get_domain_dns_domain(domain, db=None):
 
 def get_domain_sni(domain, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
@@ -200,7 +200,7 @@ def get_domain_sni(domain, db=None):
 
 def update_domain(domain, dns_domain=None, sni=None, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
@@ -233,7 +233,7 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
 
 def online_route_ping(ip, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     online_routes.update_one({"_id": ip}, {"$set": {"last_seen": datetime.now()}}, upsert=True)
@@ -241,7 +241,7 @@ def online_route_ping(ip, db=None):
 
 def online_route_get_last_seen(ip, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     online_route = online_routes.find_one({"_id": ip})
@@ -256,7 +256,7 @@ def online_route_get_all(max_age_secs=300, db=None):
     
     ips = []
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     for online_route in online_routes.find():
@@ -272,7 +272,7 @@ check_domain_set_properly_cache_max_time = 60
 
 def domain_cache_update_db(domain, status=None, cdn=None, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     if status is not None:
@@ -317,7 +317,7 @@ def update_domain_cache(domain, try_count=3, db=None):
 
 def check_domain_set_properly(domain, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
@@ -328,7 +328,7 @@ def check_domain_set_properly(domain, db=None):
 
 def check_domain_cdn_provider(domain, db=None):
     if db is None:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
     domain_entry = domains.find_one({"_id": domain})
@@ -339,7 +339,7 @@ def check_domain_cdn_provider(domain, db=None):
 
 def update_user_stats_cache(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -361,7 +361,7 @@ def has_active_endpoints(db=None):
         return True
 
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 

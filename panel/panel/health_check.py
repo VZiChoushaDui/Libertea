@@ -15,7 +15,7 @@ def ___save_to_database():
 
     print(f"Saving {len(___health_checks)} health checks to database")
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     health_checks_raw = db.health_checks_raw
     health_checks_raw.insert_many(___health_checks)
@@ -44,7 +44,7 @@ def register_data(user_id, domain, domain_dns, protocol):
     
 
 def parse():
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     health_checks_raw = db.health_checks_raw
 
@@ -188,7 +188,7 @@ def parse():
 
 def get_health_data(domain, hours=24, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
 
     health_checks = db.health_checks

@@ -104,6 +104,17 @@ def get_mongodb_connection_string():
     # print("connstr:", connstr)
     return connstr
 
+___mongoClient = None
+
+def get_mongo_client():
+    global ___mongoClient
+
+    if ___mongoClient is None:
+        print(" -- creating mongo client")
+        ___mongoClient = MongoClient(get_mongodb_connection_string(), serverSelectionTimeoutMS=5000)
+
+    return ___mongoClient
+
 def get_hostcontroller_api_key():
     return os.environ.get('HOSTCONTROLLER_API_KEY')
 
