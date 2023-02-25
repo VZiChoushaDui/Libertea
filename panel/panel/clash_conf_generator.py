@@ -90,6 +90,19 @@ def get_providers(connect_url, db):
                     host=server,
                     server=s,
                 ))
+            if settings.get_provider_enabled('vmessws', db=db):
+                providers.append(init_provider_info(
+                    type='vmess-ws',
+                    name='VmW-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_VMESS_WS_AUTH_UUID'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_WS_URL'),
+                    meta_only=True,
+                    entry_type=server_type_ex,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                ))
             if settings.get_provider_enabled('ssv2ray', db=db):
                 providers.append(init_provider_info(
                     type='ss-v2ray',

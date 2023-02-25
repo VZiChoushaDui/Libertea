@@ -6,7 +6,7 @@ Easily install and manage a multi-protocol VPN server; with user management, aut
 
 ## Features
 
-- TROJAN, Shadowsocks/v2ray and VLESS protocols
+- TROJAN, Shadowsocks/v2ray, VLESS and VMESS protocols
 - One-command installation and management
 - Camouflage domains with a real website to reduce the risk of being blocked by probing
 - Auto select the best route on user's devices

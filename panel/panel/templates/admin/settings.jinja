@@ -41,6 +41,12 @@
                 Shadowsocks+v2ray (WS)
             </label>
         </div>
+         <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_vmessws" id="provider_vmessws" {% if provider_enabled.vmessws %}checked{% endif %}>
+            <label class="form-check-label" for="provider_vmessws">
+                VMESS (WS)
+            </label>
+        </div>
         <div class="form-check">
             <input class="form-check-input" type="checkbox" value="on" name="provider_vlessws" id="provider_vlessws" {% if provider_enabled.vlessws %}checked{% endif %}>
             <label class="form-check-label" for="provider_vlessws">

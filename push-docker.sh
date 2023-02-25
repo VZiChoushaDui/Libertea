@@ -29,6 +29,11 @@ echo " *** Building and pushing libertea/provider-vless-ws:$version *** "
 docker build -t libertea/provider-vless-ws:$version ./providers/vless-ws
 docker push libertea/provider-vless-ws:$version
 
+# providers/vmess-ws
+echo " *** Building and pushing libertea/provider-vmess-ws:$version *** "
+docker build -t libertea/provider-vmess-ws:$version ./providers/vmess-ws
+docker push libertea/provider-vmess-ws:$version
+
 # providers/shadowsocks-v2ray
 echo " *** Building and pushing libertea/provider-shadowsocks-v2ray:$version *** "
 docker build -t libertea/provider-shadowsocks-v2ray:$version ./providers/shadowsocks-v2ray
@@ -55,6 +60,7 @@ docker tag libertea/syslog:$version libertea/syslog:latest
 docker tag libertea/log-parser:$version libertea/log-parser:latest
 docker tag libertea/provider-trojan-ws:$version libertea/provider-trojan-ws:latest
 docker tag libertea/provider-vless-ws:$version libertea/provider-vless-ws:latest
+docker tag libertea/provider-vmess-ws:$version libertea/provider-vmess-ws:latest
 docker tag libertea/provider-shadowsocks-v2ray:$version libertea/provider-shadowsocks-v2ray:latest
 docker tag libertea/proxy-register:$version libertea/proxy-register:latest
 docker tag libertea/proxy-haproxy:$version libertea/proxy-haproxy:latest
@@ -65,6 +71,7 @@ docker push libertea/syslog:latest
 docker push libertea/log-parser:latest
 docker push libertea/provider-trojan-ws:latest
 docker push libertea/provider-vless-ws:latest
+docker push libertea/provider-vmess-ws:latest
 docker push libertea/provider-shadowsocks-v2ray:latest
 docker push libertea/proxy-register:latest
 docker push libertea/proxy-haproxy:latest

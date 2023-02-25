@@ -280,7 +280,7 @@ def app_settings():
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
-        provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'ssv2ray']},
+        provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'vmessws', 'trojanws', 'ssv2ray']},
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
@@ -290,7 +290,7 @@ def app_settings_save():
     single_file_clash = request.form.get('single_file_clash', None)
     providers_from_all_endpoints = request.form.get('providers_from_all_endpoints', None)
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
-    provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'ssv2ray']}
+    provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'vmessws', 'trojanws', 'ssv2ray']}
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
 
@@ -303,7 +303,7 @@ def app_settings_save():
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
-    for x in ['vlessws', 'trojanws', 'ssv2ray']:
+    for x in ['vlessws', 'vmessws', 'trojanws', 'ssv2ray']:
         settings.set_provider_enabled(x, provider_enabled[x] == 'on')
 
     # if none of trojanws and ssv2ray is enabled, enable trojanws
