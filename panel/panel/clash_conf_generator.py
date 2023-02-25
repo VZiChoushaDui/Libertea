@@ -97,7 +97,7 @@ def get_providers(connect_url, db):
                     port=port,
                     password=os.environ.get('CONN_VMESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_WS_URL'),
-                    meta_only=True,
+                    meta_only=False,
                     entry_type=server_type_ex,
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
