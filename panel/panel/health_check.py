@@ -65,6 +65,7 @@ def parse():
     })
 
     interval = timedelta(hours=3)
+    min_hits_per_protocol_per_interval = 50
     start_time = datetime.utcnow() - timedelta(days=1) - interval
     start_time = start_time.replace(hour=start_time.hour - (start_time.hour % 3), minute=0, second=0, microsecond=0)
     final_time = datetime.utcnow()
@@ -145,7 +146,7 @@ def parse():
             max_hits_per_protocol[protocol] = max(max_hits_per_protocol[protocol], hit_counts[(domain, domain_dns, protocol)])
 
         for protocol in set(max_hits_per_protocol.keys()):
-            if max_hits_per_protocol[protocol] < 10:
+            if max_hits_per_protocol[protocol] < min_hits_per_protocol_per_interval:
                 print(f"Health check parse: skipped {protocol} because not enough data")
                 del max_hits_per_protocol[protocol]
 
