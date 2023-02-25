@@ -284,7 +284,7 @@ def domain_cache_update_db(domain, status=None, cdn=None, db=None):
 def update_domain_cache(domain, try_count=3, db=None):
     # send a request to https://[domain]/[get_admin_uuid]/. It should return 401 unauthorized
     try:
-        r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=3)
+        r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=5)
         if r.status_code == 401:
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':

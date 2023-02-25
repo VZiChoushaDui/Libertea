@@ -102,7 +102,7 @@
 
 <div class="list-group list-group-flush mt-2">
     {% for proxy in proxies %}
-        <a href="#" class="list-group-item list-group-item-action">
+        <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
             <div class="row">
                 <div class="col-12 list-item-title">
                     {{ proxy.ip }}
@@ -130,8 +130,6 @@
         fetch('/{{admin_uuid}}/health/' + elem.dataset.domainid + '?hours=24')
             .then(r => r.json())
             .then(data => {
-                console.log(elem.dataset.domainid);
-                console.log(data);
                 var sum = 0;
                 var count = 0;
                 for (var i = 0; i < data.length; i++) {

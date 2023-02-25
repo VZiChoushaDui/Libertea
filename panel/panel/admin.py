@@ -236,7 +236,6 @@ def domains():
     } for domain in domains.find()]
 
     proxy_ips = utils.online_route_get_all()
-    print(proxy_ips)
     proxies = [{
         'ip': x
     } for x in proxy_ips]
@@ -268,7 +267,19 @@ def domain(domain):
     domain_entry = db.domains.find_one({"_id": domain})
 
     if domain_entry is None:
-        return '', 404
+        proxy_ips = utils.online_route_get_all()
+        if not domain in proxy_ips:
+            return '', 404
+        return render_template('admin/domain.jinja', 
+            back_to='domains',
+            status='active',
+            admin_uuid=config.get_admin_uuid(),
+            server_ip=config.SERVER_MAIN_IP,
+            domain=domain,
+            secondary_proxy=True,
+        )
+
+        
 
     utils.update_domain_cache(domain_entry['_id'], try_count=1)
 
@@ -280,7 +291,9 @@ def domain(domain):
         domain=domain_entry['_id'],
         same_domain_as_panel_warning=utils.top_level_domain_equivalent(domain_entry["_id"], config.get_panel_domain()),
         status=utils.check_domain_set_properly(domain_entry['_id']),
-        cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']))
+        cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']),
+        secondary_proxy=False,
+    )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['POST'])
 def domain_save(domain):
