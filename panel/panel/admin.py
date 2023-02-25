@@ -235,10 +235,23 @@ def domains():
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
     } for domain in domains.find()]
 
+    proxy_ips = utils.online_route_get_all()
+    print(proxy_ips)
+    proxies = [{
+        'ip': x
+    } for x in proxy_ips]
+
+
     return render_template('admin/domains.jinja', 
         page='domains',
         admin_uuid=config.get_admin_uuid(),
-        domains=all_domains)
+        domains=all_domains,
+        proxies=proxies,
+        bootstrap_script_url=config.get_bootstrap_script_url(),
+        server_ip=config.SERVER_MAIN_IP,
+        panel_secret_key=config.get_panel_secret_key(),
+        proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+    )
 
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['GET'])

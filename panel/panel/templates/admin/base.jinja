@@ -180,7 +180,7 @@
             <div>
                 {% if back_to == 'domains' %}
                 <div class="tabs float-start">
-                    <a href="/{{ admin_uuid }}/domains/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Domains</a>
+                    <a href="/{{ admin_uuid }}/domains/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Routes</a>
                 </div>
                 {% elif back_to == 'users' %}
                 <div class="tabs float-start">
@@ -199,8 +199,7 @@
                 <div class="tabs float-sm-end">
                     <a href="/{{ admin_uuid }}/" class="tab {% if page=='dashboard' %}active{% endif %}">Dashboard</a>
                     <a href="/{{ admin_uuid }}/users/" class="tab {% if page=='users' %}active{% endif %}">Users</a>
-                    <a href="/{{ admin_uuid }}/domains/" class="tab {% if page=='domains' %}active{% endif %}">Domains</a>
-                    <a href="/{{ admin_uuid }}/proxies/" class="tab {% if page=='proxies' %}active{% endif %}">Proxies</a>
+                    <a href="/{{ admin_uuid }}/domains/" class="tab {% if page=='domains' %}active{% endif %}">Routes</a>
                     <a href="/{{ admin_uuid }}/settings/" class="tab {% if page=='settings' %}active{% endif %}">Settings</a>
                 </div>
                 {% endif %}
