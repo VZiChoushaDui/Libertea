@@ -149,7 +149,6 @@ def parse():
                 print(f"Health check parse: skipped {protocol} because not enough data")
                 del max_hits_per_protocol[protocol]
 
-        print(max_hits_per_protocol)
         success_rates = {}
         for domain, domain_dns, protocol in hit_counts:
             if not protocol in max_hits_per_protocol:
@@ -214,7 +213,5 @@ def get_health_data(domain, hours=24, db=None):
     items.sort(key=lambda x: x['time_slice'])
     for item in items:
         item['time_slice'] = item['time_slice'].strftime("%Y-%m-%d %H:%M:%S")
-
-    print(items)
 
     return items
