@@ -1,6 +1,8 @@
 {
     "log": {
-        "loglevel": "debug"
+        "loglevel": "debug",
+        "access": "/etc/xray/access.log",
+        "error": "/etc/xray/error.log",
     },
     "inbounds": [
         {
