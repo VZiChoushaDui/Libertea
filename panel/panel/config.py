@@ -106,13 +106,17 @@ def get_mongodb_connection_string():
     return connstr
 
 ___mongoClient = None
+___mongoClientPid = None
 
 def get_mongo_client():
     global ___mongoClient
+    global ___mongoClientPid
 
-    if ___mongoClient is None:
-        print(" -- creating mongo client")
+    my_pid = os.getpid()
+    if ___mongoClient is None or ___mongoClientPid != my_pid:
+        print(f" -- creating mongo client on pid {my_pid}")
         ___mongoClient = MongoClient(get_mongodb_connection_string(), serverSelectionTimeoutMS=5000)
+        ___mongoClientPid = my_pid
 
     return ___mongoClient
 
