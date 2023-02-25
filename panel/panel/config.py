@@ -118,6 +118,13 @@ def get_mongo_client():
         ___mongoClient = MongoClient(get_mongodb_connection_string(), serverSelectionTimeoutMS=5000)
         ___mongoClientPid = my_pid
 
+    try:
+        ___mongoClient.server_info()
+    except Exception as e:
+        print(f" -- reconnecting mongo client on pid {my_pid}")
+        ___mongoClient = MongoClient(get_mongodb_connection_string(), serverSelectionTimeoutMS=5000)
+        ___mongoClientPid = my_pid
+
     return ___mongoClient
 
 def get_hostcontroller_api_key():
