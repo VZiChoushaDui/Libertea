@@ -9,7 +9,9 @@
             "settings": {
                 "clients": [
                     {
-                        "id": "{uuid}"
+                        "id": "{uuid}",
+                        "alterId": 0,
+                        "email": "me@example.com"
                     }
                 ],
                 "fallbacks": [
@@ -43,7 +45,9 @@
             "settings": {
                 "clients": [
                     {
-                        "id": "{uuid}"
+                        "id": "{uuid}",
+                        "alterId": 0,
+                        "email": "me@example.com"
                     }
                 ]
             },
