@@ -5,20 +5,21 @@
     "inbounds": [
         {
             "port": {port},
-            "protocol": "vmess",
+            "protocol": "vless",
             "settings": {
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "alterId": 0,
-                        "email": "me@example.com"
+                        "email": "general@vless-tcp-xtls",
+                        "flow": "xtls-rprx-vision",
+                        "level": 0
                     }
                 ],
                 "fallbacks": [
                     {
                         "path": "/{url}",
                         "dest": {port-internal},
-                        "xver": 1
+                        "xver": 2
                     }
                 ]
             },
@@ -46,8 +47,8 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "alterId": 0,
-                        "email": "me@example.com"
+                        "email": "general@vmess-ws",
+                        "level": 0
                     }
                 ]
             },
@@ -58,6 +59,13 @@
                     "acceptProxyProtocol": true,
                     "path": "/{url}"
                 }
+            },
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
             }
         }
     ],
