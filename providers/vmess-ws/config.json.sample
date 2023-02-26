@@ -59,13 +59,6 @@
                     "acceptProxyProtocol": true,
                     "path": "/{url}"
                 }
-            },
-            "sniffing": {
-                "enabled": true,
-                "destOverride": [
-                    "http",
-                    "tls"
-                ]
             }
         }
     ],
