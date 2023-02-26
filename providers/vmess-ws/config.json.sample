@@ -10,9 +10,8 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "email": "general@vless-tcp-xtls",
-                        "flow": "xtls-rprx-vision",
-                        "level": 0
+                        "level": 0,
+                        "email": "me@example.com"
                     }
                 ],
                 "decryption": "none",
@@ -20,7 +19,7 @@
                     {
                         "path": "/{url}",
                         "dest": {port-internal},
-                        "xver": 2
+                        "xver": 1
                     }
                 ]
             },
