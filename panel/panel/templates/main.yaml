@@ -265,7 +265,9 @@ rules:
 {% if meta %}
   - AND,((NETWORK,UDP)),main-group-udp
 {% else %}
+{% if premium %}
   - SCRIPT,udpnetwork,main-group-udp
+{% endif %}
 {% endif %}
 {% endif %}
   - MATCH,main-group

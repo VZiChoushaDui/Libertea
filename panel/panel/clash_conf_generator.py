@@ -107,7 +107,7 @@ def get_providers(connect_url, db):
 
     return providers
 
-def generate_conf_singlefile(connect_url, meta=False):
+def generate_conf_singlefile(connect_url, meta=False, premium=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -138,6 +138,7 @@ def generate_conf_singlefile(connect_url, meta=False):
     result = render_template('main-singlefile.yaml', 
         providers=providers,
         meta=meta,
+        premium=premium,
         ips_direct_countries=ips_direct_countries,
         cloudflare_exists=cloudflare_exists,
         direct_exists=direct_exists,
@@ -147,7 +148,7 @@ def generate_conf_singlefile(connect_url, meta=False):
 
     return result
 
-def generate_conf(file_name, user_id, connect_url, meta=False):
+def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -186,6 +187,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False):
     return render_template(file_name, 
         providers=providers,
         meta=meta,
+        premium=premium,
         cloudflare_exists=cloudflare_exists,
         direct_exists=direct_exists,
         cdn_other_exists=cdn_other_exists,
