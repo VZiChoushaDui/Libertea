@@ -133,3 +133,19 @@ def set_camouflage_domain(val, db=None):
 
     db.settings.update_one({"_id": "camouflage_domain"}, {"$set": {"value": val}}, upsert=True)
     sysops.haproxy_update_camouflage_list() 
+
+def get_periodic_health_check(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "periodic_health_check"})
+    if setting is None:
+        return True
+    return setting["value"]
+
+def set_periodic_health_check(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "periodic_health_check"}, {"$set": {"value": val}}, upsert=True)
+    

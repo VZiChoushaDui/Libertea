@@ -146,6 +146,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
         user_id=user_id,
         panel_domain=config.get_panel_domain(),
         udp_exists=udp_exists,
+        health_check=settings.get_periodic_health_check(),
     )
 
     return result
@@ -154,7 +155,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml']:
+    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml', 'health-check-providers.yaml']:
         return ""
 
     client = config.get_mongo_client()

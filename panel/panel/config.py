@@ -75,14 +75,17 @@ def get_ip_api_url():
         'https://api.ipify.org',
         'https://ifconfig.io/ip',
         'http://ifconfig.io/ip',
-        'https://ipecho.net/plain',
-        'http://ipecho.net/plain'
     ])
 
 SERVER_MAIN_IP = None
 for i in range(5):
     try:
-        SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+        ip = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+        if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', ip):
+            print("Failed to get server ip. Result was: " + str(ip))
+            continue
+
+        SERVER_MAIN_IP = ip
         break
     except Exception as e:
         print("Failed to get server ip.")
@@ -91,7 +94,7 @@ if SERVER_MAIN_IP is None:
     raise Exception("couldn't fetch SERVER_MAIN_IP")
 
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
-    raise Exception("couldn't fetch SERVER_MAIN_IP")
+    raise Exception("couldn't fetch SERVER_MAIN_IP. Result was: " + str(SERVER_MAIN_IP))
 
 # print("SERVER_MAIN_IP: " + SERVER_MAIN_IP)
 

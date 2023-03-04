@@ -83,7 +83,9 @@
                     {% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
+                    {% if health_check %}
                     Health: <span class="health-percent" data-domainid="{{ domain.id }}">⌛</span>
+                    {% endif %}
                 </div>
             </div>
         </a>
@@ -115,7 +117,9 @@
                     {% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
+                    {% if health_check %}
                     Health: <span class="health-percent" data-domainid="{{ proxy.ip }}">⌛</span>
+                    {% endif %}
                 </div>
             </div>
         </a>
@@ -129,6 +133,7 @@
     </div>
 </div>
 
+{% if health_check %}
 <script>
     document.querySelectorAll('.health-percent').forEach(elem => {
         fetch('/{{admin_uuid}}/health/' + elem.dataset.domainid + '?hours=24')
@@ -152,7 +157,7 @@
                 elem.innerText = avg_percent + '%';
             });
     });
-
 </script>
+{% endif %}
 
 {% endblock %}

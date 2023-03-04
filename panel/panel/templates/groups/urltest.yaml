@@ -3,7 +3,7 @@
     tolerance: 1500
     proxies:
 {% for provider in providers %}{% if not provider.meta_only or meta %}{% if provider.entry_type == entry_type %}{% if not udp_only or provider.type == 'trojan-ws' %}
-      - {{ provider.name }}-g
+      - {{ provider.name }}
 {% endif %}{% endif %}{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
     interval: 300

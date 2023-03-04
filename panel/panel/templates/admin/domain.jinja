@@ -17,11 +17,13 @@
             </strong>
         </div>
     </div>
+{% if health_check %}
     <div class="row">
         <div class="col-12">
-            Health: <strong><span class="health-percent">⌛</span></strong>
+            Health in the past 24 hours: <strong><span class="health-percent">⌛</span></strong>
         </div>
     </div>
+{% endif %}
 {% if secondary_proxy %}
     {% if secondary_proxy_update_available %}
     <div class="row mt-5">
@@ -111,10 +113,12 @@
     </div>
     {% endif %}
 {% endif %}
+{% if health_check %}
     <div class="row mt-5">
         <h6>Health over time</h6>
         <canvas id="healthChart" style="width: 100%; height: 250px;"></canvas>
     </div>
+{% endif %}
 {% if not secondary_proxy %}
     <form method="post" class="mt-5">
         <h5 class="mb-4">Advanced options</h5>
@@ -173,6 +177,8 @@
             });
         </script>
 {% endif %}
+
+{% if health_check %}
         <script>
             fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=24')
                 .then(r => r.json())
@@ -274,6 +280,7 @@
                 });
 
         </script>
+{% endif %}
     </div>
 </div>
 

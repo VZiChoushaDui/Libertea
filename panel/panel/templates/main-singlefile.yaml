@@ -150,14 +150,15 @@ proxy-groups:
 
 {% endif %}
 
-
+{% if health_check %}
 {% for provider in providers %}
 {% if not provider.meta_only or meta %}
 {% with name=provider.name, server=provider.server, sni=provider.sni, host=provider.host, type=provider.type, entry_type=provider.entry_type, panel_domain=panel_domain, user_id=user_id %}
-{% include ("groups/singleserver.yaml") %}
+{% include ("groups/healthcheckserver.yaml") %}
 {% endwith %}
 {% endif %}
 {% endfor %}
+{% endif %}
 
 
 mixed-port: 1096

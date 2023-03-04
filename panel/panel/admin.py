@@ -252,6 +252,7 @@ def domains():
         server_ip=config.SERVER_MAIN_IP,
         panel_secret_key=config.get_panel_secret_key(),
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+        health_check=settings.get_periodic_health_check(),
     )
 
 
@@ -283,6 +284,7 @@ def domain(domain):
             bootstrap_script_url=config.get_bootstrap_script_url(),
             panel_secret_key=config.get_panel_secret_key(),
             proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+            health_check=settings.get_periodic_health_check(),
         )
 
         
@@ -299,6 +301,7 @@ def domain(domain):
         status=utils.check_domain_set_properly(domain_entry['_id']),
         cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']),
         secondary_proxy=False,
+        health_check=settings.get_periodic_health_check(),
     )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['POST'])
@@ -405,6 +408,7 @@ def app_settings():
         single_file_clash=settings.get_single_clash_file_configuration(),
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
+        health_check=settings.get_periodic_health_check(),
         camouflage_domain=camouflage_domain,
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
@@ -422,6 +426,7 @@ def app_settings_save():
     provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'ssv2ray']}
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
+    health_check = request.form.get('health_check', None)
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
@@ -430,6 +435,7 @@ def app_settings_save():
     settings.set_secondary_proxy_use_80_instead_of_443(proxy_use_80 == 'on')
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
+    settings.set_periodic_health_check(health_check == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
     for x in ['vlessws', 'trojanws', 'ssv2ray']:

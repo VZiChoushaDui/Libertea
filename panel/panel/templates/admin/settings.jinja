@@ -87,6 +87,13 @@
         </label>
     </div>
     <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" value="on" name="health_check" id="health_check" {% if health_check %}checked{% endif %}>
+        <label class="form-check-label" for="health_check">
+            Periodic health check from clients<br />
+            (only single-file clash configuration supports this feature)
+        </label>
+    </div>
+    <div class="form-check mb-4">
         <input class="form-check-input" type="checkbox" value="on" name="providers_from_all_endpoints" id="providers_from_all_endpoints" {% if providers_from_all_endpoints %}checked{% endif %}>
         <label class="form-check-label" for="providers_from_all_endpoints">
             Add all VPN endpoints as provider source URLs
