@@ -91,14 +91,14 @@ proxy-groups:
       - tier2-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     global-default: true
     lazy: false
 
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group"
     type: url-test
-    tolerance: 300
+    tolerance: 1500
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group
@@ -106,20 +106,20 @@ proxy-groups:
       - direct-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
 {% if cdn_other_exists %}
   - name: "tier2-group"
     type: url-test
-    tolerance: 300
+    tolerance: 1500
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -132,7 +132,7 @@ proxy-groups:
       - cloudflare-{{ domain }}
 {% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -145,7 +145,7 @@ proxy-groups:
       - cdn-other-{{ domain }}
 {% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -158,7 +158,7 @@ proxy-groups:
       - direct-{{ domain }}
 {% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -173,14 +173,14 @@ proxy-groups:
       - tier2-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     global-default: true
     lazy: false
 
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group-udp"
     type: url-test
-    tolerance: 300
+    tolerance: 1500
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group-udp
@@ -188,20 +188,20 @@ proxy-groups:
       - direct-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
 {% if cdn_other_exists %}
   - name: "tier2-group-udp"
     type: url-test
-    tolerance: 300
+    tolerance: 1500
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -214,7 +214,7 @@ proxy-groups:
       - cloudflare-udp-{{ domain }}
 {% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -227,7 +227,7 @@ proxy-groups:
       - cdn-other-udp-{{ domain }}
 {% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
@@ -240,7 +240,7 @@ proxy-groups:
       - direct-udp-{{ domain }}
 {% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
