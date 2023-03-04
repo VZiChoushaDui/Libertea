@@ -271,14 +271,20 @@ def online_route_get_version(ip, db=None):
     return online_route["version"]
 
 def online_route_update_available(ip, db=None):
-    if online_route_get_version(ip, db) < config.LIBERTEA_PROXY_VERSION:
-        return True
+    try:
+        if online_route_get_version(ip, db) < config.LIBERTEA_PROXY_VERSION:
+            return True
+    except:
+        pass
     return False
 
 def online_route_any_update_available(db=None):
-    for ip in online_route_get_all(db=db):
-        if online_route_get_version(ip, db) < config.LIBERTEA_PROXY_VERSION:
-            return True
+    try:
+        for ip in online_route_get_all(db=db):
+            if online_route_get_version(ip, db) < config.LIBERTEA_PROXY_VERSION:
+                return True
+    except:
+        pass
     return False
 
 def online_route_get_all(max_age_secs=300, db=None):
