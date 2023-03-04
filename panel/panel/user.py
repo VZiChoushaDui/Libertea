@@ -1,3 +1,5 @@
+import json
+import base64
 import urllib.parse
 from . import config
 from . import settings
@@ -5,6 +7,7 @@ from . import health_check
 from datetime import datetime
 from pymongo import MongoClient
 from . import clash_conf_generator
+from . import subscription_conf_generator
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
 blueprint = Blueprint('user', __name__)
@@ -97,6 +100,54 @@ def user_config(id, file_name):
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Disposition': 'inline; filename="' + config.get_panel_domain() + "-" + str(id) + '.yaml"',
     }
+
+    
+@blueprint.route('/<id>/subscribeb64')
+def user_subscribeb64(id):
+    user = get_user(id)
+    if user is None:
+        return "", 404
+
+    vless = request.args.get('vless', 'true') == 'true'
+    trojan = request.args.get('trojan', 'true') == 'true'
+    shadowsocks = request.args.get('shadowsocks', 'true') == 'true'
+
+    data = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=vless, trojan=trojan, shadowsocks=shadowsocks)
+
+    result = ""
+    for provider_url in data:
+        result += provider_url + '\n'
+
+    return base64.b64encode(result.encode('utf-8')).decode('utf-8')
+
+@blueprint.route('/<id>/subscribe')
+def user_subscribe(id):
+    user = get_user(id)
+    if user is None:
+        return "", 404
+
+    vless = request.args.get('vless', 'true') == 'true'
+    trojan = request.args.get('trojan', 'true') == 'true'
+    shadowsocks = request.args.get('shadowsocks', 'true') == 'true'
+
+    data = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=vless, trojan=trojan, shadowsocks=shadowsocks)
+
+    result = ""
+    for provider_url in data:
+        result += provider_url + '\n'
+
+    return result
+
+@blueprint.route('/<id>/subscribe/shadowsocks.json')
+def user_subscribe_ss(id):
+    user = get_user(id)
+    if user is None:
+        return "", 404
+
+    data = subscription_conf_generator.generate_conf_json(user['_id'], user['connect_url'])
+
+    return json.dumps(data)
+
 
 @blueprint.route('/<id>/health')
 def user_health(id):
