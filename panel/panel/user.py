@@ -102,7 +102,7 @@ def user_config(id, file_name):
     }
 
     
-@blueprint.route('/<id>/subscribeb64')
+@blueprint.route('/<id>/subscribe/b64')
 def user_subscribeb64(id):
     user = get_user(id)
     if user is None:
@@ -120,7 +120,7 @@ def user_subscribeb64(id):
 
     return base64.b64encode(result.encode('utf-8')).decode('utf-8')
 
-@blueprint.route('/<id>/subscribe')
+@blueprint.route('/<id>/subscribe/list')
 def user_subscribe(id):
     user = get_user(id)
     if user is None:
@@ -138,7 +138,7 @@ def user_subscribe(id):
 
     return result
 
-@blueprint.route('/<id>/subscribe/shadowsocks.json')
+@blueprint.route('/<id>/subscribe/ss')
 def user_subscribe_ss(id):
     user = get_user(id)
     if user is None:
