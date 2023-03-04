@@ -265,6 +265,8 @@ def online_route_get_version(ip, db=None):
 
     if not 'version' in online_route:
         return 0
+    if online_route["version"] is None:
+        return 0
 
     return online_route["version"]
 
