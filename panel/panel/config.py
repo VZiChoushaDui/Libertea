@@ -79,7 +79,16 @@ def get_ip_api_url():
         'http://ipecho.net/plain'
     ])
 
-SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+SERVER_MAIN_IP = None
+for i in range(5):
+    try:
+        SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+        break
+    except Exception as e:
+        print("Failed to get server ip.")
+
+if SERVER_MAIN_IP is None:
+    raise Exception("couldn't fetch SERVER_MAIN_IP")
 
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
     raise Exception("couldn't fetch SERVER_MAIN_IP")
