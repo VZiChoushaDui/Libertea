@@ -3,5 +3,5 @@
     proxies:
       - {{ name }}
     url: 'https://{{panel_domain}}/{{user_id}}/health?protocol={{ type }}&domain={% if entry_type == "SecondaryProxy" %}{{ server }}{% else %}{{ host }}{% endif %}&domain_dns={{ server }}'
-    interval: 30
+    interval: 140
     lazy: false
