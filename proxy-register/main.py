@@ -5,6 +5,8 @@ import socket
 import requests
 from datetime import datetime
 
+LIBERTEA_PROXY_VERSION = 1001
+
 # Force ipv4 for requests
 old_getaddrinfo = socket.getaddrinfo
 def new_getaddrinfo(*args, **kwargs):
@@ -36,7 +38,7 @@ while True:
                 "X-API-KEY": API_KEY,
                 "Content-Type": "application/x-www-form-urlencoded"
             }, 
-            data="ip=" + SERVER_MAIN_IP)
+            data="ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION))
         # print status code and response text
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), result.status_code, result.text)
     except Exception as e:

@@ -22,6 +22,52 @@
             Health: <strong><span class="health-percent">⌛</span></strong>
         </div>
     </div>
+{% if secondary_proxy %}
+    {% if secondary_proxy_update_available %}
+    <div class="row mt-5">
+        <div class="col-12">
+            ⚠️ There's a new update available for this secondary proxy server.<br />
+            <div style="font-size: 14px; margin-left: 26px; margin-top: 8px;">
+                To update, run this command in the SSH shell of this server:<br />
+                <code id="codeToCopy">curl -fsSL {{ bootstrap_script_url }} | bash -s -- install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
+                <br />
+                <br />
+                <button class="btn btn-outline-primary btn-code-copy">
+                    Copy code to clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function copyCode() {
+            var codeToCopy = document.querySelector("#codeToCopy").innerHTML;
+            navigator.clipboard.writeText(codeToCopy);
+    
+            document.querySelector(".btn-code-copy").innerText = "Copied!";
+            setTimeout(function() {
+                document.querySelector(".btn-code-copy").innerText = "Copy code to clipboard";
+            }, 2000);
+        }
+    
+        document.querySelector("#codeToCopy").addEventListener("click", function() {
+            copyCode();
+    
+            // select the whole code
+            var range = document.createRange();
+            range.selectNode(document.querySelector("#codeToCopy"));
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+        });
+    
+        document.querySelector(".btn-code-copy").addEventListener("click", function() {
+            copyCode();
+        });
+    </script>
+    
+    
+    {% endif %}
+    
+{% endif %}
 {% if not secondary_proxy %}
     <div class="row">
         <div class="col-12">

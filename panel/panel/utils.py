@@ -231,12 +231,15 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
         return ___get_max_ips(conn_url, db=db)
 
 
-def online_route_ping(ip, db=None):
+def online_route_ping(ip, version, db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
-    online_routes.update_one({"_id": ip}, {"$set": {"last_seen": datetime.now()}}, upsert=True)
+    online_routes.update_one({"_id": ip}, {"$set": {
+        "last_seen": datetime.now(),
+        "version": version,
+    }}, upsert=True)
 
 
 def online_route_get_last_seen(ip, db=None):
@@ -249,6 +252,32 @@ def online_route_get_last_seen(ip, db=None):
         return None
 
     return online_route["last_seen"]
+
+
+def online_route_get_version(ip, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    online_route = online_routes.find_one({"_id": ip})
+    if online_route is None:
+        return None
+
+    if not 'version' in online_route:
+        return 0
+
+    return online_route["version"]
+
+def online_route_update_available(ip, db=None):
+    if online_route_get_version(ip, db) < config.LIBERTEA_PROXY_VERSION:
+        return True
+    return False
+
+def online_route_any_update_available(db=None):
+    for ip in online_route_get_all(db=db):
+        if online_route_get_version(ip, db) < config.LIBERTEA_PROXY_VERSION:
+            return True
+    return False
 
 def online_route_get_all(max_age_secs=300, db=None):
     # get all online routes (max last seen 5 minutes ago)

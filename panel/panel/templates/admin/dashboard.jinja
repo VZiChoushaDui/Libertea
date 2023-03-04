@@ -36,6 +36,11 @@
     ⚠️ There's a new version of Libertea available. <a href="https://github.com/VZiChoushaDui/Libertea#update" target="_blank">Update now</a>
 </div>
 {% endif %}
+{% if proxy_update_available %}
+<div class="w-100 mt-4 px-3">
+    ⚠️ One or more of your Secondary Proxies needs to be updated. <a href="/{{ admin_uuid }}/domains/">more info</a>
+</div>
+{% endif %}
 
 {% if no_domain_warning %}
 <div class="w-100 mt-4 px-3">

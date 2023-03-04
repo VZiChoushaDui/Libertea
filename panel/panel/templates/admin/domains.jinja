@@ -105,10 +105,14 @@
         <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
             <div class="row">
                 <div class="col-12 list-item-title">
-                    {{ proxy.ip }}
+                    {{ proxy.ip }} {% if proxy.update_available %}⚠️{% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle">
+                    {% if proxy.update_available %}
+                    🟢 Online, update available
+                    {% else %}
                     🟢 Online
+                    {% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     Health: <span class="health-percent" data-domainid="{{ proxy.ip }}">⌛</span>

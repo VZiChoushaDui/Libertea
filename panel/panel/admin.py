@@ -38,6 +38,7 @@ def dashboard():
         month_name=datetime.now().strftime("%B"),
         update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
+        proxy_update_available=utils.online_route_any_update_available(),
     )
 
 
@@ -237,7 +238,8 @@ def domains():
 
     proxy_ips = utils.online_route_get_all()
     proxies = [{
-        'ip': x
+        'ip': x,
+        'update_available': utils.online_route_update_available(x, db),
     } for x in proxy_ips]
 
 
@@ -277,6 +279,10 @@ def domain(domain):
             server_ip=config.SERVER_MAIN_IP,
             domain=domain,
             secondary_proxy=True,
+            secondary_proxy_update_available=utils.online_route_update_available(domain),
+            bootstrap_script_url=config.get_bootstrap_script_url(),
+            panel_secret_key=config.get_panel_secret_key(),
+            proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
         )
 
         
