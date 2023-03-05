@@ -18,6 +18,8 @@ tun:
   auto-route: true
   auto-detect-interface: true
 
+global-client-fingerprint: chrome
+
 proxies:
 {% for provider in providers %}
 {% if not provider.meta_only or meta %}

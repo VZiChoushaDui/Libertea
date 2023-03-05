@@ -18,6 +18,8 @@ tun:
   auto-route: true
   auto-detect-interface: true
 
+global-client-fingerprint: chrome
+
 proxy-providers:
 {% for domain in domains %}
 {% if cloudflare_exists %}
