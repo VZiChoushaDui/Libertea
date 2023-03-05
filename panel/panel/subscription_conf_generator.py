@@ -78,8 +78,8 @@ def generate_conf_json(user_id, connect_url):
                 "password": provider['password'],
                 "method": "chacha20-ietf-poly1305",
                 "plugin": "v2ray-plugin",
-                "plugin_opts": "tls;host=" + provider['host'] + ";path=" + provider['path'] + ";mux=8",
-                "remarks": config.get_panel_domain() + ' ' + provider['name'] + provider['name'],
+                "plugin_opts": "tls;host=" + provider['host'] + ";path=" + provider['path'] + ";mux=4",
+                "remarks": config.get_panel_domain() + ' ' + provider['name'],
             }
             provider_confs.append(ss_json_v2ray)
 
