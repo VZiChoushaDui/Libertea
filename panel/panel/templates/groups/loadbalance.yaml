@@ -6,5 +6,5 @@
       - {{ provider.name }}
 {% endif %}{% endif %}{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 300
+    interval: 800
     lazy: false
