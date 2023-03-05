@@ -26,17 +26,17 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
             provider_urls.append('trojan://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?sni=' + provider['sni'] + '&type=ws&host=' + provider['host'] + '&path=' + provider['path'] + 
                                  '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + 
-                                 '#' + provider['name'])
+                                 '#' + config.get_panel_domain() + ' ' + provider['name'])
         elif provider['type'] == 'vless-ws' and vless:
             provider_urls.append('vless://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?sni=' + provider['sni'] + '&type=ws&host=' + provider['host'] + '&path=' + provider['path'] + 
                                  '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&security=tls&encryption=none'
-                                 '#' + provider['name'])
+                                 '#' + config.get_panel_domain() + ' ' + provider['name'])
         elif provider['type'] == 'ss-v2ray' and shadowsocks:
             # add xray plugin to url
             provider_urls.append('ss://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?plugin=v2ray-plugin%3Btls%3Bhost%3D' + provider['host'] + '%3Bpath%3D' + provider['path'] + '%3Bmux%3D4' + 
-                                 '#' + provider['name'])
+                                 '#' + config.get_panel_domain() + ' ' + provider['name'])
         elif provider['type'] == 'vmess-ws':
             # vmess is a base64 encoded json
             vmess_json = {
@@ -72,15 +72,6 @@ def generate_conf_json(user_id, connect_url):
 
     for provider in providers:
         if provider['type'] == 'ss-v2ray':
-            ss_json_xray = {
-                "server": provider['server'],
-                "server_port": provider['port'],
-                "password": provider['password'],
-                "method": "chacha20-ietf-poly1305",
-                "plugin": "xray-plugin",
-                "plugin_opts": "tls;host=" + provider['host'] + ";path=" + provider['path'] + ";mux=8",
-                "remarks": provider['name'],
-            }
             ss_json_v2ray = {
                 "server": provider['server'],
                 "server_port": provider['port'],
@@ -88,9 +79,8 @@ def generate_conf_json(user_id, connect_url):
                 "method": "chacha20-ietf-poly1305",
                 "plugin": "v2ray-plugin",
                 "plugin_opts": "tls;host=" + provider['host'] + ";path=" + provider['path'] + ";mux=8",
-                "remarks": provider['name'],
+                "remarks": config.get_panel_domain() + ' ' + provider['name'] + provider['name'],
             }
-            provider_confs.append(ss_json_xray)
             provider_confs.append(ss_json_v2ray)
 
     return provider_confs
