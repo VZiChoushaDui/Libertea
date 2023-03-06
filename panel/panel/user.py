@@ -50,7 +50,9 @@ def user_config(id, file_name):
         return "", 404
 
     ua = request.headers.get('User-Agent')
+    print(f"Requested {file_name} with User Agent '{ua}'")
     is_meta = 'Clash' in ua and ('Meta' in ua or 'Stash' in ua)
+    is_premium = 'premium' in ua
 
     if file_name == 'mconfig':
         conf = clash_conf_generator.generate_conf_singlefile(user['connect_url'], 
@@ -64,13 +66,13 @@ def user_config(id, file_name):
 
     if settings.get_single_clash_file_configuration() and file_name == 'config':
         conf = clash_conf_generator.generate_conf_singlefile(user['connect_url'], 
-            meta=is_meta)
+            meta=is_meta, premium=is_premium)
     else:
         if file_name == 'config':
             file_name = 'main'
 
         conf = clash_conf_generator.generate_conf(file_name + '.yaml', user['_id'], user['connect_url'], 
-            meta=is_meta)
+            meta=is_meta, premium=is_premium)
         
         if conf == "":
             return "", 404
