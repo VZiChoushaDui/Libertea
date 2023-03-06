@@ -52,7 +52,7 @@
     🚨 Warning: You don't have a camouflage domain set up, this increases the chance of your VPN being blocked.<br /><a href="/{{ admin_uuid }}/settings/">Set up a camouflage domain</a>
 </div>
 {% endif %}
-{% if domains_count == 1 %}
+{% if active_domains_count == 1 %}
 <div class="w-100 mt-4 px-3">
     ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
 </div>
@@ -72,7 +72,7 @@
             <div class="stats-item-desc">Users</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value">{{ domains_count }}</div>
+            <div class="stats-item-value">{{ active_domains_count }}</div>
             <div class="stats-item-desc">Active Domains</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
