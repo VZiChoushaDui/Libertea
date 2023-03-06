@@ -1,4 +1,6 @@
 import json
+import psutil
+import requests
 from . import utils
 from . import config
 from datetime import datetime
@@ -39,7 +41,7 @@ def ___get_total_ips(file_name, conn_url):
 
 def get_gigabytes_today(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -49,7 +51,7 @@ def get_gigabytes_today(user_id, db=None):
 
 def get_gigabytes_this_month(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -59,7 +61,7 @@ def get_gigabytes_this_month(user_id, db=None):
 
 def get_ips_today(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -69,7 +71,7 @@ def get_ips_today(user_id, db=None):
 
 def get_ips_this_month(user_id, db=None):
     if db is None:
-        client = MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     users = db.users
     user = users.find_one({"_id": user_id})
@@ -93,3 +95,152 @@ def get_ips_this_month_all():
     file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
     return ___get_total_ips(file_name, '[total]')
     
+def get_connected_ips_right_now(user_id, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    users = db.users
+    user = users.find_one({"_id": user_id})
+    conn_url = user['connect_url']
+    
+    try:
+        req = requests.get(f'https://localhost/{ conn_url }/connected-ips-count', verify=False, timeout=0.1)
+        if req.status_code == 200:
+            return req.text
+    except:
+        pass
+
+    return None
+
+def get_total_connected_ips_right_now():
+    try:
+        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-ips-count', verify=False, timeout=0.1)
+        if req.status_code == 200:
+            return int(req.text)
+    except:
+        pass
+
+    return None
+
+def save_connected_ips_count(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    users = db.users
+    connected_ips_log = db.connected_ips_log
+
+    cur_hour_min = datetime.now().strftime('%H:%M')
+    total_connected_ips = 0
+    total_connected_users = 0
+    user_ids = list(users.find({}, {'_id': 1}))
+    connected_user_ids = []
+    for user_id in user_ids:
+        user_id = user_id['_id']
+        connected_ips = get_connected_ips_right_now(user_id, db)
+        if connected_ips is not None:
+            if connected_ips.isdigit():
+                connected_ips = int(connected_ips)
+                if connected_ips > 0:
+                    total_connected_users += 1
+                    connected_user_ids.append(user_id)
+                entry_key = str(user_id) + '--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
+                connected_ips_log.update_one(
+                    {'_id': entry_key},
+                    {'$set': {
+                        cur_hour_min: connected_ips,
+                    }},
+                    upsert=True
+                )
+                total_connected_ips += connected_ips
+    entry_key = 'ALL--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
+    connected_ips_log.update_one(
+        {'_id': entry_key},
+        {
+            '$setOnInsert': {
+                'connected_users': [],
+            }
+        },
+        upsert=True
+    )
+
+    connected_ips_log.update_one(
+        {'_id': entry_key},
+        {
+            '$set': {
+                cur_hour_min: total_connected_ips,
+            },
+            '$addToSet': {
+                'connected_users': {
+                    '$each': connected_user_ids
+                }
+            }
+        },
+        upsert=True
+    )
+
+    connected_ips_log.update_one(
+        {'_id': "ALL--Recent"},
+        {
+            '$set': {
+                "total_connected_ips": total_connected_ips,
+                "total_connected_users": total_connected_users,
+            }
+        },
+        upsert=True
+    )
+    
+
+def get_connected_ips_over_time(user_id, year, month, day, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    connected_ips_log = db.connected_ips_log
+    entry_key = str(user_id) + '--' + str(year) + '-' + str(month) + '-' + str(day)
+
+    try:
+        return dict(connected_ips_log.find_one({'_id': entry_key}))
+    except Exception as e:
+        return {}
+
+def get_all_connected_ips_over_time(year, month, day, db=None):
+    return get_connected_ips_over_time('ALL', year, month, day, db)
+
+def get_connected_users_now():
+    try:
+        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-users-count', verify=False, timeout=0.1)
+        if req.status_code == 200:
+            return int(req.text)
+    except:
+        pass
+
+    return None
+
+def get_connected_users_today(db=None):
+    try:
+        if db is None:
+            client = config.get_mongo_client()
+            db = client[config.MONGODB_DB_NAME]
+
+        connected_ips_log = db.connected_ips_log
+        entry_key = 'ALL--' + str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day)
+        res = connected_ips_log.find_one({'_id': entry_key})
+        return len(list(res['connected_users']))
+    except Exception as e:
+        return '-'
+
+
+def get_system_stats_cpu():
+    try:
+        return str(int(psutil.cpu_percent())) + '%'
+    except:
+        pass
+    return '-'
+
+def get_system_stats_ram():
+    try:
+        return str(int(psutil.virtual_memory()[2])) + '%'
+    except:
+        pass
+    
+    return '-'

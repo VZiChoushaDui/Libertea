@@ -39,7 +39,7 @@ def haproxy_update_users_list():
     count = 0
     haproxy_ensure_folder()
     with open(get_root_dir() + 'data/haproxy-lists/valid-user-endpoints.lst', 'w') as f:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         users = db.users
         for user in users.find():
@@ -51,7 +51,7 @@ def haproxy_update_users_list():
 
     count = 0
     with open(get_root_dir() + 'data/haproxy-lists/valid-panel-endpoints.lst', 'w') as f:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         users = db.users
         for user in users.find():
@@ -68,7 +68,7 @@ def haproxy_update_domains_list():
     count = 0
     haproxy_ensure_folder()
     with open(get_root_dir() + 'data/haproxy-lists/domains.lst', 'w') as f:
-        client = pymongo.MongoClient(config.get_mongodb_connection_string())
+        client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         domains = db.domains
         for domain in domains.find():

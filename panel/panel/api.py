@@ -149,6 +149,13 @@ def add_route():
     if ip == None or ip == "":
         return "", 404
 
-    utils.online_route_ping(ip)
+    version = request.form.get('version')
+    if version == None or version == "":
+        version = "1000"
+    if not version.isdigit():
+        version = "1000"
+    version = int(version)
+
+    utils.online_route_ping(ip, version)
     return "", 200
     

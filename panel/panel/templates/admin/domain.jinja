@@ -17,6 +17,60 @@
             </strong>
         </div>
     </div>
+{% if health_check %}
+    <div class="row">
+        <div class="col-12">
+            Health in the past 24 hours: <strong><span class="health-percent">⌛</span></strong>
+        </div>
+    </div>
+{% endif %}
+{% if secondary_proxy %}
+    {% if secondary_proxy_update_available %}
+    <div class="row mt-5">
+        <div class="col-12">
+            ⚠️ There's a new update available for this secondary proxy server.<br />
+            <div style="font-size: 14px; margin-left: 26px; margin-top: 8px;">
+                To update, run this command in the SSH shell of this server:<br />
+                <code id="codeToCopy">curl -fsSL {{ bootstrap_script_url }} | bash -s -- install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
+                <br />
+                <br />
+                <button class="btn btn-outline-primary btn-code-copy">
+                    Copy code to clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function copyCode() {
+            var codeToCopy = document.querySelector("#codeToCopy").innerHTML;
+            navigator.clipboard.writeText(codeToCopy);
+    
+            document.querySelector(".btn-code-copy").innerText = "Copied!";
+            setTimeout(function() {
+                document.querySelector(".btn-code-copy").innerText = "Copy code to clipboard";
+            }, 2000);
+        }
+    
+        document.querySelector("#codeToCopy").addEventListener("click", function() {
+            copyCode();
+    
+            // select the whole code
+            var range = document.createRange();
+            range.selectNode(document.querySelector("#codeToCopy"));
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+        });
+    
+        document.querySelector(".btn-code-copy").addEventListener("click", function() {
+            copyCode();
+        });
+    </script>
+    
+    
+    {% endif %}
+    
+{% endif %}
+{% if not secondary_proxy %}
     <div class="row">
         <div class="col-12">
             CDN Provider: 
@@ -58,7 +112,14 @@
         </div>
     </div>
     {% endif %}
-
+{% endif %}
+{% if health_check %}
+    <div class="row mt-5">
+        <h6>Health over time</h6>
+        <canvas id="healthChart" style="width: 100%; height: 250px;"></canvas>
+    </div>
+{% endif %}
+{% if not secondary_proxy %}
     <form method="post" class="mt-5">
         <h5 class="mb-4">Advanced options</h5>
         <div class="form-group mb-4">
@@ -97,24 +158,130 @@
                 </div>
             </div>
         </div>
+{% endif %}
+{% if not secondary_proxy %}
         <script>
             document.querySelector('.btn-delete-domain').addEventListener('click', function() {
-            fetch(window.location.href, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(function(response) {
-                if (response.ok) {
-                    window.location.href = '/{{ admin_uuid }}/domains/';
-                } else {
-                    alert('Failed to delete domain.');
-                }
+                fetch(window.location.href, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function(response) {
+                    if (response.ok) {
+                        window.location.href = '/{{ admin_uuid }}/domains/';
+                    } else {
+                        alert('Failed to delete domain.');
+                    }
+                });
             });
-        });
         </script>
+{% endif %}
+
+{% if health_check %}
+        <script>
+            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=24')
+                .then(r => r.json())
+                .then(data => {
+                    var elem = document.querySelector('.health-percent');
+                    var sum = 0;
+                    var count = 0;
+                    for (var i = 0; i < data.length; i++) {
+                        var item = data[i];
+                        console.log(item);
+                        sum += item.success_rate;
+                        count += 1;
+                    }
+
+                    if (count == 0) {
+                        elem.innerText = 'N/A';
+                        return;
+                    }
+
+                    var avg_percent = Math.round(sum / count * 100);
+                    elem.innerText = avg_percent + '%';
+                });
+            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=168')
+                .then(r => r.json())
+                .then(data => {
+                    var times = [];
+                    for (var i = 0; i < data.length; i++) {
+                        var item = data[i];
+                        if (times.indexOf(item.time_slice) == -1) {
+                            times.push(item.time_slice);
+                        }
+                    }
+
+                    var chart_data_x = [];
+                    var chart_data_y = [];
+
+                    for (var i = 0; i < times.length; i++) {
+                        var time = times[i];
+                        var sum = 0;
+                        var count = 0;
+                        for (var j = 0; j < data.length; j++) {
+                            var item = data[j];
+                            if (item.time_slice == time) {
+                                sum += item.success_rate;
+                                count += 1;
+                            }
+                        }
+
+                        var avg = sum / count;
+                        chart_data_x.push(time.substring(0, time.length - 3));
+                        chart_data_y.push(Math.round(100 * avg));
+                    }
+
+                    const ctx = document.querySelector('#healthChart');
+                    ctx.innerHTML = "";
+
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: chart_data_x,
+                            datasets: [{
+                                label: 'Health (%)',
+                                data: chart_data_y,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: "Health (%)",
+                                    },
+                                    beginAtZero: true,
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                },
+                                zoom: {
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true,
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'x',
+                                    },
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'x',
+                                    }
+                                }
+                            },
+                        }
+                    });
+                });
+
+        </script>
+{% endif %}
     </div>
-    
 </div>
 
 {% endblock %}

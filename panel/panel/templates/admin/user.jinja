@@ -56,6 +56,11 @@
 </div>
 <hr />
 <div class="section">
+    <h6>Connected IPs in the past 3 days</h6>
+    <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
+</div>
+<hr />
+<div class="section">
     <form method="post" class="mt-5">
         <div class="form-group mb-4">
             <label for="userId">User Id</label>
@@ -193,8 +198,63 @@
                 });
         }
 
-        setInterval(get_ips_connected_right_now, 10000);
+        function updateConnectionChart() {
+            fetch('/{{ admin_uuid }}/stats/connections/{{ user._id }}?days=3')
+                .then(function(response) {
+                    return response.json()
+                })
+                .then(function(data) {
+                    const ctx = document.getElementById('connectionChart');
+                    ctx.innerHTML = "";
+
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.x,
+                            datasets: [{
+                                label: 'IPs connected',
+                                data: data.y,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: "Connected IPs",
+                                    },
+                                    beginAtZero: true,
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                },
+                                zoom: {
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true,
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'x',
+                                    },
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'x',
+                                    }
+                                }
+                            },
+                        }
+                    });
+                });
+        }
+
+        setInterval(get_ips_connected_right_now, 5000);
         get_ips_connected_right_now();
+        updateConnectionChart();
     </script>
 </div>
 

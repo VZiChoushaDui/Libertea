@@ -4,8 +4,8 @@ local ltn12 = require("ltn12")
 
 core.Info("Hello HAProxy!\n")
 
-local flush_interval = 2 * 60 -- seconds
-local connected_ip_log_interval = 60 -- seconds
+local flush_interval = 150 -- seconds
+local connected_ip_log_interval = 10 * 60 -- seconds
 
 local function getTimestamp()
     return os.time(os.date("!*t"))
@@ -15,6 +15,7 @@ local last_flush = getTimestamp()
 local last_connected_ip_log = getTimestamp()
 
 local path_ips = {}
+local path_ips_long = {}
 
 local function log(msg)
     core.Info(os.date('%Y-%m-%d %H:%M:%S') .. " " .. msg)
@@ -75,6 +76,7 @@ local function flush_if_needed()
     local now = getTimestamp()
     if now - last_flush > flush_interval then
         last_flush = now
+        path_ips_long = path_ips
         path_ips = {}
         logWarn("Flushed path_ips\n")
     end
@@ -82,7 +84,7 @@ local function flush_if_needed()
         last_connected_ip_log = now
         total_ips = 0
         logWarn("*** Connected ips ***\n")
-        for username, ips in pairs(path_ips) do
+        for username, ips in pairs(path_ips_long) do
             total_ips = total_ips + getLength(ips)
             logWarn("   " .. username .. " connected ips: " .. getLength(ips) .. "\n")
             -- for ip, _ in pairs(ips) do
@@ -134,6 +136,9 @@ local function auth_request(txn)
         if path_ips[username] == nil then
             path_ips[username] = {}
         end
+        if path_ips_long[username] == nil then
+            path_ips_long[username] = {}
+        end
         
         -- check if user ip is already in path_ips table, if not add the ip to the list
         if not setContains(path_ips[username], user_ip) then
@@ -146,6 +151,7 @@ local function auth_request(txn)
             end
 
             addToSet(path_ips[username], user_ip)
+            addToSet(path_ips_long[username], user_ip)
             log(username .. ": IP " .. user_ip .. " connected to " .. hostname .. "\n")
         end
 
@@ -158,8 +164,8 @@ local function connected_ips_count(applet)
     local username = string.sub(applet.path, 2, string.find(applet.path, "/", 2) - 1)
 
     local response = "0"
-    if path_ips[username] ~= nil then
-        response = getLength(path_ips[username])
+    if path_ips_long[username] ~= nil then
+        response = getLength(path_ips_long[username])
     end
 
     applet:set_status(200)
@@ -171,7 +177,7 @@ end
 
 local function total_connected_ips_count(applet)
     total_ips = 0
-    for username, ips in pairs(path_ips) do
+    for username, ips in pairs(path_ips_long) do
         total_ips = total_ips + getLength(ips)
     end
     
@@ -184,6 +190,17 @@ local function total_connected_ips_count(applet)
     applet:send(response)
 end
 
+local function total_connected_users_count(applet)
+    local response = getLength(path_ips_long)
+
+    applet:set_status(200)
+    applet:add_header("Content-Type", "text/plain")
+    applet:add_header("Content-Length", string.len(response))
+    applet:start_response()
+    applet:send(response)
+end
+
 core.register_service("connected-ips-count", "http", connected_ips_count)
 core.register_service("total-connected-ips-count", "http", total_connected_ips_count)
+core.register_service("total-connected-users-count", "http", total_connected_users_count)
 core.register_action("auth-request", { "http-req" }, auth_request, 0)

@@ -7,5 +7,5 @@ $InputTCPServerRun 514 \n\
 $template RemoteStore, "/var/log/log/event.log-%$year%%$Month%%$Day%-%$Hour%.log" \n\
 :source, !isequal, "localhost" -?RemoteStore \n\
 :source, isequal, "last" ~ ' > /etc/rsyslog.conf
-ENTRYPOINT ["rsyslogd", "-n"]
 
+ENTRYPOINT ["rsyslogd", "-n"]

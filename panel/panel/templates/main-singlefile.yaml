@@ -18,6 +18,8 @@ tun:
   auto-route: true
   auto-detect-interface: true
 
+global-client-fingerprint: chrome
+
 proxies:
 {% for provider in providers %}
 {% if not provider.meta_only or meta %}
@@ -37,14 +39,14 @@ proxy-groups:
       - tier2-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     global-default: true
     lazy: false
 
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group"
     type: url-test
-    tolerance: 300
+    tolerance: 4000
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group
@@ -52,41 +54,40 @@ proxy-groups:
       - direct-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 900
     lazy: false
 {% endif %}
 
 {% if cdn_other_exists %}
   - name: "tier2-group"
     type: url-test
-    tolerance: 300
+    tolerance: 4000
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
 {% if cloudflare_exists %}
-{% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare", udp_only=False %}
+{% with name="cloudflare-group", proxies=providers, entry_type="CDNProxy-Cloudflare", udp_only=False, panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% if cdn_other_exists %}
-{% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other", udp_only=False %}
+{% with name="cdn-other-group", proxies=providers, entry_type="CDNProxy-Other", udp_only=False, panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/loadbalance.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% if direct_exists %}
-{% with name="direct-group", proxies=providers, entry_type="SecondaryProxy", udp_only=False %}
+{% with name="direct-group", proxies=providers, entry_type="SecondaryProxy", udp_only=False, panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
-
 
 
 {% if udp_exists %}
@@ -99,14 +100,14 @@ proxy-groups:
       - tier2-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     global-default: true
     lazy: false
 
 {% if direct_exists or cloudflare_exists %}
   - name: "tier1-group-udp"
     type: url-test
-    tolerance: 300
+    tolerance: 4000
     proxies:
 {% if cloudflare_exists %}
       - cloudflare-group-udp
@@ -114,42 +115,53 @@ proxy-groups:
       - direct-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 900
     lazy: false
 {% endif %}
 
 {% if cdn_other_exists %}
   - name: "tier2-group-udp"
     type: url-test
-    tolerance: 300
+    tolerance: 4000
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 15
+    interval: 300
     lazy: false
 {% endif %}
 
 {% if cloudflare_exists %}
-{% with name="cloudflare-group-udp", proxies=providers, entry_type="CDNProxy-Cloudflare", udp_only=True %}
+{% with name="cloudflare-group-udp", proxies=providers, entry_type="CDNProxy-Cloudflare", udp_only=True, panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% if cdn_other_exists %}
-{% with name="cdn-other-group-udp", proxies=providers, entry_type="CDNProxy-Other", udp_only=True %}
+{% with name="cdn-other-group-udp", proxies=providers, entry_type="CDNProxy-Other", udp_only=True, panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/loadbalance.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% if direct_exists %}
-{% with name="direct-group-udp", proxies=providers, entry_type="SecondaryProxy", udp_only=True %}
+{% with name="direct-group-udp", proxies=providers, entry_type="SecondaryProxy", udp_only=True, panel_domain=panel_domain, user_id=user_id %}
 {% include "groups/urltest.yaml" %}
 {% endwith %}
 {% endif %}
 
 {% endif %}
+
+{% if health_check %}
+{% for provider in providers %}
+{% if not provider.meta_only or meta %}
+{% with name=provider.name, server=provider.server, sni=provider.sni, host=provider.host, type=provider.type, entry_type=provider.entry_type, panel_domain=panel_domain, user_id=user_id %}
+{% include ("groups/healthcheckserver.yaml") %}
+{% endwith %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
 
 mixed-port: 1096
 redir-port: 7892

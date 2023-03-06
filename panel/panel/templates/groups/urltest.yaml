@@ -1,10 +1,10 @@
   - name: "{{name}}"
     type: url-test
-    tolerance: 250
+    tolerance: 4000
     proxies:
 {% for provider in providers %}{% if not provider.meta_only or meta %}{% if provider.entry_type == entry_type %}{% if not udp_only or provider.type == 'trojan-ws' %}
       - {{ provider.name }}
 {% endif %}{% endif %}{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 30
+    interval: 800
     lazy: false

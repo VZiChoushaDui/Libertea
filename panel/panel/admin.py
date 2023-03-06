@@ -1,11 +1,14 @@
+import re
+import json
 import urllib
 import requests
 from . import utils
 from . import stats
 from . import config
 from . import settings
-from datetime import datetime
+from . import health_check
 from pymongo import MongoClient
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
 blueprint = Blueprint('admin', __name__)
@@ -31,19 +34,111 @@ def dashboard():
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
         no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
-        traffic_today=stats.get_gigabytes_today_all(),
-        traffic_this_month=stats.get_gigabytes_this_month_all(),
-        ips_today=stats.get_ips_today_all(),
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
         update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
+        proxy_update_available=utils.online_route_any_update_available(),
     )
 
 
+@blueprint.route(root_url + "health/<domain>", methods=['GET'])
+def health_domain(domain):
+    hours = int(str(request.args.get('hours', '24')))
+    return health_check.get_health_data(domain, hours=hours)
+
+
+@blueprint.route(root_url + "stats/user", methods=['GET'])
+def user_stats():
+    ips_now = stats.get_total_connected_ips_right_now()
+    users_now = stats.get_connected_users_now()
+    traffic_today = stats.get_gigabytes_today_all()
+    traffic_this_month = stats.get_gigabytes_this_month_all()
+    ips_today = stats.get_ips_today_all()
+    users_today = stats.get_connected_users_today()
+
+    try:
+        if int(users_now) > int(users_today):
+            users_today = users_now
+    except:
+        pass
+    try:
+        if int(ips_now) > int(ips_today):
+            ips_today = ips_now
+    except:
+        pass
+
+    return {
+        'ips_now': ips_now,
+        'users_now': users_now,
+        'traffic_today': traffic_today,
+        'traffic_this_month': traffic_this_month,
+        'ips_today': ips_today,
+        'users_today': users_today,
+    }
+
+@blueprint.route(root_url + "stats/system", methods=['GET'])
+def system_stats():
+    return {
+        'cpu': stats.get_system_stats_cpu(),
+        'ram': stats.get_system_stats_ram(),
+    }
+
+@blueprint.route(root_url + "stats/connections", methods=['GET'])
+def connection_stats():
+    connected_ips_over_time_xs = []
+    connected_ips_over_time_ys = []
+
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
+    cur_date = datetime.now() - timedelta(days=days, seconds=1)
+    while cur_date <= datetime.now():
+        connected_ips_over_time_raw = stats.get_all_connected_ips_over_time(cur_date.year, cur_date.month, cur_date.day)
+        day_str = cur_date.strftime("%m-%d")
+        for key in connected_ips_over_time_raw:
+            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
+                connected_ips_over_time_xs.append(day_str + " " + key)
+                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
+        cur_date += timedelta(days=1)
+
+    return {
+        "x": connected_ips_over_time_xs,
+        "y": connected_ips_over_time_ys,
+    }
+
+@blueprint.route(root_url + "stats/connections/<user_id>", methods=['GET'])
+def connection_stats_user(user_id):
+    connected_ips_over_time_xs = []
+    connected_ips_over_time_ys = []
+    
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    connected_ips_over_time_format = re.compile('[0-9][0-9]\:[0-9][0-9]')
+    cur_date = datetime.now() - timedelta(days=7, seconds=1)
+    while cur_date <= datetime.now():
+        connected_ips_over_time_raw = stats.get_connected_ips_over_time(user_id, cur_date.year, cur_date.month, cur_date.day)
+        day_str = cur_date.strftime("%m-%d")
+        for key in connected_ips_over_time_raw:
+            if connected_ips_over_time_format.match(key) and str(connected_ips_over_time_raw[key]).isdigit():
+                connected_ips_over_time_xs.append(day_str + " " + key)
+                connected_ips_over_time_ys.append(int(connected_ips_over_time_raw[key]))
+        cur_date += timedelta(days=1)
+
+    return {
+        "x": connected_ips_over_time_xs,
+        "y": connected_ips_over_time_ys,
+    }
+
 @blueprint.route(root_url + 'users/')
 def users():
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -73,7 +168,7 @@ def user(user):
             max_ips=settings.get_default_max_ips()
         )
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
@@ -99,7 +194,6 @@ def user(user):
         max_ips_default=max_ips_default,
         default_max_ips_count=settings.get_default_max_ips(),
         user=user)
-
 
 @blueprint.route(root_url + 'users/<user>/', methods=['POST'])
 def user_save(user):
@@ -132,7 +226,7 @@ def user_delete(user):
 
 @blueprint.route(root_url + 'domains/')
 def domains():
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domains = db.domains
 
@@ -142,10 +236,24 @@ def domains():
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
     } for domain in domains.find()]
 
+    proxy_ips = utils.online_route_get_all()
+    proxies = [{
+        'ip': x,
+        'update_available': utils.online_route_update_available(x, db),
+    } for x in proxy_ips]
+
+
     return render_template('admin/domains.jinja', 
         page='domains',
         admin_uuid=config.get_admin_uuid(),
-        domains=all_domains)
+        domains=all_domains,
+        proxies=proxies,
+        bootstrap_script_url=config.get_bootstrap_script_url(),
+        server_ip=config.SERVER_MAIN_IP,
+        panel_secret_key=config.get_panel_secret_key(),
+        proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+        health_check=settings.get_periodic_health_check(),
+    )
 
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['GET'])
@@ -157,12 +265,29 @@ def domain(domain):
             admin_uuid=config.get_admin_uuid(),
         )
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domain_entry = db.domains.find_one({"_id": domain})
 
     if domain_entry is None:
-        return '', 404
+        proxy_ips = utils.online_route_get_all()
+        if not domain in proxy_ips:
+            return '', 404
+        return render_template('admin/domain.jinja', 
+            back_to='domains',
+            status='active',
+            admin_uuid=config.get_admin_uuid(),
+            server_ip=config.SERVER_MAIN_IP,
+            domain=domain,
+            secondary_proxy=True,
+            secondary_proxy_update_available=utils.online_route_update_available(domain),
+            bootstrap_script_url=config.get_bootstrap_script_url(),
+            panel_secret_key=config.get_panel_secret_key(),
+            proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+            health_check=settings.get_periodic_health_check(),
+        )
+
+        
 
     utils.update_domain_cache(domain_entry['_id'], try_count=1)
 
@@ -174,7 +299,10 @@ def domain(domain):
         domain=domain_entry['_id'],
         same_domain_as_panel_warning=utils.top_level_domain_equivalent(domain_entry["_id"], config.get_panel_domain()),
         status=utils.check_domain_set_properly(domain_entry['_id']),
-        cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']))
+        cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']),
+        secondary_proxy=False,
+        health_check=settings.get_periodic_health_check(),
+    )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['POST'])
 def domain_save(domain):
@@ -188,6 +316,10 @@ def domain_save(domain):
                 domain = domain[8:]
             if domain.startswith('www.'):
                 domain = domain[4:]
+
+            if len(domain) == 0:
+                return redirect(url_for('admin.dashboard'))
+            
             utils.add_domain(domain)
 
         if request.form.get('next', None) == 'dashboard':
@@ -276,6 +408,7 @@ def app_settings():
         single_file_clash=settings.get_single_clash_file_configuration(),
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
+        health_check=settings.get_periodic_health_check(),
         camouflage_domain=camouflage_domain,
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
@@ -293,6 +426,7 @@ def app_settings_save():
     provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'ssv2ray']}
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
+    health_check = request.form.get('health_check', None)
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
@@ -301,6 +435,7 @@ def app_settings_save():
     settings.set_secondary_proxy_use_80_instead_of_443(proxy_use_80 == 'on')
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
+    settings.set_periodic_health_check(health_check == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
     for x in ['vlessws', 'trojanws', 'ssv2ray']:

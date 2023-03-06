@@ -107,11 +107,11 @@ def get_providers(connect_url, db):
 
     return providers
 
-def generate_conf_singlefile(connect_url, meta=False, premium=False):
+def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
 
     providers = get_providers(connect_url, db)
@@ -143,7 +143,10 @@ def generate_conf_singlefile(connect_url, meta=False, premium=False):
         cloudflare_exists=cloudflare_exists,
         direct_exists=direct_exists,
         cdn_other_exists=cdn_other_exists,
+        user_id=user_id,
+        panel_domain=config.get_panel_domain(),
         udp_exists=udp_exists,
+        health_check=settings.get_periodic_health_check(),
     )
 
     return result
@@ -152,10 +155,10 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml']:
+    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml', 'health-check-providers.yaml']:
         return ""
 
-    client = MongoClient(config.get_mongodb_connection_string())
+    client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     
     providers = get_providers(connect_url, db=db)
@@ -193,6 +196,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
         cdn_other_exists=cdn_other_exists,
         ips_direct_countries=ips_direct_countries,
         user_id=user_id,
+        panel_domain=config.get_panel_domain(),
         domains=list(domains),
         udp_exists=udp_exists,
     )

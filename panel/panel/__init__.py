@@ -1,6 +1,8 @@
 import requests
+from . import stats
 from . import utils
 from . import config
+from . import health_check
 from . import sysops
 from . import admin
 from . import user
@@ -27,6 +29,17 @@ def periodic_update_users_stats(signal):
         utils.update_user_stats_cache(user['panel_id'])
     print("CRON: done")
 
+@uwsgidecorators.timer(15 * 60)
+def periodic_health_check_parse(signal):
+    print("CRON: Health check parse")
+    health_check.parse()
+    print("CRON: done")
+
+@uwsgidecorators.cron(-10, -1, -1, -1, -1)
+def save_connected_ips(signal):
+    print("CRON: Saving connected IPs")
+    stats.save_connected_ips_count()
+    print("CRON: done")
 
 
 def create_app():

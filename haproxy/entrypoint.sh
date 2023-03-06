@@ -23,7 +23,13 @@ function reload
         export CAMOUFLAGE_PORT="11111"
     fi
 
-    haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile -sf $(cat $pidfile) &
+    # haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile -sf $(cat $pidfile) &
+
+    echo "  Killing haproxy..."
+    killall haproxy
+    echo "  Starting haproxy..."
+    haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile &
+
     wait
 }
 

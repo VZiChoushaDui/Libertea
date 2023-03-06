@@ -1,11 +1,68 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
-<div class="w-100 mt-4 px-3">
-    <a class="btn btn-primary float-start float-sm-end" href="/{{ admin_uuid }}/domains/new/">
+<div class="mt-4 px-2">
+    <a class="btn btn-primary float-start float-sm-end mx-1 mb-1" href="/{{ admin_uuid }}/domains/new/">
         Add new domain
+    </a>
+    <a class="btn btn-primary add-proxy-button float-start float-sm-end mx-1 mb-1" href="#">
+        Add new secondary proxy
     </a>
 </div>
 <div style="clear: both"></div>
+<div class="add-proxy-instructions my-4 mx-3 px-3 py-4" style="border: 1px solid #aaa; border-radius: 16px; display: none;">
+    To add a secondary proxy to your VPN, buy a new server, and copy and paste the following command into the SSH shell:<br /><br />
+    <code id="codeToCopy">curl -fsSL {{ bootstrap_script_url }} | bash -s -- install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
+    <br />
+    <br />
+    <button class="btn btn-outline-primary btn-copy">
+        Copy code to clipboard
+    </button>
+</div>
+
+
+<script>
+    function copyCode() {
+        var codeToCopy = document.querySelector("#codeToCopy").innerHTML;
+        navigator.clipboard.writeText(codeToCopy);
+
+        document.querySelector(".btn-copy").innerText = "Copied!";
+        setTimeout(function() {
+            document.querySelector(".btn-copy").innerText = "Copy code to clipboard";
+        }, 2000);
+    }
+
+    document.querySelector("#codeToCopy").addEventListener("click", function() {
+        copyCode();
+
+        // select the whole code
+        var range = document.createRange();
+        range.selectNode(document.querySelector("#codeToCopy"));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    });
+
+    document.querySelector(".add-proxy-button").addEventListener("click", function() {
+        document.querySelector(".add-proxy-instructions").style.display = "block";
+        document.querySelector(".add-proxy-button").style.display = "none";
+    });
+
+    document.querySelector(".btn-copy").addEventListener("click", function() {
+        copyCode();
+    });
+
+    var goToNew = new URLSearchParams(window.location.search).get('newproxy');
+    if (goToNew) {
+        document.querySelector(".add-proxy-instructions").style.display = "block";
+        document.querySelector(".add-proxy-button").style.display = "none";
+    }
+</script>
+
+
+
+<div style="clear: both"></div>
+<div class="mx-3">
+    <h6 class="bordered">Domains</h6>
+</div>
 <div class="list-group list-group-flush mt-2">
     {% for domain in domains %}
         <a href="/{{ admin_uuid }}/domains/{{ domain.id }}/" class="list-group-item list-group-item-action">
@@ -14,7 +71,7 @@
                     {{ domain.id }}
                     {% if domain.warning %} ⚠️ {% endif %}
                 </div>
-                <div class="col-12 list-item-subtitle">
+                <div class="col-6 list-item-subtitle">
                     {% if domain.status == 'active' %}
                     ✅ Active
                     {% elif domain.status == 'inactive' %}
@@ -25,8 +82,82 @@
                     ⚠️ Unknown status
                     {% endif %}
                 </div>
+                <div class="col-6 list-item-subtitle" style="text-align: right;">
+                    {% if health_check %}
+                    Health: <span class="health-percent" data-domainid="{{ domain.id }}">⌛</span>
+                    {% endif %}
+                </div>
             </div>
         </a>
     {% endfor %}
 </div>
+<div class="mx-3 mt-5">
+    <h6 class="bordered">Secondary Proxies</h6>
+</div>
+
+<div class="proxy-intro mt-2 mx-3">
+    <div class="mb-2" style="font-size: 14px;">
+        Secondary proxies allow users to connect to your Libertea via direct IP routes, bypassing the CDN for 
+        more reliable connections for when the ISPs are blocking the CDN.
+    </div>
+</div>
+
+<div class="list-group list-group-flush mt-2">
+    {% for proxy in proxies %}
+        <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
+            <div class="row">
+                <div class="col-12 list-item-title">
+                    {{ proxy.ip }} {% if proxy.update_available %}⚠️{% endif %}
+                </div>
+                <div class="col-6 list-item-subtitle">
+                    {% if proxy.update_available %}
+                    🟢 Online, update available
+                    {% else %}
+                    🟢 Online
+                    {% endif %}
+                </div>
+                <div class="col-6 list-item-subtitle" style="text-align: right;">
+                    {% if health_check %}
+                    Health: <span class="health-percent" data-domainid="{{ proxy.ip }}">⌛</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+<div class="proxy-intro mt-4 mx-3">    
+    <div class="mb-2" style="opacity: 0.75; font-size: 12px;">
+        The IPs for secondary proxies might get blocked after a while, in which case you can simply delete
+        the old secondary proxy server and add a new one, without disrupting your service and main server.
+    </div>
+</div>
+
+{% if health_check %}
+<script>
+    document.querySelectorAll('.health-percent').forEach(elem => {
+        fetch('/{{admin_uuid}}/health/' + elem.dataset.domainid + '?hours=24')
+            .then(r => r.json())
+            .then(data => {
+                var sum = 0;
+                var count = 0;
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    console.log(item);
+                    sum += item.success_rate;
+                    count += 1;
+                }
+
+                if (count == 0) {
+                    elem.innerText = 'N/A';
+                    return;
+                }
+
+                var avg_percent = Math.round(sum / count * 100);
+                elem.innerText = avg_percent + '%';
+            });
+    });
+</script>
+{% endif %}
+
 {% endblock %}

@@ -17,5 +17,5 @@ while true; do
         ls -t | grep gz |  tail -n +72 | xargs rm --verbose
     fi
 
-    sleep 60
+    sleep 300
 done
