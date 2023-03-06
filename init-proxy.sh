@@ -51,6 +51,14 @@ fi
 echo " ** Installing docker compose..."
 apt-get install docker-compose-plugin >/dev/null
 
+# if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
+if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
+    echo "    - Applying apparmor fix..."
+    apt-get install -qq -y apparmor apparmor-utils >/dev/null
+    service docker restart
+fi
+
+
 echo " ** Creating .env file..."
 if [ -f .env ]; then
     rm -f .env.bak
