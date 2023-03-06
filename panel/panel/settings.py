@@ -140,7 +140,7 @@ def get_periodic_health_check(db=None):
         db = client[config.MONGODB_DB_NAME]
     setting = db.settings.find_one({"_id": "periodic_health_check"})
     if setting is None:
-        return True
+        return False
     return setting["value"]
 
 def set_periodic_health_check(val, db=None):

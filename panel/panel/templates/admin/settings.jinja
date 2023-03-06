@@ -77,7 +77,8 @@
     <div class="form-check mb-4">
         <input class="form-check-input" type="checkbox" value="on" name="single_file_clash" id="single_file_clash" {% if single_file_clash %}checked{% endif %}>
         <label class="form-check-label" for="single_file_clash">
-            Use single-file clash configuration<br />(Disables one-click auto update for users, but makes initial import faster on poor connections)
+            Use single-file clash configuration<br />
+            <i style="opacity: 0.75">Disables one-click auto update for users, but makes initial import faster on poor connections</i>
         </label>
     </div>
     <div class="form-check mb-4">
@@ -89,8 +90,8 @@
     <div class="form-check mb-4">
         <input class="form-check-input" type="checkbox" value="on" name="health_check" id="health_check" {% if health_check %}checked{% endif %}>
         <label class="form-check-label" for="health_check">
-            Periodic health check from clients<br />
-            (only single-file clash configuration supports this feature)
+            Periodic health check from clients <strong>[BETA]</strong><br />
+            <i style="opacity: 0.75">Only single-file clash configuration supports this feature</i>
         </label>
     </div>
     <div class="form-check mb-4">
