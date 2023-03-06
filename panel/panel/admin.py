@@ -30,7 +30,7 @@ def dashboard():
         page='dashboard',
         users_count=len(utils.get_users()),
         admin_uuid=config.get_admin_uuid(),
-        active_domains_count=len(utils.get_active_domains()),
+        domains_count=len(utils.get_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
         no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
