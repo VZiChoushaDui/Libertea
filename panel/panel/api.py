@@ -1,3 +1,4 @@
+import re
 from . import utils
 from . import config
 from pymongo import MongoClient
@@ -147,6 +148,9 @@ def add_route():
 
     ip = request.form.get('ip')
     if ip == None or ip == "":
+        return "", 404
+
+    if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', ip):
         return "", 404
 
     version = request.form.get('version')
