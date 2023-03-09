@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import random
 import socket
@@ -21,10 +22,11 @@ def get_ip_api_url():
         'https://api.ipify.org',
         'https://ifconfig.io/ip',
         'http://ifconfig.io/ip',
-        'https://ipecho.net/plain',
-        'http://ipecho.net/plain'
     ])
 SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+
+if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
+    raise Exception("couldn't fetch SERVER_MAIN_IP. Result was: " + str(SERVER_MAIN_IP))
 
 REGISTER_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT')
 API_KEY = os.environ.get('PANEL_SECRET_KEY')
