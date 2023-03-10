@@ -49,6 +49,10 @@ If you want to uninstall Liberta or Liberta-secondary-proxy from your server for
 
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
 
+## Contribution
+
+Contributions are welcome! Please feel free to open an issue for any bugs, improvements and ideas; or open a pull request if you want to contribute code. If you're opening a pull request, make sure to send it to the `development` branch of this repository.
+
 ## Frequently Asked Questions
 
 ##### Does Libertea keep my domains and IPs safe from being blocked?
