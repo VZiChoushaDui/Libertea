@@ -93,7 +93,7 @@ proxy-groups:
       - tier2-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 300
+    interval: 5
     global-default: true
     lazy: false
 
@@ -108,21 +108,21 @@ proxy-groups:
       - direct-group
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 900
+    interval: 5
     lazy: false
 {% endif %}
 
 {% if cdn_other_exists %}
   - name: "tier2-group"
-    type: url-test
-    tolerance: 4000
+    type: select
+    # tolerance: 4000
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group
 {% endif %}
-    url: 'https://www.google.com/generate_204'
-    interval: 300
-    lazy: false
+    # url: 'https://www.google.com/generate_204'
+    # interval: 300
+    # lazy: false
 {% endif %}
 
 {% if cloudflare_exists %}
@@ -175,7 +175,7 @@ proxy-groups:
       - tier2-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 300
+    interval: 5
     global-default: true
     lazy: false
 
@@ -190,21 +190,21 @@ proxy-groups:
       - direct-group-udp
 {% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 900
+    interval: 5
     lazy: false
 {% endif %}
 
 {% if cdn_other_exists %}
   - name: "tier2-group-udp"
-    type: url-test
-    tolerance: 4000
+    type: select
+    # tolerance: 4000
     proxies:
 {% if cdn_other_exists %}
       - cdn-other-group-udp
 {% endif %}
-    url: 'https://www.google.com/generate_204'
-    interval: 300
-    lazy: false
+    # url: 'https://www.google.com/generate_204'
+    # interval: 300
+    # lazy: false
 {% endif %}
 
 {% if cloudflare_exists %}
