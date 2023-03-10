@@ -45,7 +45,7 @@ def user_dashboard(id):
 
     try:
         ua = request.headers.get('User-Agent')
-        if 'Clash' in ua or 'Stash' in ua:
+        if 'Clash' in ua or 'Stash' in ua or 'Shadowrocket' in ua or 'clash' in ua:
             return redirect('/{}/config.yaml'.format(id))
     except:
         pass
@@ -70,7 +70,7 @@ def user_config(id, file_name):
 
     ua = request.headers.get('User-Agent')
     print(f"Requested {file_name} with User Agent '{ua}'")
-    is_meta = 'Clash' in ua and ('Meta' in ua or 'Stash' in ua)
+    is_meta = ('Clash' in ua and ('Meta' in ua or 'Stash' in ua)) or 'Shadowrocket' in ua
     is_premium = 'premium' in ua
 
     if file_name == 'mconfig':
