@@ -199,9 +199,7 @@ proxy-groups:
     type: select
     # tolerance: 4000
     proxies:
-{% if cdn_other_exists %}
       - cdn-other-group-udp
-{% endif %}
     # url: 'https://www.google.com/generate_204'
     # interval: 300
     # lazy: false
