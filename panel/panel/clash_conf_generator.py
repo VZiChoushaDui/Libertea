@@ -25,11 +25,11 @@ def get_default_tier_for_route(domain):
 
 def get_default_tier(entry_type):
     if entry_type == 'CDNProxy-Cloudflare':
-        return '1'
+        return '2'
     if entry_type == 'SecondaryProxy':
         return '1'
     if entry_type == 'CDNProxy-Other':
-        return '2'
+        return '3'
     return '3'
 
 def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
