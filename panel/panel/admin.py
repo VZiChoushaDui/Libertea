@@ -236,12 +236,14 @@ def domains():
         "id": domain["_id"],
         "status": utils.check_domain_set_properly(domain["_id"]),
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
+        "tier": utils.get_domain_or_online_route_tier(domain["_id"]),
     } for domain in domains.find()]
 
     proxy_ips = utils.online_route_get_all()
     proxies = [{
-        'ip': x,
-        'update_available': utils.online_route_update_available(x, db),
+        "ip": x,
+        "tier": utils.get_domain_or_online_route_tier(x),
+        "update_available": utils.online_route_update_available(x, db),
     } for x in proxy_ips]
 
 
