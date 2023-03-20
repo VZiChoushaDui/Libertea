@@ -46,7 +46,7 @@ def get_secondary_proxy_ports(db=None):
         db = client[config.MONGODB_DB_NAME]
     setting = db.settings.find_one({"_id": "secondary_proxy_ports"})
     if setting is None:
-        return "80,443"
+        return "80"
     return setting["value"]
 
 def set_secondary_proxy_ports(val, db=None):
