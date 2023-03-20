@@ -41,7 +41,19 @@ proxy-groups:
     global-default: true
     lazy: false
 
+{% for tier in tiers %}
+{% if tier.exists %}
+{% with name="tier" + (tier.index) + "-group", proxies=providers, tier=tier, udp_only=False, panel_domain=panel_domain, user_id=user_id, udp_only=False %}
+{% if tier.type == 'urltest' %}{% include "groups/urltest.yaml" %}{% endif %}
+{% if tier.type == 'fallback' %}{% include "groups/fallback.yaml" %}{% endif %}
+{% if tier.type == 'loadbalance' %}{% include "groups/loadbalance.yaml" %}{% endif %}
+{% endwith %}
+{% endif %}
+{% endfor %}
+
+
 {% if udp_exists %}
+{% if meta or premium %}
   - name: "main-group-udp"
     type: fallback
     proxies:
@@ -51,15 +63,9 @@ proxy-groups:
     url: 'https://www.google.com/generate_204'
     interval: 5
     lazy: false
-{% endif %}
 
 {% for tier in tiers %}
 {% if tier.exists %}
-{% with name="tier" + (tier.index) + "-group", proxies=providers, tier=tier, udp_only=False, panel_domain=panel_domain, user_id=user_id, udp_only=False %}
-{% if tier.type == 'urltest' %}{% include "groups/urltest.yaml" %}{% endif %}
-{% if tier.type == 'fallback' %}{% include "groups/fallback.yaml" %}{% endif %}
-{% if tier.type == 'loadbalance' %}{% include "groups/loadbalance.yaml" %}{% endif %}
-{% endwith %}
 {% with name="tier" + (tier.index) + "-group-udp", proxies=providers, tier=tier, udp_only=False, panel_domain=panel_domain, user_id=user_id, udp_only=True %}
 {% if tier.type == 'urltest' %}{% include "groups/urltest.yaml" %}{% endif %}
 {% if tier.type == 'fallback' %}{% include "groups/fallback.yaml" %}{% endif %}
@@ -68,6 +74,8 @@ proxy-groups:
 {% endif %}
 {% endfor %}
 
+{% endif %}
+{% endif %}
 
 {% if health_check %}
 {% for provider in providers %}
