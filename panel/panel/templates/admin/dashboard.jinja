@@ -124,7 +124,7 @@
 <div class="section stats">
     <div class="row">
         <div class="col-12">
-            <h6 class="bordered">Connected IPs in the past 3 days</h6>
+            <h6 class="bordered">Connected IPs in the past 7 days</h6>
             <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
         </div>
     </div>
@@ -167,7 +167,7 @@
     }
 
     function updateConnectionChart() {
-        fetch('/{{ admin_uuid }}/stats/connections?days=3')
+        fetch('/{{ admin_uuid }}/stats/connections?days=7')
             .then(function(response) {
                 return response.json()
             })
