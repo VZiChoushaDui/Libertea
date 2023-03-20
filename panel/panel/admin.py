@@ -7,7 +7,6 @@ from . import stats
 from . import config
 from . import settings
 from . import health_check
-from . import clash_conf_generator
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
@@ -234,16 +233,16 @@ def domains():
 
     all_domains = [{
         "id": domain["_id"],
-        "status": utils.check_domain_set_properly(domain["_id"]),
+        "status": utils.check_domain_set_properly(domain["_id"], db=db),
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
-        "tier": utils.get_domain_or_online_route_tier(domain["_id"]),
+        "tier": utils.get_domain_or_online_route_tier(domain["_id"], db=db, return_default_if_none=True),
     } for domain in domains.find()]
 
     proxy_ips = utils.online_route_get_all()
     proxies = [{
         "ip": x,
-        "tier": utils.get_domain_or_online_route_tier(x),
-        "update_available": utils.online_route_update_available(x, db),
+        "tier": utils.get_domain_or_online_route_tier(x, db=db, return_default_if_none=True),
+        "update_available": utils.online_route_update_available(x, db=db),
     } for x in proxy_ips]
 
 
@@ -256,7 +255,7 @@ def domains():
         server_ip=config.SERVER_MAIN_IP,
         panel_secret_key=config.get_panel_secret_key(),
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
-        health_check=settings.get_periodic_health_check(),
+        health_check=settings.get_periodic_health_check(db=db),
     )
 
 
@@ -275,7 +274,7 @@ def domain(domain):
 
     tier = utils.get_domain_or_online_route_tier(domain)
     if tier is None:
-        tier = clash_conf_generator.get_default_tier_for_route(domain)
+        tier = utils.get_default_tier_for_route(domain)
     tier = str(tier)
 
     if domain_entry is None:
@@ -424,7 +423,7 @@ def app_settings():
         page='settings',
         admin_uuid=config.get_admin_uuid(),
         max_ips=settings.get_default_max_ips(),
-        proxy_use_80=settings.get_secondary_proxy_use_80_instead_of_443(),
+        proxy_port=settings.get_secondary_proxy_ports(),
         single_file_clash=settings.get_single_clash_file_configuration(),
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
@@ -440,7 +439,7 @@ def app_settings():
 @blueprint.route(root_url + 'settings/', methods=['POST'])
 def app_settings_save():
     max_ips = request.form.get('max_ips', None)
-    proxy_use_80 = request.form.get('proxy_use_80', None)
+    proxy_port = request.form.get('proxy_port', None)
     single_file_clash = request.form.get('single_file_clash', None)
     providers_from_all_endpoints = request.form.get('providers_from_all_endpoints', None)
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
@@ -457,7 +456,9 @@ def app_settings_save():
         settings.set_default_max_ips(max_ips)
     if add_domains_even_if_inactive is not None:
         settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
-    settings.set_secondary_proxy_use_80_instead_of_443(proxy_use_80 == 'on')
+    if proxy_port is not None:
+        settings.set_secondary_proxy_ports(proxy_port)
+
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')

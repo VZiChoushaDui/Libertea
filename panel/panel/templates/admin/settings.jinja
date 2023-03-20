@@ -96,12 +96,13 @@
             {% endfor %}
         </div>
 
-        <div class="form-check mb-4">
-            <input class="form-check-input" type="checkbox" value="on" name="proxy_use_80" id="proxy_use_80" {% if proxy_use_80 %}checked{% endif %}>
-            <label class="form-check-label" for="proxy_use_80">
-                Use port 80 instead of 443 for secondary proxies<br />
-                <i style="opacity: 0.75">Recommended</i>
-            </label>
+        <div class="form-group mb-4">
+            <label for="proxy_port">Secondary proxy port</label>
+            <select class="form-select" aria-label="Secondary proxy port" id="proxy_port" name="proxy_port">
+                <option value="443" {% if proxy_port == '443' %}selected{% endif %}>443</option>
+                <option value="80" {% if proxy_port == '80' %}selected{% endif %}>80</option>
+                <option value="443,80" {% if proxy_port == '80,443' %}selected{% endif %}>Both 80 and 443</option>
+            </select>
         </div>
         <div class="form-check mb-4">
             <input class="form-check-input" type="checkbox" value="on" name="single_file_clash" id="single_file_clash" {% if single_file_clash %}checked{% endif %}>

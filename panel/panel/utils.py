@@ -198,7 +198,34 @@ def get_domain_sni(domain, db=None):
         return None
     return domain_entry["sni"]
 
-def get_domain_or_online_route_tier(domain, db=None):
+def get_route_entry_type(domain, db=None):
+    entry_type = None
+    for server in get_domains(db=db):
+        if domain == server:
+            entry_type = 'CDNProxy'
+            if check_domain_cdn_provider(server, db=db) == 'Cloudflare':
+                entry_type += '-Cloudflare'
+            else:
+                entry_type += '-Other'
+            break
+    if entry_type is None:
+        entry_type = 'SecondaryProxy'
+
+    return entry_type
+
+def get_default_tier_for_route(domain):
+    return get_default_tier(get_route_entry_type(domain))
+
+def get_default_tier(entry_type):
+    if entry_type == 'CDNProxy-Cloudflare':
+        return '2'
+    if entry_type == 'SecondaryProxy':
+        return '1'
+    if entry_type == 'CDNProxy-Other':
+        return '3'
+    return '4'
+
+def get_domain_or_online_route_tier(domain, db=None, return_default_if_none=False):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -210,6 +237,9 @@ def get_domain_or_online_route_tier(domain, db=None):
         return str(domain_entry["tier"])
     if online_route_entry is not None and "tier" in online_route_entry:
         return str(online_route_entry["tier"])
+
+    if return_default_if_none:
+        return get_default_tier_for_route(domain)
     return None
 
 def set_domain_or_online_route_tier(domain, tier, db=None):

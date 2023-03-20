@@ -7,31 +7,6 @@ from pymongo import MongoClient
 from flask import render_template
 from datetime import datetime, timedelta
 
-def get_default_tier_for_route(domain):
-    entry_type = ''
-    for secondary_route in utils.online_route_get_all():
-        if domain == secondary_route:
-            entry_type = 'SecondaryProxy'
-    for server in utils.get_domains():
-        if domain == server:
-            entry_type = 'CDNProxy'
-            if utils.check_domain_cdn_provider(server) == 'Cloudflare':
-                entry_type += '-Cloudflare'
-            else:
-                entry_type += '-Other'
-
-    return get_default_tier(entry_type)
-
-
-def get_default_tier(entry_type):
-    if entry_type == 'CDNProxy-Cloudflare':
-        return '2'
-    if entry_type == 'SecondaryProxy':
-        return '1'
-    if entry_type == 'CDNProxy-Other':
-        return '3'
-    return '4'
-
 def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
     if server is None:
         server = host
@@ -46,7 +21,7 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
         skip_cert_verify = "true"
 
     if tier is None:
-        tier = get_default_tier(entry_type)
+        tier = utils.get_default_tier(entry_type)
 
     return {
         'type': type,
@@ -66,28 +41,26 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
 def get_providers(connect_url, db):
     servers = []
 
+    ports = settings.get_secondary_proxy_ports(db=db)
+    try:
+        ports = [int(x) for x in ports.split(',')]
+    except:
+        ports = [443]
+
     for secondary_route in utils.online_route_get_all(db=db):
-        if settings.get_secondary_proxy_use_80_instead_of_443(db=db):
-            servers.append((secondary_route, 80, 'SecondaryProxy'))
-        else:
-            servers.append((secondary_route, 443, 'SecondaryProxy'))
+        for port in ports:
+            servers.append((secondary_route, port))
     for server in utils.get_domains(db=db):
         if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) == 'active':
-            servers.append((server, 443, 'CDNProxy'))
+            servers.append((server, 443))
     
     # # DEBUG ONLY
     # servers.append((config.SERVER_MAIN_IP, 443))
 
     providers = []
     idx = 0
-    for server, port, server_type in servers:      
-        server_type_ex = server_type
-        if server_type == 'CDNProxy':
-            if utils.check_domain_cdn_provider(server, db=db) == 'Cloudflare':
-                server_type_ex += '-Cloudflare'
-            else:
-                server_type_ex += '-Other'
-
+    for server, port in servers:      
+        server_entry_type = utils.get_route_entry_type(server, db=db)
         server_ips_str = utils.get_domain_dns_domain(server, db=db)
         server_ips = [server_ips_str]
         if server_ips_str is not None and ',' in server_ips_str:
@@ -101,7 +74,7 @@ def get_providers(connect_url, db):
                     password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
                     meta_only=False,
-                    entry_type=server_type_ex,
+                    entry_type=server_entry_type,
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
@@ -115,7 +88,7 @@ def get_providers(connect_url, db):
                     password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
                     meta_only=True,
-                    entry_type=server_type_ex,
+                    entry_type=server_entry_type,
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
@@ -129,7 +102,7 @@ def get_providers(connect_url, db):
                     password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
                     meta_only=False,
-                    entry_type=server_type_ex,
+                    entry_type=server_entry_type,
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
