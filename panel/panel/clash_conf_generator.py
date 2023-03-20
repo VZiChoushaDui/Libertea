@@ -30,7 +30,7 @@ def get_default_tier(entry_type):
         return '1'
     if entry_type == 'CDNProxy-Other':
         return '3'
-    return '3'
+    return '4'
 
 def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
     if server is None:
@@ -157,7 +157,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
     udp_exists = settings.get_provider_enabled('trojanws', db=db)
 
     tiers = []
-    for i in range(3):
+    for i in range(4):
         tiers.append({
             'index': str(i+1),
             'exists': len([x for x in providers if x['tier'] == str(i+1)]) > 0,
@@ -227,7 +227,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
 
 
     tiers = []
-    for i in range(3):
+    for i in range(4):
         tiers.append({
             'index': str(i+1),
             'exists': len([x for x in providers if x['tier'] == str(i+1)]) > 0,

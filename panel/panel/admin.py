@@ -414,7 +414,7 @@ def app_settings():
         
     
     proxygroup_type_selected = {}
-    for i in [1,2,3]:
+    for i in [1,2,3,4]:
         proxygroup_type_selected[str(i)] = settings.get_tier_proxygroup_type(i)
 
     return render_template('admin/settings.jinja',
@@ -446,7 +446,7 @@ def app_settings_save():
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
 
-    tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3]}
+    tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
     for i in tiers_proxygroup_type.keys():
         settings.set_tier_proxygroup_type(i, tiers_proxygroup_type[i])
 
