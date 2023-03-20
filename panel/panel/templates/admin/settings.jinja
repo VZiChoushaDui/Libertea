@@ -67,38 +67,68 @@
         <label for="concurrentIps">Default max concurrent IPs to connect</label>
         <input type="number" class="form-control" id="concurrentIps" name="max_ips" value="{{ max_ips }}" style="max-width: 400px;">
     </div>
-    <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" value="on" name="proxy_use_80" id="proxy_use_80" {% if proxy_use_80 %}checked{% endif %}>
-        <label class="form-check-label" for="proxy_use_80">
-            Use port 80 instead of 443 for secondary proxies<br />
-            <i style="opacity: 0.75">Recommended</i>
-        </label>
+    <div class="form-group mb-4">
+        <button class="show-advanced-settings btn btn-link px-0">Show advanced settings</button>
     </div>
-    <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" value="on" name="single_file_clash" id="single_file_clash" {% if single_file_clash %}checked{% endif %}>
-        <label class="form-check-label" for="single_file_clash">
-            Use single-file clash configuration<br />
-            <i style="opacity: 0.75">Disables one-click auto update for users, but makes initial import faster on poor connections</i>
-        </label>
-    </div>
-    <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" value="on" name="add_domains_even_if_inactive" id="add_domains_even_if_inactive" {% if add_domains_even_if_inactive %}checked{% endif %}>
-        <label class="form-check-label" for="add_domains_even_if_inactive">
-            Add all domains to Clash config, even if they are not active or reachable from server
-        </label>
-    </div>
-    <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" value="on" name="health_check" id="health_check" {% if health_check %}checked{% endif %}>
-        <label class="form-check-label" for="health_check">
-            Periodic health check from clients <strong>[BETA]</strong><br />
-            <i style="opacity: 0.75">Only single-file clash configuration supports this feature</i>
-        </label>
-    </div>
-    <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" value="on" name="providers_from_all_endpoints" id="providers_from_all_endpoints" {% if providers_from_all_endpoints %}checked{% endif %}>
-        <label class="form-check-label" for="providers_from_all_endpoints">
-            Add all VPN endpoints as provider source URLs
-        </label>
+    <script>
+        document.querySelector(".show-advanced-settings").addEventListener("click", function(e) {
+            e.preventDefault();
+            document.querySelector(".advanced-settings").style.display = "block";
+            this.style.display = "none";
+        });
+    </script>
+    <div class="advanced-settings" style="display: none">
+        <div class="form-group">
+            <label class="form-check-label">
+                Server selection method<br />
+            </label>
+        </div>
+        <div class="mb-5 mx-2 pt-2 tier-proxygroup-types-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+            {% for tier in ['1', '2', '3'] %}
+            <div class="form-group mb-4">
+                <label for="tier_{{tier}}_proxygroup_type">Priority {{ tier }}</label>
+                <select class="form-select" aria-label="Tier {{ tier }} server selection method" id="tier_{{tier}}_proxygroup_type" name="tier_{{tier}}_proxygroup_type">
+                    <option value="urltest" {% if proxygroup_type_selected[tier] == 'urltest' %}selected{% endif %}>Ping</option>
+                    <option value="loadbalance" {% if proxygroup_type_selected[tier] == 'loadbalance' %}selected{% endif %}>Load balance (round-robin)</option>
+                    <option value="fallback" disabled {% if proxygroup_type_selected[tier] == 'fallback' %}selected{% endif %}>Fallback (best health score first)</option>
+                </select>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" value="on" name="proxy_use_80" id="proxy_use_80" {% if proxy_use_80 %}checked{% endif %}>
+            <label class="form-check-label" for="proxy_use_80">
+                Use port 80 instead of 443 for secondary proxies<br />
+                <i style="opacity: 0.75">Recommended</i>
+            </label>
+        </div>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" value="on" name="single_file_clash" id="single_file_clash" {% if single_file_clash %}checked{% endif %}>
+            <label class="form-check-label" for="single_file_clash">
+                Use single-file clash configuration<br />
+                <i style="opacity: 0.75">Disables one-click auto update for users, but makes initial import faster on poor connections</i>
+            </label>
+        </div>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" value="on" name="add_domains_even_if_inactive" id="add_domains_even_if_inactive" {% if add_domains_even_if_inactive %}checked{% endif %}>
+            <label class="form-check-label" for="add_domains_even_if_inactive">
+                Add all domains to Clash config, even if they are not active or reachable from server
+            </label>
+        </div>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" value="on" name="health_check" id="health_check" {% if health_check %}checked{% endif %}>
+            <label class="form-check-label" for="health_check">
+                Periodic health check from clients <strong>[BETA]</strong><br />
+                <i style="opacity: 0.75">Only single-file clash configuration supports this feature</i>
+            </label>
+        </div>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" value="on" name="providers_from_all_endpoints" id="providers_from_all_endpoints" {% if providers_from_all_endpoints %}checked{% endif %}>
+            <label class="form-check-label" for="providers_from_all_endpoints">
+                Add all VPN endpoints as provider source URLs
+            </label>
+        </div>
     </div>
     <button type="submit" class="btn btn-primary">Save</button>
 </form>

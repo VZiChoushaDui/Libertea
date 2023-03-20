@@ -198,6 +198,43 @@ def get_domain_sni(domain, db=None):
         return None
     return domain_entry["sni"]
 
+def get_domain_or_online_route_tier(domain, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    online_routes = db.online_routes
+    domain_entry = domains.find_one({"_id": domain})
+    online_route_entry = online_routes.find_one({"_id": domain})
+    if domain_entry is not None and "tier" in domain_entry:
+        return str(domain_entry["tier"])
+    if online_route_entry is not None and "tier" in online_route_entry:
+        return str(online_route_entry["tier"])
+    return None
+
+def set_domain_or_online_route_tier(domain, tier, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    tier = str(tier)
+    if not tier.isdigit():
+        return False
+    if int(tier) <= 0 or int(tier) > 3:
+        return False
+
+    domains = db.domains
+    online_routes = db.online_routes
+    domain_entry = domains.find_one({"_id": domain})
+    online_route_entry = online_routes.find_one({"_id": domain})
+    if domain_entry is None and online_route_entry is None:
+        return False
+    if domain_entry is not None:
+        domains.update_one({"_id": domain}, {"$set": {"tier": tier}})
+    if online_route_entry is not None:
+        online_routes.update_one({"_id": domain}, {"$set": {"tier": tier}})
+    return True
+
 def update_domain(domain, dns_domain=None, sni=None, db=None):
     if db is None:
         client = config.get_mongo_client()

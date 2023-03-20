@@ -7,7 +7,32 @@ from pymongo import MongoClient
 from flask import render_template
 from datetime import datetime, timedelta
 
-def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None):
+def get_default_tier_for_route(domain):
+    entry_type = ''
+    for secondary_route in utils.online_route_get_all():
+        if domain == secondary_route:
+            entry_type = 'SecondaryProxy'
+    for server in utils.get_domains():
+        if domain == server:
+            entry_type = 'CDNProxy'
+            if utils.check_domain_cdn_provider(server) == 'Cloudflare':
+                entry_type += '-Cloudflare'
+            else:
+                entry_type += '-Other'
+
+    return get_default_tier(entry_type)
+
+
+def get_default_tier(entry_type):
+    if entry_type == 'CDNProxy-Cloudflare':
+        return '1'
+    if entry_type == 'SecondaryProxy':
+        return '1'
+    if entry_type == 'CDNProxy-Other':
+        return '2'
+    return '3'
+
+def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
     if server is None:
         server = host
     if sni is None:
@@ -19,6 +44,9 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
         sni = 'google.com'
         host = 'google.com'
         skip_cert_verify = "true"
+
+    if tier is None:
+        tier = get_default_tier(entry_type)
 
     return {
         'type': type,
@@ -32,19 +60,20 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
         'skip_cert_verify': skip_cert_verify,
         'meta_only': meta_only,
         'entry_type': entry_type,
+        'tier': tier,
     }
 
 def get_providers(connect_url, db):
     servers = []
 
-    for server in utils.get_domains(db=db):
-        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) == 'active':
-            servers.append((server, 443, 'CDNProxy'))
     for secondary_route in utils.online_route_get_all(db=db):
         if settings.get_secondary_proxy_use_80_instead_of_443(db=db):
             servers.append((secondary_route, 80, 'SecondaryProxy'))
         else:
             servers.append((secondary_route, 443, 'SecondaryProxy'))
+    for server in utils.get_domains(db=db):
+        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) == 'active':
+            servers.append((server, 443, 'CDNProxy'))
     
     # # DEBUG ONLY
     # servers.append((config.SERVER_MAIN_IP, 443))
@@ -76,6 +105,7 @@ def get_providers(connect_url, db):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
             if settings.get_provider_enabled('vlessws', db=db):
                 providers.append(init_provider_info(
@@ -89,6 +119,7 @@ def get_providers(connect_url, db):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
             if settings.get_provider_enabled('ssv2ray', db=db):
                 providers.append(init_provider_info(
@@ -102,6 +133,7 @@ def get_providers(connect_url, db):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
             idx += 1
 
@@ -115,17 +147,6 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
     db = client[config.MONGODB_DB_NAME]
 
     providers = get_providers(connect_url, db)
-
-    cloudflare_exists = False
-    direct_exists = False
-    cdn_other_exists = False
-    for provider in providers:
-        if provider['entry_type'] == 'CDNProxy-Cloudflare':
-            cloudflare_exists = True
-        elif provider['entry_type'] == 'CDNProxy-Other':
-            cdn_other_exists = True
-        elif provider['entry_type'] == 'SecondaryProxy':
-            direct_exists = True
     
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
@@ -135,18 +156,24 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
     
     udp_exists = settings.get_provider_enabled('trojanws', db=db)
 
+    tiers = []
+    for i in range(3):
+        tiers.append({
+            'index': str(i+1),
+            'exists': len([x for x in providers if x['tier'] == str(i+1)]) > 0,
+            'type': settings.get_tier_proxygroup_type(i+1, db=db),
+        })
+
     result = render_template('main-singlefile.yaml', 
         providers=providers,
         meta=meta,
         premium=premium,
         ips_direct_countries=ips_direct_countries,
-        cloudflare_exists=cloudflare_exists,
-        direct_exists=direct_exists,
-        cdn_other_exists=cdn_other_exists,
         user_id=user_id,
         panel_domain=config.get_panel_domain(),
         udp_exists=udp_exists,
         health_check=settings.get_periodic_health_check(),
+        tiers=tiers,
     )
 
     return result
@@ -155,24 +182,17 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
-    if file_name not in ['main.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 'direct-udp.yaml', 'rules.yaml', 'health-check-providers.yaml']:
+    if file_name not in ['main.yaml', 'tier1.yaml', 'tier2.yaml', 'tier3.yaml', 
+                            'tier1-udp.yaml', 'tier2-udp.yaml', 'tier3-udp.yaml', 
+                            'rules.yaml', 'cloudflare.yaml', 'cdn-other.yaml', 
+                            'direct.yaml', 'cloudflare-udp.yaml', 'cdn-other-udp.yaml', 
+                            'direct-udp.yaml', 'rules.yaml', 'health-check-providers.yaml']:
         return ""
 
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     
     providers = get_providers(connect_url, db=db)
-
-    cloudflare_exists = False
-    direct_exists = False
-    cdn_other_exists = False
-    for provider in providers:
-        if provider['entry_type'] == 'CDNProxy-Cloudflare':
-            cloudflare_exists = True
-        elif provider['entry_type'] == 'CDNProxy-Other':
-            cdn_other_exists = True
-        elif provider['entry_type'] == 'SecondaryProxy':
-            direct_exists = True
 
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
@@ -186,17 +206,42 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
         domains.add(config.get_panel_domain())
     
     udp_exists = settings.get_provider_enabled('trojanws', db=db)
+    
+    if file_name.startswith('tier') and file_name.endswith('.yaml'):
+        tier = int(file_name[4])
+        if file_name.endswith('udp.yaml'):
+            file_name = 'tier-udp.yaml'
+        else:
+            file_name = 'tier.yaml'
+
+        return render_template(file_name, 
+            providers=[x for x in providers if x['tier'] == str(tier)],
+            meta=meta,
+            premium=premium,
+            ips_direct_countries=ips_direct_countries,
+            user_id=user_id,
+            panel_domain=config.get_panel_domain(),
+            domains=list(domains),
+            udp_exists=udp_exists,
+        )
+
+
+    tiers = []
+    for i in range(3):
+        tiers.append({
+            'index': str(i+1),
+            'exists': len([x for x in providers if x['tier'] == str(i+1)]) > 0,
+            'type': settings.get_tier_proxygroup_type(i+1, db=db),
+        })
 
     return render_template(file_name, 
         providers=providers,
         meta=meta,
         premium=premium,
-        cloudflare_exists=cloudflare_exists,
-        direct_exists=direct_exists,
-        cdn_other_exists=cdn_other_exists,
         ips_direct_countries=ips_direct_countries,
         user_id=user_id,
         panel_domain=config.get_panel_domain(),
         domains=list(domains),
         udp_exists=udp_exists,
+        tiers=tiers,
     )

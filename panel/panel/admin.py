@@ -7,6 +7,7 @@ from . import stats
 from . import config
 from . import settings
 from . import health_check
+from . import clash_conf_generator
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
@@ -270,6 +271,10 @@ def domain(domain):
     db = client[config.MONGODB_DB_NAME]
     domain_entry = db.domains.find_one({"_id": domain})
 
+    tier = str(utils.get_domain_or_online_route_tier(domain))
+    if tier is None:
+        tier = str(clash_conf_generator.get_default_tier_for_route(domain))
+
     if domain_entry is None:
         proxy_ips = utils.online_route_get_all()
         if not domain in proxy_ips:
@@ -286,9 +291,8 @@ def domain(domain):
             panel_secret_key=config.get_panel_secret_key(),
             proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
             health_check=settings.get_periodic_health_check(),
+            tier=tier,
         )
-
-        
 
     utils.update_domain_cache(domain_entry['_id'], try_count=1)
 
@@ -303,6 +307,7 @@ def domain(domain):
         cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']),
         secondary_proxy=False,
         health_check=settings.get_periodic_health_check(),
+        tier=tier,
     )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['POST'])
@@ -335,6 +340,12 @@ def domain_save(domain):
             ip_override = None
 
         utils.update_domain(domain, dns_domain=ip_override)
+
+    priority = request.form.get('priority', None)
+    if priority is not None:
+        priority = int(priority)
+        utils.set_domain_or_online_route_tier(domain, priority)
+    
     return redirect(url_for('admin.domains'))
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
@@ -401,6 +412,10 @@ def app_settings():
                 camouflage_error = camouflage_domain_status
         
     
+    proxygroup_type_selected = {}
+    for i in [1,2,3]:
+        proxygroup_type_selected[str(i)] = settings.get_tier_proxygroup_type(i)
+
     return render_template('admin/settings.jinja',
         page='settings',
         admin_uuid=config.get_admin_uuid(),
@@ -415,6 +430,7 @@ def app_settings():
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
         provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'ssv2ray']},
+        proxygroup_type_selected=proxygroup_type_selected,
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
@@ -428,6 +444,10 @@ def app_settings_save():
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
+
+    tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3]}
+    for i in tiers_proxygroup_type.keys():
+        settings.set_tier_proxygroup_type(i, tiers_proxygroup_type[i])
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
