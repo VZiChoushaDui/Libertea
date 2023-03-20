@@ -271,9 +271,10 @@ def domain(domain):
     db = client[config.MONGODB_DB_NAME]
     domain_entry = db.domains.find_one({"_id": domain})
 
-    tier = str(utils.get_domain_or_online_route_tier(domain))
+    tier = utils.get_domain_or_online_route_tier(domain)
     if tier is None:
-        tier = str(clash_conf_generator.get_default_tier_for_route(domain))
+        tier = clash_conf_generator.get_default_tier_for_route(domain)
+    tier = str(tier)
 
     if domain_entry is None:
         proxy_ips = utils.online_route_get_all()
