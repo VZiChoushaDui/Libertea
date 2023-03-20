@@ -250,7 +250,7 @@ def set_domain_or_online_route_tier(domain, tier, db=None):
     tier = str(tier)
     if not tier.isdigit():
         return False
-    if int(tier) <= 0 or int(tier) > 3:
+    if int(tier) <= 0 or int(tier) > 4:
         return False
 
     domains = db.domains
