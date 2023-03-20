@@ -328,6 +328,7 @@ def domain_save(domain):
                 return redirect(url_for('admin.dashboard'))
             
             utils.add_domain(domain)
+            utils.update_domain_cache(domain, try_count=2)
 
         if request.form.get('next', None) == 'dashboard':
             return redirect(url_for('admin.dashboard'))
