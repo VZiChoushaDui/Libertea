@@ -17,6 +17,11 @@
             </strong>
         </div>
     </div>
+    <div class="row">
+        <div class="col-12">
+            Traffic usage in in <span class="traffic-month-name"></span>: <strong><span class="traffic-month-value">⌛</span></strong>
+        </div>
+    </div>
 {% if health_check %}
     <div class="row">
         <div class="col-12">
@@ -113,6 +118,10 @@
     </div>
     {% endif %}
 {% endif %}
+    <div class="row mt-5">
+        <h6>Traffic usage over time</h6>
+        <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
+    </div>
 {% if health_check %}
     <div class="row mt-5">
         <h6>Health over time</h6>
@@ -121,7 +130,7 @@
 {% endif %}
 
 <form method="post" class="mt-5">
-    <h5 class="mb-4">Advanced options</h5>
+    <h6 class="mb-2 bordered">Advanced options</h6>
     <div class="form-group mb-4">
         <label for="priority">Priority</label>
         <select class="form-select" aria-label="Route priority" id="priority" name="priority">
@@ -256,7 +265,9 @@
                             datasets: [{
                                 label: 'Health (%)',
                                 data: chart_data_y,
-                                borderWidth: 1
+                                borderWidth: 1,
+                                backgroundColor: 'rgba(255, 99, 132, 0.75)',
+                                borderColor: 'rgba(255, 99, 132, 0.75)',
                             }]
                         },
                         options: {
@@ -293,6 +304,77 @@
                     });
                 });
 
+            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
+                .then(function(response) {
+                    return response.json()
+                })
+                .then(function(data) {
+                    const ctx = document.getElementById('trafficChart');
+                    ctx.innerHTML = "";
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.x,
+                            datasets: [{
+                                label: 'Traffic',
+                                data: data.y,
+                                borderWidth: 1,
+                                fill: true,
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                            }]
+                        },
+                        options: {
+                            interaction: {
+                                intersect: false,
+                                mode: 'index',
+                            },
+                            scales: {
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: "Traffic (GB)",
+                                    },
+                                    beginAtZero: true,
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                },
+                                zoom: {
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true,
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'x',
+                                    },
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'x',
+                                    }
+                                }
+                            },
+                        }
+                    });
+                });
+
+            document.querySelector('.traffic-month-name').innerText = new Date().toLocaleString('default', { month: 'long' });
+            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=' + new Date().getDate())
+                .then(function(response) {
+                    return response.json()
+                })
+                .then(function(data) {
+                    var sum = 0;
+                    for (var i = 0; i < data.y.length; i++) {
+                        sum += data.y[i];
+                    }
+                    document.querySelector('.traffic-month-value').innerText = Math.round(sum * 100) / 100 + ' GB';
+                }); 
         </script>
 {% endif %}
     </div>

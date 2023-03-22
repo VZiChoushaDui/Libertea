@@ -34,7 +34,7 @@
     </div>
 </div>
 <hr />
-<div class="section stats">
+<div class="section stats mb-5">
     <div class="row">
         <div class="col-6 col-sm-3 stats-item">
             <div class="stats-item-value">{{ traffic_today }}</div>
@@ -54,14 +54,17 @@
         </div>
     </div>
 </div>
-<hr />
-<div class="section">
-    <h6>Connected IPs in the past 3 days</h6>
+<div class="section mb-4">
+    <h6>Connected IPs over time</h6>
     <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
 </div>
-<hr />
+<div class="section mb-4">
+    <h6>Traffic usage over time</h6>
+    <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
+</div>
 <div class="section">
-    <form method="post" class="mt-5">
+    <form method="post" class="mt-2">
+        <h6 class="mb-2 bordered">User settings</h6>
         <div class="form-group mb-4">
             <label for="userId">User Id</label>
             <input type="text" class="form-control" id="userId" name="userId" readonly disabled value="{{ user._id }}">
@@ -199,7 +202,7 @@
         }
 
         function updateConnectionChart() {
-            fetch('/{{ admin_uuid }}/stats/connections/{{ user._id }}?days=3')
+            fetch('/{{ admin_uuid }}/stats/connections/{{ user._id }}?days=14')
                 .then(function(response) {
                     return response.json()
                 })
@@ -214,7 +217,9 @@
                             datasets: [{
                                 label: 'IPs connected',
                                 data: data.y,
-                                borderWidth: 1
+                                borderWidth: 1,
+                                backgroundColor: 'rgba(255, 99, 132, 0.75)',
+                                borderColor: 'rgba(255, 99, 132, 0.75)',
                             }]
                         },
                         options: {
@@ -252,9 +257,72 @@
                 });
         }
 
+            
+        function updateTrafficChart() {
+            fetch('/{{ admin_uuid }}/stats/traffic/user/{{ user._id }}?days=30')
+                .then(function(response) {
+                    return response.json()
+                })
+                .then(function(data) {
+                    const ctx = document.getElementById('trafficChart');
+                    ctx.innerHTML = "";
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.x,
+                            datasets: [{
+                                label: 'Traffic',
+                                data: data.y,
+                                borderWidth: 1,
+                                fill: true,
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                            }]
+                        },
+                        options: {
+                            interaction: {
+                                intersect: false,
+                                mode: 'index',
+                            },
+                            scales: {
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: "Traffic (GB)",
+                                    },
+                                    beginAtZero: true,
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                },
+                                zoom: {
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true,
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'x',
+                                    },
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'x',
+                                    }
+                                }
+                            },
+                        }
+                    });
+                });
+        }
+
         setInterval(get_ips_connected_right_now, 5000);
         get_ips_connected_right_now();
         updateConnectionChart();
+        updateTrafficChart();
     </script>
 </div>
 

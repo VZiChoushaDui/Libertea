@@ -137,6 +137,51 @@ def connection_stats_user(user_id):
         "y": connected_ips_over_time_ys,
     }
 
+@blueprint.route(root_url + "stats/traffic", methods=['GET'])
+def traffic_stats():
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day_all(days=days)
+    traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
+
+    return {
+        "x": traffic_over_time_xs,
+        "y": traffic_over_time_ys,
+    }
+
+@blueprint.route(root_url + "stats/traffic/user/<user_id>", methods=['GET'])
+def traffic_stats_user(user_id):
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day(user_id, days=days)
+    traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
+
+    return {
+        "x": traffic_over_time_xs,
+        "y": traffic_over_time_ys,
+    }
+    
+@blueprint.route(root_url + "stats/traffic/domain/<domain>", methods=['GET'])
+def traffic_stats_domain(domain):
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day_all(days=days, domain=domain)
+    traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
+
+    return {
+        "x": traffic_over_time_xs,
+        "y": traffic_over_time_ys,
+    }
+
 @blueprint.route(root_url + 'users/')
 def users():
     client = config.get_mongo_client()
