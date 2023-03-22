@@ -107,7 +107,7 @@ local function auth_request(txn)
     end
 
     local user_ip = txn.f:src()
-    local forwarded_ip = txn.f:req_hdr("X-Forwarded-For")
+    local forwarded_ip = txn.f:req_hdr_ip("X-Forwarded-For", 1)
 
     -- check if X-Forwarded-For header is present
     if forwarded_ip ~= nil then
