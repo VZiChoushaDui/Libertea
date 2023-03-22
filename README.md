@@ -62,3 +62,7 @@ Libertea uses SSL-based protocols, so the traffic is not distinguishable from no
 ##### Can I route regional traffic directly (without going through VPN)?
 
 Yes. In the admin panel, go to the *Settings* tab, and in the *Route regional IPs directly* section, select the countries you want to go through directly.
+
+##### Some of my servers or CDN plans have limited traffic. Can I prioritize servers?
+
+Yes. You can set a priority for each domain and secondary proxy; users' devices will try higher priority routes first, and use the lower priority ones only if those are not available. This way, you can optimize your traffic usage per server/domain according to your needs.
