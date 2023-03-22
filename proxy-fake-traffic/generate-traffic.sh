@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # get country code
-COUNTRY_CODE=$(curl -s https://ipapi.co/country_code)
+COUNTRY_CODE=$(curl -s https://ifconfig.io/country_code)
 
 countries=("CN" "RU" "CU" "TH" "TM" "IR" "SY" "SA" "TR")
 
