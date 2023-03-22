@@ -198,6 +198,73 @@ def get_domain_sni(domain, db=None):
         return None
     return domain_entry["sni"]
 
+def get_route_entry_type(domain, db=None):
+    entry_type = None
+    for server in get_domains(db=db):
+        if domain == server:
+            entry_type = 'CDNProxy'
+            if check_domain_cdn_provider(server, db=db) == 'Cloudflare':
+                entry_type += '-Cloudflare'
+            else:
+                entry_type += '-Other'
+            break
+    if entry_type is None:
+        entry_type = 'SecondaryProxy'
+
+    return entry_type
+
+def get_default_tier_for_route(domain):
+    return get_default_tier(get_route_entry_type(domain))
+
+def get_default_tier(entry_type):
+    if entry_type == 'CDNProxy-Cloudflare':
+        return '2'
+    if entry_type == 'SecondaryProxy':
+        return '1'
+    if entry_type == 'CDNProxy-Other':
+        return '3'
+    return '4'
+
+def get_domain_or_online_route_tier(domain, db=None, return_default_if_none=False):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    online_routes = db.online_routes
+    domain_entry = domains.find_one({"_id": domain})
+    online_route_entry = online_routes.find_one({"_id": domain})
+    if domain_entry is not None and "tier" in domain_entry:
+        return str(domain_entry["tier"])
+    if online_route_entry is not None and "tier" in online_route_entry:
+        return str(online_route_entry["tier"])
+
+    if return_default_if_none:
+        return get_default_tier_for_route(domain)
+    return None
+
+def set_domain_or_online_route_tier(domain, tier, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    tier = str(tier)
+    if not tier.isdigit():
+        return False
+    if int(tier) <= 0 or int(tier) > 4:
+        return False
+
+    domains = db.domains
+    online_routes = db.online_routes
+    domain_entry = domains.find_one({"_id": domain})
+    online_route_entry = online_routes.find_one({"_id": domain})
+    if domain_entry is None and online_route_entry is None:
+        return False
+    if domain_entry is not None:
+        domains.update_one({"_id": domain}, {"$set": {"tier": tier}})
+    if online_route_entry is not None:
+        online_routes.update_one({"_id": domain}, {"$set": {"tier": tier}})
+    return True
+
 def update_domain(domain, dns_domain=None, sni=None, db=None):
     if db is None:
         client = config.get_mongo_client()

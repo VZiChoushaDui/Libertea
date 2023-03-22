@@ -137,6 +137,51 @@ def connection_stats_user(user_id):
         "y": connected_ips_over_time_ys,
     }
 
+@blueprint.route(root_url + "stats/traffic", methods=['GET'])
+def traffic_stats():
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day_all(days=days)
+    traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
+
+    return {
+        "x": traffic_over_time_xs,
+        "y": traffic_over_time_ys,
+    }
+
+@blueprint.route(root_url + "stats/traffic/user/<user_id>", methods=['GET'])
+def traffic_stats_user(user_id):
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day(user_id, days=days)
+    traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
+
+    return {
+        "x": traffic_over_time_xs,
+        "y": traffic_over_time_ys,
+    }
+    
+@blueprint.route(root_url + "stats/traffic/domain/<domain>", methods=['GET'])
+def traffic_stats_domain(domain):
+    days = str(request.args.get('days', '7'))
+    if not days.isdigit():
+        days = '7'
+    days = int(days)
+
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day_all(days=days, domain=domain)
+    traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
+
+    return {
+        "x": traffic_over_time_xs,
+        "y": traffic_over_time_ys,
+    }
+
 @blueprint.route(root_url + 'users/')
 def users():
     client = config.get_mongo_client()
@@ -233,14 +278,16 @@ def domains():
 
     all_domains = [{
         "id": domain["_id"],
-        "status": utils.check_domain_set_properly(domain["_id"]),
+        "status": utils.check_domain_set_properly(domain["_id"], db=db),
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
+        "tier": utils.get_domain_or_online_route_tier(domain["_id"], db=db, return_default_if_none=True),
     } for domain in domains.find()]
 
     proxy_ips = utils.online_route_get_all()
     proxies = [{
-        'ip': x,
-        'update_available': utils.online_route_update_available(x, db),
+        "ip": x,
+        "tier": utils.get_domain_or_online_route_tier(x, db=db, return_default_if_none=True),
+        "update_available": utils.online_route_update_available(x, db=db),
     } for x in proxy_ips]
 
 
@@ -253,7 +300,7 @@ def domains():
         server_ip=config.SERVER_MAIN_IP,
         panel_secret_key=config.get_panel_secret_key(),
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
-        health_check=settings.get_periodic_health_check(),
+        health_check=settings.get_periodic_health_check(db=db),
     )
 
 
@@ -269,6 +316,11 @@ def domain(domain):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domain_entry = db.domains.find_one({"_id": domain})
+
+    tier = utils.get_domain_or_online_route_tier(domain)
+    if tier is None:
+        tier = utils.get_default_tier_for_route(domain)
+    tier = str(tier)
 
     if domain_entry is None:
         proxy_ips = utils.online_route_get_all()
@@ -286,9 +338,8 @@ def domain(domain):
             panel_secret_key=config.get_panel_secret_key(),
             proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
             health_check=settings.get_periodic_health_check(),
+            tier=tier,
         )
-
-        
 
     utils.update_domain_cache(domain_entry['_id'], try_count=1)
 
@@ -303,6 +354,7 @@ def domain(domain):
         cdn_provider=utils.check_domain_cdn_provider(domain_entry['_id']),
         secondary_proxy=False,
         health_check=settings.get_periodic_health_check(),
+        tier=tier,
     )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['POST'])
@@ -322,6 +374,7 @@ def domain_save(domain):
                 return redirect(url_for('admin.dashboard'))
             
             utils.add_domain(domain)
+            utils.update_domain_cache(domain, try_count=2)
 
         if request.form.get('next', None) == 'dashboard':
             return redirect(url_for('admin.dashboard'))
@@ -335,6 +388,12 @@ def domain_save(domain):
             ip_override = None
 
         utils.update_domain(domain, dns_domain=ip_override)
+
+    priority = request.form.get('priority', None)
+    if priority is not None:
+        priority = int(priority)
+        utils.set_domain_or_online_route_tier(domain, priority)
+    
     return redirect(url_for('admin.domains'))
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
@@ -401,11 +460,15 @@ def app_settings():
                 camouflage_error = camouflage_domain_status
         
     
+    proxygroup_type_selected = {}
+    for i in [1,2,3,4]:
+        proxygroup_type_selected[str(i)] = settings.get_tier_proxygroup_type(i)
+
     return render_template('admin/settings.jinja',
         page='settings',
         admin_uuid=config.get_admin_uuid(),
         max_ips=settings.get_default_max_ips(),
-        proxy_use_80=settings.get_secondary_proxy_use_80_instead_of_443(),
+        proxy_port=settings.get_secondary_proxy_ports(),
         single_file_clash=settings.get_single_clash_file_configuration(),
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
@@ -415,12 +478,13 @@ def app_settings():
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
         provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'ssv2ray']},
+        proxygroup_type_selected=proxygroup_type_selected,
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
 def app_settings_save():
     max_ips = request.form.get('max_ips', None)
-    proxy_use_80 = request.form.get('proxy_use_80', None)
+    proxy_port = request.form.get('proxy_port', None)
     single_file_clash = request.form.get('single_file_clash', None)
     providers_from_all_endpoints = request.form.get('providers_from_all_endpoints', None)
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
@@ -429,11 +493,17 @@ def app_settings_save():
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
 
+    tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
+    for i in tiers_proxygroup_type.keys():
+        settings.set_tier_proxygroup_type(i, tiers_proxygroup_type[i])
+
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
     if add_domains_even_if_inactive is not None:
         settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
-    settings.set_secondary_proxy_use_80_instead_of_443(proxy_use_80 == 'on')
+    if proxy_port is not None:
+        settings.set_secondary_proxy_ports(proxy_port)
+
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')

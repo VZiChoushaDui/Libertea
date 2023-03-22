@@ -69,6 +69,7 @@
             <div class="row">
                 <div class="col-12 list-item-title">
                     {{ domain.id }}
+                    {% if domain.tier != None %}<div class="list-item-badge">{{ domain.tier }}</div>{% endif %}
                     {% if domain.warning %} ⚠️ {% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle">
@@ -107,7 +108,9 @@
         <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
             <div class="row">
                 <div class="col-12 list-item-title">
-                    {{ proxy.ip }} {% if proxy.update_available %}⚠️{% endif %}
+                    {{ proxy.ip }}
+                    {% if proxy.tier != None %}<div class="list-item-badge">{{ proxy.tier }}</div>{% endif %}
+                    {% if proxy.update_available %}⚠️{% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle">
                     {% if proxy.update_available %}

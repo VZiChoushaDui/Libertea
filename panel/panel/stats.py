@@ -3,10 +3,10 @@ import psutil
 import requests
 from . import utils
 from . import config
-from datetime import datetime
 from pymongo import MongoClient
+from datetime import datetime, timedelta
 
-def ___get_total_gigabytes(file_name, conn_url):
+def ___get_total_gigabytes(file_name, conn_url, return_as_string=True, domain=None):
     try:
         with open(file_name, 'r') as f:
             data = json.load(f)
@@ -14,14 +14,27 @@ def ___get_total_gigabytes(file_name, conn_url):
         for user in data['users']:
             entry_name = list(user.keys())[0]
             if entry_name == conn_url:
-                gigabytes = user[entry_name]['megabytes'] / 1024
-                gigabytes = round(gigabytes * 1000) / 1000
-                gigabytes = str(gigabytes) + ' GB'
-                return gigabytes
+                gigabytes = 0
+                if domain is None:
+                    gigabytes = user[entry_name]['megabytes'] / 1024
+                else:
+                    if domain in user[entry_name]['domains']:
+                        gigabytes = user[entry_name]['domains'][domain]['megabytes'] / 1024
+                    else:
+                        gigabytes = 0
 
-        return '0 GB'
+                if return_as_string:
+                    gigabytes = round(gigabytes * 1000) / 1000
+                    gigabytes = str(gigabytes) + ' GB'
+                return gigabytes
+                
+        if return_as_string:
+            return '0 GB'
+        return 0
     except:
-        return '-'
+        if return_as_string:
+            return '-'
+        return None
 
 def ___get_total_ips(file_name, conn_url):
     try:
@@ -82,6 +95,47 @@ def get_ips_this_month(user_id, db=None):
 def get_gigabytes_today_all():
     file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
     return ___get_total_gigabytes(file_name, '[total]')
+
+def get_traffic_per_day(user_id, days=7, domain=None, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    users = db.users
+    user = users.find_one({"_id": user_id})
+    conn_url = user['connect_url']
+
+    xs = []
+    ys = []
+    for i in range(days - 1, -1, -1):
+        date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+        file_name = './data/usages/day/{}.json'.format(date)
+        xs.append(date)
+        try:
+            traffic = ___get_total_gigabytes(file_name, conn_url, return_as_string=False, domain=domain)
+            if traffic is None:
+                traffic = 0
+            ys.append(traffic)
+        except:
+            ys.append(None)
+
+    return xs, ys
+
+def get_traffic_per_day_all(days=7, domain=None):
+    xs = []
+    ys = []
+    for i in range(days - 1, -1, -1):
+        date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+        file_name = './data/usages/day/{}.json'.format(date)
+        xs.append(date)
+        try:
+            traffic = ___get_total_gigabytes(file_name, '[total]', return_as_string=False, domain=domain)
+            if traffic is None:
+                traffic = 0
+            ys.append(traffic)
+        except:
+            ys.append(None)
+
+    return xs, ys
 
 def get_gigabytes_this_month_all():
     file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))

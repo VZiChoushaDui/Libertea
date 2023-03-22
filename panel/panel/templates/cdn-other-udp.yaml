@@ -1,5 +1,4 @@
 proxies:
-{% if cloudflare_exists %}
 {% for provider in providers %}
 {% if not provider.meta_only or meta %}
 {% if provider.entry_type == "CDNProxy-Other" %}
@@ -11,4 +10,3 @@ proxies:
 {% endif %}
 {% endif %}
 {% endfor %}
-{% endif %}

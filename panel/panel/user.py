@@ -75,7 +75,7 @@ def user_config(id, file_name):
 
     if file_name == 'mconfig':
         conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
-            meta=is_meta)
+            meta=is_meta, premium=is_premium)
 
         # don't show in browser, use a header to force download
         return conf, 200, {

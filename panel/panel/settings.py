@@ -24,6 +24,7 @@ def set_default_max_ips(val, db=None):
     db.settings.update_one({"_id": "default_max_ips"}, {"$set": {"value": val}}, upsert=True)
 
 def get_secondary_proxy_use_80_instead_of_443(db=None):
+    ### DEPRECATED ###
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -33,10 +34,26 @@ def get_secondary_proxy_use_80_instead_of_443(db=None):
     return setting["value"]
 
 def set_secondary_proxy_use_80_instead_of_443(val, db=None):
+    ### DEPRECATED ###
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     db.settings.update_one({"_id": "secondary_proxy_use_80_instead_of_443"}, {"$set": {"value": val}}, upsert=True)
+
+def get_secondary_proxy_ports(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "secondary_proxy_ports"})
+    if setting is None:
+        return "80"
+    return setting["value"]
+
+def set_secondary_proxy_ports(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "secondary_proxy_ports"}, {"$set": {"value": val}}, upsert=True)
 
 def get_route_direct_country_enabled(country, db=None):
     if db is None:
@@ -149,3 +166,22 @@ def set_periodic_health_check(val, db=None):
         db = client[config.MONGODB_DB_NAME]
     db.settings.update_one({"_id": "periodic_health_check"}, {"$set": {"value": val}}, upsert=True)
     
+def get_tier_proxygroup_type(tier_index, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "tier_proxygroup_type_" + str(tier_index)})
+    if setting is None:
+        return "urltest"
+    return setting["value"]
+
+def set_tier_proxygroup_type(tier_index, val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    if val not in ['urltest', 'loadbalance', 'fallback']:
+        return False
+    
+    db.settings.update_one({"_id": "tier_proxygroup_type_" + str(tier_index)}, {"$set": {"value": val}}, upsert=True)
+    return True

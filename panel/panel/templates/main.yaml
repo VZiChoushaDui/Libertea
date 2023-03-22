@@ -21,54 +21,23 @@ tun:
 global-client-fingerprint: chrome
 
 proxy-providers:
+{% for tier in tiers %}
+{% if tier.exists %}
 {% for domain in domains %}
-{% if cloudflare_exists %}
-  cloudflare-{{domain}}:
+  tier{{tier.index}}-{{domain}}:
     type: http
-    url: https://{{ domain }}/{{ user_id }}/cloudflare.yaml
-    path: ./{{ domain }}-files/cloudflare.yaml
+    url: https://{{ domain }}/{{ user_id }}/tier{{tier.index}}.yaml
+    path: ./{{ domain }}-files/tier{{tier.index}}.yaml
     interval: 3600
 
 {% if udp_exists %}
-  cloudflare-udp-{{domain}}:
+  tier{{tier.index}}-udp-{{domain}}:
     type: http
-    url: https://{{ domain }}/{{ user_id }}/cloudflare-udp.yaml
-    path: ./{{ domain }}-files/cloudflare-udp.yaml
+    url: https://{{ domain }}/{{ user_id }}/tier{{tier.index}}-udp.yaml
+    path: ./{{ domain }}-files/tier{{tier.index}}-udp.yaml
     interval: 3600
 {% endif %}
-{% endif %}
-
-{% if direct_exists %}
-  direct-{{ domain }}:
-    type: http
-    url: https://{{ domain }}/{{ user_id }}/direct.yaml
-    path: ./{{ domain }}-files/direct.yaml
-    interval: 3600
-
-{% if udp_exists %}
-  direct-udp-{{ domain }}:
-    type: http
-    url: https://{{ domain }}/{{ user_id }}/direct-udp.yaml
-    path: ./{{ domain }}-files/direct-udp.yaml
-    interval: 3600
-{% endif %}
-{% endif %}
-
-{% if cdn_other_exists %}
-  cdn-other-{{ domain }}:
-    type: http
-    url: https://{{ domain }}/{{ user_id }}/cdn-other.yaml
-    path: ./{{ domain }}-files/cdn-other.yaml
-    interval: 3600
-
-{% if udp_exists %}
-  cdn-other-udp-{{ domain }}:
-    type: http
-    url: https://{{ domain }}/{{ user_id }}/cdn-other-udp.yaml
-    path: ./{{ domain }}-files/cdn-other-udp.yaml
-    interval: 3600
-
-{% endif %}
+{% endfor %}
 {% endif %}
 {% endfor %}
 
@@ -87,164 +56,80 @@ proxy-groups:
   - name: "main-group"
     type: fallback
     proxies:
-{% if direct_exists or cloudflare_exists %}
-      - tier1-group
-{% endif %}{% if cdn_other_exists %}
-      - tier2-group
-{% endif %}
+{% for tier in tiers %}{% if tier.exists %}
+      - tier{{tier.index}}-group
+{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
     interval: 5
     global-default: true
     lazy: false
 
-{% if direct_exists or cloudflare_exists %}
-  - name: "tier1-group"
-    type: url-test
-    tolerance: 4000
+{% if udp_exists %}
+  - name: "main-group-udp"
+    type: fallback
     proxies:
-{% if cloudflare_exists %}
-      - cloudflare-group
-{% endif %}{% if direct_exists %}
-      - direct-group
-{% endif %}
+{% for tier in tiers %}{% if tier.exists %}
+      - tier{{tier.index}}-group-udp
+{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
     interval: 5
     lazy: false
 {% endif %}
 
-{% if cdn_other_exists %}
-  - name: "tier2-group"
-    type: select
-    # tolerance: 4000
-    proxies:
-{% if cdn_other_exists %}
-      - cdn-other-group
-{% endif %}
-    # url: 'https://www.google.com/generate_204'
-    # interval: 300
-    # lazy: false
-{% endif %}
-
-{% if cloudflare_exists %}
-  - name: "cloudflare-group"
+{% for tier in tiers %}
+{% if tier.exists %}
+  - name: "tier{{tier.index}}-group"
+    use:
+{% for domain in domains %}
+      - tier{{tier.index}}-{{ domain }}
+{% endfor %}
+{% if tier.type == 'urltest' %}
     type: url-test
-    strategy: round-robin
-    use:
-{% for domain in domains %}
-      - cloudflare-{{ domain }}
-{% endfor %}
+    tolerance: 4000
     url: 'https://www.google.com/generate_204'
-    interval: 900
+    interval: 30
     lazy: false
 {% endif %}
-
-{% if cdn_other_exists %}
-  - name: "cdn-other-group"
-    type: load-balance
-    strategy: round-robin
-    use:
-{% for domain in domains %}
-      - cdn-other-{{ domain }}
-{% endfor %}
+{% if tier.type == 'loadbalance' %}
     url: 'https://www.google.com/generate_204'
-    interval: 300
+    interval: 30
+    strategy: round-robin
     lazy: false
 {% endif %}
-
-{% if direct_exists %}
-  - name: "direct-group"
-    type: load-balance
-    strategy: round-robin
-    use:
-{% for domain in domains %}
-      - direct-{{ domain }}
-{% endfor %}
+{% if tier.type == 'fallback' %}
     url: 'https://www.google.com/generate_204'
-    interval: 800
+    interval: 30
     lazy: false
 {% endif %}
 
 {% if udp_exists %}
-
-  - name: "main-group-udp"
-    type: fallback
-    proxies:
-{% if direct_exists or cloudflare_exists %}
-      - tier1-group-udp
-{% endif %}{% if cdn_other_exists %}
-      - tier2-group-udp
-{% endif %}
-    url: 'https://www.google.com/generate_204'
-    interval: 5
-    global-default: true
-    lazy: false
-
-{% if direct_exists or cloudflare_exists %}
-  - name: "tier1-group-udp"
+  - name: "tier{{tier.index}}-group-udp"
+    use:
+{% for domain in domains %}
+      - tier{{tier.index}}-udp-{{ domain }}
+{% endfor %}
+{% if tier.type == 'urltest' %}
     type: url-test
     tolerance: 4000
-    proxies:
-{% if cloudflare_exists %}
-      - cloudflare-group-udp
-{% endif %}{% if direct_exists %}
-      - direct-group-udp
-{% endif %}
     url: 'https://www.google.com/generate_204'
-    interval: 5
+    interval: 30
     lazy: false
 {% endif %}
-
-{% if cdn_other_exists %}
-  - name: "tier2-group-udp"
-    type: select
-    # tolerance: 4000
-    proxies:
-      - cdn-other-group-udp
-    # url: 'https://www.google.com/generate_204'
-    # interval: 300
-    # lazy: false
+{% if tier.type == 'loadbalance' %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
+{% if tier.type == 'fallback' %}
+    url: 'https://www.google.com/generate_204'
+    interval: 30
+    lazy: false
+{% endif %}
 {% endif %}
 
-{% if cloudflare_exists %}
-  - name: "cloudflare-group-udp"
-    type: url-test
-    strategy: round-robin
-    use:
-{% for domain in domains %}
-      - cloudflare-udp-{{ domain }}
+{% endif %}
 {% endfor %}
-    url: 'https://www.google.com/generate_204'
-    interval: 800
-    lazy: false
-{% endif %}
 
-{% if cdn_other_exists %}
-  - name: "cdn-other-group-udp"
-    type: load-balance
-    strategy: round-robin
-    use:
-{% for domain in domains %}
-      - cdn-other-udp-{{ domain }}
-{% endfor %}
-    url: 'https://www.google.com/generate_204'
-    interval: 300
-    lazy: false
-{% endif %}
-
-{% if direct_exists %}
-  - name: "direct-group-udp"
-    type: load-balance
-    strategy: round-robin
-    use:
-{% for domain in domains %}
-      - direct-udp-{{ domain }}
-{% endfor %}
-    url: 'https://www.google.com/generate_204'
-    interval: 800
-    lazy: false
-{% endif %}
-
-{% endif %}
 
 
 
