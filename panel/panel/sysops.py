@@ -41,7 +41,10 @@ def haproxy_renew_certs():
 def haproxy_ensure_folder():
     folder = get_root_dir() + 'data/haproxy-lists'
     if not os.path.exists(folder):
-        os.makedirs(folder)
+        try:
+            os.makedirs(folder)
+        except:
+            pass
 
 def haproxy_update_users_list():
     count = 0
