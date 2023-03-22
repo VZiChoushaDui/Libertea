@@ -106,7 +106,7 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
 
     xs = []
     ys = []
-    for i in range(days):
+    for i in range(days - 1, -1, -1):
         date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
         file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
@@ -123,7 +123,7 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
 def get_traffic_per_day_all(days=7, domain=None):
     xs = []
     ys = []
-    for i in range(days):
+    for i in range(days - 1, -1, -1):
         date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
         file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
