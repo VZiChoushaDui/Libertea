@@ -151,7 +151,7 @@
     
     <button type="submit" class="mt-4 btn btn-primary">Save</button>
     {% if not secondary_proxy %}
-        <button class="mt-4 btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">
+        <button class="mt-4 btn btn-primary-outline" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">
             Delete domain
         </button>
     {% endif %}
@@ -266,8 +266,8 @@
                                 label: 'Health (%)',
                                 data: chart_data_y,
                                 borderWidth: 1,
-                                backgroundColor: 'rgba(255, 99, 132, 0.75)',
-                                borderColor: 'rgba(255, 99, 132, 0.75)',
+                                backgroundColor: 'rgba(229, 89, 119, 0.75)',
+                                borderColor: 'rgba(229, 89, 119, 0.75)',
                             }]
                         },
                         options: {
@@ -321,8 +321,8 @@
                                 data: data.y,
                                 borderWidth: 1,
                                 fill: true,
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(229, 89, 119, 0.2)',
+                                borderColor: 'rgba(229, 89, 119, 1)',
                             }]
                         },
                         options: {
