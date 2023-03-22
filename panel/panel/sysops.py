@@ -1,5 +1,7 @@
 import os
+import time
 import pymongo
+import threading
 from . import config
 from . import settings
 
@@ -17,12 +19,18 @@ def run_command(command):
     print("Ran command '" + command + "' and got exit code " + str(result))
     return result
 
-def haproxy_reload():
+def ___haproxy_reload_internal(sleep_secs):
     print("**** Reloading haproxy container ****")
-    if run_command('docker kill -s HUP ' + config.HAPROXY_CONTAINER_NAME) == 0:
+    if run_command('sleep ' + str(sleep_secs) + ' && docker kill -s HUP ' + config.HAPROXY_CONTAINER_NAME) == 0:
         return True
     
     return False
+
+def haproxy_reload():
+    th = threading.Thread(target=___haproxy_reload_internal, args=(1,))
+    th.start()
+    return True
+    
 
 def haproxy_renew_certs():
     if run_command('./haproxy/certbot.sh') == 0:
