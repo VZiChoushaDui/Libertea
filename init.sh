@@ -336,10 +336,25 @@ while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_
         echo "ERROR: Timeout while waiting for panel to start."
         echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
         echo "       and include the following information:"
+        echo ""
+        
+        PANEL_LISTENING="True"
+        PANEL_ROOT_STATUS_CODE=""
+        PANEL_ADMIN_STATUS_CODE=""
+        if [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)" == "000" ]; then
+            # check if localhost:1000 is open at all or it's refusing connections
+            PANEL_LISTENING="False"
+        fi
+        PANEL_ROOT_STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)"
+        PANEL_ADMIN_STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+
         echo "       - component name: libertea-panel"
         echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
         echo "       - OS version: $(cat /etc/os-release | grep -E "^VERSION_ID=" | cut -d "=" -f 2)"
         echo "       - Docker version: $(docker --version)"
+        echo "       - Panel listening: $PANEL_LISTENING"
+        echo "       - Panel root status code: $PANEL_ROOT_STATUS_CODE"
+        echo "       - Panel admin status code: $PANEL_ADMIN_STATUS_CODE"
         echo "       Also include the output of the following command:"
         echo "           tail -n 100 /tmp/libertea-panel.log"
         echo ""
