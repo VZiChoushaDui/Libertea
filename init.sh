@@ -326,12 +326,26 @@ for container in $containers; do
 done
 
 # wait for the panel to start 
-# while ! curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/"; do
-# it should return 200
 echo -ne "    ⌛ libertea-panel\r"
+try_count=0
 while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)" != "200" ]; do
     sleep 1
-    if [ $(( $(date +%s) - start_time )) -gt 45 ]; then
+    if [ $(($try_count)) -eq 0 ] && [ $(( $(date +%s) - start_time )) -gt 45 ]; then
+        echo "    ❌ libertea-panel failed to start. Retrying..."
+        try_count=1
+
+        # restart the panel
+        set +e
+        pkill -9 -f uwsgi
+        systemctl kill libertea-panel.service
+        pkill -9 -f uwsgi
+        set -e
+        systemctl restart libertea-panel.service
+
+        echo -ne "    ⌛ libertea-panel\r"
+    fi
+
+    if [ $(($try_count)) -gt 0 ] && [ $(( $(date +%s) - start_time )) -gt 100 ]; then
         echo "*******************************************************"
         echo "ERROR: Timeout while waiting for panel to start."
         echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
