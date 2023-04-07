@@ -10,8 +10,9 @@
             <ul class="dropdown-menu order-items-list">
                 <li><a class="dropdown-item" href="#" data-sort-id="created-at-desc" data-sort-field="data-created-at" data-order="desc" onclick="sort_items(this)">Created At (Newest first)</a></li>
                 <li><a class="dropdown-item" href="#" data-sort-id="created-at-asc" data-sort-field="data-created-at" data-order="asc" onclick="sort_items(this)">Created At (Oldest first)</a></li>
-                <li><a class="dropdown-item" href="#" data-sort-id="traffic-desc" data-sort-field="data-traffic-this-month" data-order="desc" onclick="sort_items(this)">Traffic @ {{ month_name }} (Highest first)</a></li>
-                <li><a class="dropdown-item" href="#" data-sort-id="ips-desc" data-sort-field="data-ips-today" data-order="desc" onclick="sort_items(this)">IPs today (Highest first)</a></li>
+                <li><a class="dropdown-item" href="#" data-sort-id="traffic-desc" data-sort-field="data-traffic-this-month" data-order="desc" onclick="sort_items(this)">Traffic in {{ month_long_name }} (Highest first)</a></li>
+                <li><a class="dropdown-item" href="#" data-sort-id="traffic-today-desc" data-sort-field="data-traffic-today" data-order="desc" onclick="sort_items(this)">Traffic Today (Highest first)</a></li>
+                <!-- <li><a class="dropdown-item" href="#" data-sort-id="ips-desc" data-sort-field="data-ips-today" data-order="desc" onclick="sort_items(this)">IPs today (Highest first)</a></li> -->
             </ul>
         </div>
     </div>
@@ -32,7 +33,8 @@
             class="list-group-item list-group-item-action" 
             data-created-at="{{ user.created_at_timestamp }}" 
             data-traffic-this-month="{{ user.traffic_this_month }}"
-            data-ips-today="{{ user.ips_today }}">
+            data-ips-today="{{ user.ips_today }}"
+            data-traffic-today="{{ user.traffic_today }}">
             <div class="row">
                 <div class="col-7 list-item-title">
                     {{ user.note }}
@@ -44,7 +46,7 @@
                     {{ user.id }}
                 </div>
                 <div class="col-5 list-item-subtitle" style="text-align: right;">
-                    {{ user.ips_today }} IPs today
+                    {{ user.traffic_today }} GB today
                 </div>
             </div>
         </a>

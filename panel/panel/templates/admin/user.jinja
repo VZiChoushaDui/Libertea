@@ -49,8 +49,8 @@
             <div class="stats-item-desc">IPs connected right now</div>
         </div>
         <div class="col-6 col-sm-3 stats-item">
-            <div class="stats-item-value">{{ ips_today }}</div>
-            <div class="stats-item-desc">IPs connected today</div>
+            <div class="stats-item-value max-concurrent-connections">⌛</div>
+            <div class="stats-item-desc">Max concurrent connections today</div>
         </div>
     </div>
 </div>
@@ -207,6 +207,22 @@
                     return response.json()
                 })
                 .then(function(data) {
+                    try {
+                        var lastDayKey = data.x.slice(-1)[0].substring(0, 5);
+                        var maxValToday = 0;
+                        for (var i = 0; i < data.y.length; i++) {
+                            if (data.x[i].substring(0, 5) == lastDayKey) {
+                                maxValToday = Math.max(maxValToday, data.y[i]);
+                            }
+                        }
+                        document.querySelector('.max-concurrent-connections').innerHTML = maxValToday;
+                    }
+                    catch {
+                        document.querySelector('.max-concurrent-connections').innerHTML = '-';
+                    }
+
+
+
                     const ctx = document.getElementById('connectionChart');
                     ctx.innerHTML = "";
 

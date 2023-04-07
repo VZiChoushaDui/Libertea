@@ -194,6 +194,7 @@ def users():
         "id": user["_id"],
         "note": user["note"],
         "created_at_timestamp": user["created_at"].timestamp(),
+        "traffic_today": user["__cache_traffic_today"].replace(' GB', '') if "__cache_traffic_today" in user else "0",
         "traffic_this_month": user["__cache_traffic_this_month"].replace(' GB', '') if "__cache_traffic_this_month" in user else "0",
         "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
     } for user in users.find()]
@@ -202,6 +203,7 @@ def users():
         page='users',
         no_domain_warning=not utils.has_active_endpoints(),
         month_name=month_short_name,
+        month_long_name=datetime.now().strftime("%B"),
         admin_uuid=config.get_admin_uuid(),
         users=all_users)
 
