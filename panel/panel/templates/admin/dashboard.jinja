@@ -103,10 +103,10 @@
             <div class="stats-item-value users-connected-right-now">⌛</div>
             <div class="stats-item-desc">Users connected right now</div>
         </div>
-        <div class="col-6 col-sm-4 stats-item">
+        <!-- <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value ips-connected-today">⌛</div>
             <div class="stats-item-desc">IPs connected today</div>
-        </div>
+        </div> -->
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value users-connected-today">⌛</div>
             <div class="stats-item-desc">Users connected today</div>
@@ -169,7 +169,7 @@
                 document.querySelector('.users-connected-today').innerHTML = parseStatsValue(data.users_today);
                 document.querySelector('.traffic-today').innerHTML = parseStatsValue(data.traffic_today);
                 document.querySelector('.traffic-this-month').innerHTML = parseStatsValue(data.traffic_this_month);
-                document.querySelector('.ips-connected-today').innerHTML = parseStatsValue(data.ips_today);
+                // document.querySelector('.ips-connected-today').innerHTML = parseStatsValue(data.ips_today);
                 document.querySelector('.ips-connected-right-now').innerHTML = parseStatsValue(data.ips_now);
             });
     }
