@@ -2,28 +2,30 @@
 
 # Libertea
 
-Easily install and manage a multi-protocol VPN server; with user management, auto fallback and auto update.
+Easily install and manage a multi-protocol, multi-route V2ray VPN server; with user management, domain camouflage (fallback), and route auto update for users.
+
+[Chinese 中文](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
+
+[Farsi فارسی](https://github.com/VZiChoushaDui/Libertea/blob/master/README-fa.md)
 
 ## Features
 
-- TROJAN, Shadowsocks/v2ray and VLESS protocols
-- One-command installation and management
-- Camouflage domains with a real website to reduce the risk of being blocked by probing
-- Auto select the best route on user's devices
-- User management
-- Support multiple domains behind CDN
-- Secondary IPs for better availability
+- **TROJAN**, **Shadowsocks/v2ray** and **VLESS** protocols (Powered by XRay project)
+- **Camouflage domains** with a real website to reduce the risk of being blocked by probing
+- **One-command** installation and management
+- Support **multiple** domains and IPs, and **auto-select** the best route on user's devices
+- **Multi-user management** with connection limitation
 
 ## Requirements
 
-- A server with at least 1 GB RAM
-- Ubuntu 20.04+ or Debian 11+ (Ubuntu 22.04 recommended)
-- At least one domain behind a CDN (such as Cloudflare)
+- A server running Ubuntu 20.04+ or Debian 11+ (Ubuntu 22.04 recommended)
+- At least 1 GB of RAM
+- One domain/subdomain pointed to a CDN (such as Cloudflare), and the CDN set to `Full` SSL mode
 
 ## Recommended configuration
 
 - Two domains behind a CDN (such as Cloudflare), one for the panel/update and one for the VPN itself
-- At least one extra server for the secondary proxy (512MB RAM is enough for secondary proxies)
+- One or more extra servers for the secondary proxy (512MB RAM is enough for secondary proxies)
 
 ## Installation
 
