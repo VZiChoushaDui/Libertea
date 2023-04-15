@@ -115,7 +115,7 @@ if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then
 fi
 
 echo " ** Getting public IP..."
-my_ip=$(curl -s https://api.ipify.org)
+my_ip=$(curl -s https://ifconfig.io/ip)
 
 # if .env does not exist, copy sample.env and fill it with random values
 if [ ! -f .env ]; then
