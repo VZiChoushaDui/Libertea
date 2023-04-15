@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo-complete.png" style="width: 300px" />
 
-#Libertea
+# Libertea
 
 轻松安装和管理多协议、多路由的 V2ray VPN 服务器；具有用户管理、域伪装和自动更新功能。
 
