@@ -16,7 +16,7 @@
 - پشتیبانی از **چندین** دامنه و IP و **انتخاب خودکار** بهترین مسیر در دستگاه های کاربر
 - **مدیریت چند کاربره** با محدودیت اتصال
 
-## الزامات
+## پیکربندی حداقلی
 
 - سروری که Ubuntu 20.04+ یا Debian 11+ را اجرا می کند (اوبونتو 22.04 توصیه می شود)
 - حداقل 1 گیگابایت رم
@@ -47,7 +47,7 @@
 
 ## حذف
 
-اگر به هر دلیلی می خواهید Liberta یا Liberta-secondary-proxy را از سرور خود حذف کنید، دستور زیر را روی سرور خود اجرا کنید:
+اگر به هر دلیلی می خواهید Libertea یا Libertea-secondary-proxy را از سرور خود حذف کنید، دستور زیر را روی سرور خود اجرا کنید:
 
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
 
