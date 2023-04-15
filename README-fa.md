@@ -4,7 +4,7 @@
 
 سرور V2ray VPN چند مسیری را به راحتی نصب و مدیریت کنید. با مدیریت کاربر، استتار دامنه، و به روز رسانی خودکار مسیرها برای کاربران.
 
-[چینی 中文](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
+[中文 چینی](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
 
 [English](https://github.com/VZiChoushaDui/Libertea/blob/master/README.md)
 
