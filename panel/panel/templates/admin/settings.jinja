@@ -30,6 +30,12 @@
     </div>
     <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
         <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_trojangrpc" id="provider_trojangrpc" {% if provider_enabled.trojangrpc %}checked{% endif %}>
+            <label class="form-check-label" for="provider_trojangrpc">
+                Trojan (GRPC)
+            </label>
+        </div>
+        <div class="form-check">
             <input class="form-check-input" type="checkbox" value="on" name="provider_trojanws" id="provider_trojanws" {% if provider_enabled.trojanws %}checked{% endif %}>
             <label class="form-check-label" for="provider_trojanws">
                 Trojan (WS)

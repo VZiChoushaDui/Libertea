@@ -49,6 +49,8 @@ services:
       - CONN_VLESS_WS_IP=${CONN_VLESS_WS_IP}
       - CONN_TROJAN_WS_URL=${CONN_TROJAN_WS_URL}
       - CONN_TROJAN_WS_IP=${CONN_TROJAN_WS_IP}
+      - CONN_TROJAN_GRPC_URL=${CONN_TROJAN_GRPC_URL}
+      - CONN_TROJAN_GRPC_IP=${CONN_TROJAN_GRPC_IP}
       - CONN_SHADOWSOCKS_V2RAY_URL=${CONN_SHADOWSOCKS_V2RAY_URL}
       - CONN_SHADOWSOCKS_V2RAY_IP=${CONN_SHADOWSOCKS_V2RAY_IP}
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
@@ -84,6 +86,21 @@ services:
     restart: always
     volumes:
       - './providers/trojan-ws/config.json:/etc/xray/config.json'
+      - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  provider-trojan-grpc:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+    build: ./providers/trojan-grpc
+    ports:
+      - "127.0.0.1:2004:2004"
+    cap_add:
+      - NET_ADMIN
+    container_name: libertea-provider-trojan-grpc
+    restart: always
+    volumes:
+      - './providers/trojan-grpc/config.json:/etc/xray/config.json'
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vless-ws:

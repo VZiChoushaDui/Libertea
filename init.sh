@@ -251,6 +251,8 @@ echo "    - vless-ws..."
 ./providers/vless-ws/init.sh 2002 12002 "$CONN_VLESS_WS_URL" "$CONN_VLESS_WS_AUTH_UUID"
 echo "    - shadowsocks-v2ray..."
 ./providers/shadowsocks-v2ray/init.sh 2003 "$CONN_SHADOWSOCKS_V2RAY_URL" "$CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD"
+echo "    - trojan-grpc..."
+./providers/trojan-grpc/init.sh 2004 12004 "$CONN_TROJAN_GRPC_URL" "$CONN_TROJAN_GRPC_AUTH_PASSWORD"
 
 echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/

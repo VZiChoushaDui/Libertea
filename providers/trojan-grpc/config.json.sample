@@ -1,0 +1,30 @@
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": {port},
+            "protocol": "trojan",
+            "settings": {
+                "clients": [
+                    {
+                        "password":"{password}"
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "grpc",
+                "security": "none",
+                "grpcSettings": {
+                    "serviceName": "{url}"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}

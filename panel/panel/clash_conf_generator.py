@@ -66,6 +66,20 @@ def get_providers(connect_url, db):
         if server_ips_str is not None and ',' in server_ips_str:
             server_ips = server_ips_str.split(',')
         for s in server_ips:
+            if settings.get_provider_enabled('trojangrpc', db=db):
+                providers.append(init_provider_info(
+                    type='trojan-grpc',
+                    name='TrG-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_TROJAN_GRPC_AUTH_PASSWORD'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_GRPC_URL'),
+                    meta_only=False,
+                    entry_type=server_entry_type,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                ))
             if settings.get_provider_enabled('trojanws', db=db):
                 providers.append(init_provider_info(
                     type='trojan-ws',
