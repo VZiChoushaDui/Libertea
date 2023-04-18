@@ -76,7 +76,9 @@ def get_provider_enabled(provider_name, db=None):
         db = client[config.MONGODB_DB_NAME]
     setting = db.settings.find_one({"_id": "provider_enabled_" + provider_name})
     if setting is None:
-        return True
+        if provider_name in ['trojangrpc', 'trojanws', 'vlessgrpc', 'ssv2ray']:
+            return True
+        return False
     return setting["value"]
 
 def set_provider_enabled(provider_name, val, db=None):
