@@ -85,6 +85,31 @@
                 <input type="number" class="form-control" id="max_ips" name="max_ips" value="{{ user.max_ips }}">
             </div>
         </div>
+        <div class="form-group">
+            <label class="form-check-label">
+                Default available servers in V2ray/Shadowsocks clients<br />
+                <span style="opacity: 0.75; font-size: 12px;">
+                    Select which priority groups should be visible to each user by default in V2Ray/Shadowsocks clients.
+                </span>
+            </label>
+        </div>
+        <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_default" id="tier_enabled_for_subscription_default" {% if user.tier_enabled_for_subscription['default'] %}checked{% endif %}>
+                <label class="form-check-label" for="tier_enabled_for_subscription_default">
+                    Default configuration
+                </label>
+            </div>
+            {% for tier in ['1','2','3','4'] %}
+                <div class="form-check tier-enabled-for-subscription-custom">
+                    <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_{{ tier }}" id="tier_enabled_for_subscription_{{ tier }}" {% if user.tier_enabled_for_subscription[tier] %}checked{% endif %}>
+                    <label class="form-check-label" for="tier_enabled_for_subscription_{{ tier }}">
+                        Priority {{ tier }}
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+        
 
         <button type="submit" class="btn btn-primary">Save</button>
         <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">
@@ -335,10 +360,25 @@
                 });
         }
 
+        function setCustomTierEnabledForSubscriptionVisiblity() {
+            if (document.getElementById('tier_enabled_for_subscription_default').checked) {
+                document.querySelectorAll('.tier-enabled-for-subscription-custom').forEach(function (el) {
+                    el.style.display = 'none';
+                });
+            } else {
+                document.querySelectorAll('.tier-enabled-for-subscription-custom').forEach(function (el) {
+                    el.style.display = 'block';
+                });
+            }
+        }
+
         setInterval(get_ips_connected_right_now, 5000);
         get_ips_connected_right_now();
         updateConnectionChart();
         updateTrafficChart();
+        setCustomTierEnabledForSubscriptionVisiblity();
+
+        document.getElementById('tier_enabled_for_subscription_default').addEventListener('change', setCustomTierEnabledForSubscriptionVisiblity);
     </script>
 </div>
 

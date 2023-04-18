@@ -32,7 +32,7 @@
         <div class="form-check">
             <input class="form-check-input" type="checkbox" value="on" name="provider_trojangrpc" id="provider_trojangrpc" {% if provider_enabled.trojangrpc %}checked{% endif %}>
             <label class="form-check-label" for="provider_trojangrpc">
-                Trojan (GRPC)
+                Trojan (gRPC)
             </label>
         </div>
         <div class="form-check">
@@ -42,9 +42,21 @@
             </label>
         </div>
         <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_ssgrpc" id="provider_ssgrpc" {% if provider_enabled.ssgrpc %}checked{% endif %}>
+            <label class="form-check-label" for="provider_ssgrpc">
+                Shadowsocks (gRPC)
+            </label>
+        </div>
+        <div class="form-check">
             <input class="form-check-input" type="checkbox" value="on" name="provider_ssv2ray" id="provider_ssv2ray" {% if provider_enabled.ssv2ray %}checked{% endif %}>
             <label class="form-check-label" for="provider_ssv2ray">
-                Shadowsocks+v2ray (WS)
+                Shadowsocks (WS)
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="on" name="provider_vlessgrpc" id="provider_vlessgrpc" {% if provider_enabled.vlessgrpc %}checked{% endif %}>
+            <label class="form-check-label" for="provider_vlessgrpc">
+                VLESS (gRPC) <i style="opacity: 0.75; font-size: 12px;">Clash Meta and Stash only</i>
             </label>
         </div>
         <div class="form-check">
@@ -84,6 +96,24 @@
         });
     </script>
     <div class="advanced-settings" style="display: none">
+        <div class="form-group">
+            <label class="form-check-label">
+                Default available servers in V2ray/Shadowsocks clients<br />
+                <span style="opacity: 0.75; font-size: 12px;">
+                    Select which priority groups should be visible to each user by default in V2Ray/Shadowsocks clients.
+                </span>
+            </label>
+        </div>
+        <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+            {% for tier in ['1','2','3','4'] %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_{{ tier }}" id="tier_enabled_for_subscription_{{ tier }}" {% if tier_enabled_for_subscription[tier] %}checked{% endif %}>
+                    <label class="form-check-label" for="tier_enabled_for_subscription_{{ tier }}">
+                        Priority {{ tier }}
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
         <div class="form-group">
             <label class="form-check-label">
                 Server selection method<br />

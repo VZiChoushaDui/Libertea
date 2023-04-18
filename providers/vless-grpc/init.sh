@@ -9,10 +9,10 @@ fi
 
 PORT="$1"
 URL="$2"
-PASSWORD="$3"
+UUID="$3"
 
-if [ -z "$PORT" ] || [ -z "$URL" ] || [ -z "$PASSWORD" ]; then
-    echo "Usage: $0 <port> <url> <password>"
+if [ -z "$PORT" ] || [ -z "$URL" ] || [ -z "$UUID" ]; then
+    echo "Usage: $0 <port> <url> <uuid>"
     exit 1
 fi
 
@@ -21,4 +21,4 @@ cp config.json.sample config.json
 sed -i "s|{port}|$PORT|g" config.json
 sed -i "s|{port-internal}|$PORT_INTERNAL|g" config.json
 sed -i "s|{url}|$URL|g" config.json
-sed -i "s|{password}|$PASSWORD|g" config.json
+sed -i "s|{uuid}|$UUID|g" config.json

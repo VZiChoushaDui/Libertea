@@ -1,0 +1,31 @@
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": {port},
+            "protocol": "shadowsocks",
+            "settings": {
+                "clients": [
+                    {
+                        "password":"{password}",
+                        "method": "chacha20-ietf-poly1305"
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "grpc",
+                "security": "none",
+                "grpcSettings": {
+                    "serviceName": "{url}"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}

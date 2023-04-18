@@ -80,6 +80,21 @@ def get_providers(connect_url, db):
                     server=s,
                     tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
+            if settings.get_provider_enabled('vlessgrpc', db=db) and server_entry_type != 'SecondaryProxy':
+                # Vless-grpc does not yet support routing via secondary proxy
+                providers.append(init_provider_info(
+                    type='vless-grpc',
+                    name='VlG-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_VLESS_GRPC_AUTH_UUID'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_GRPC_URL'),
+                    meta_only=True,
+                    entry_type=server_entry_type,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                ))
             if settings.get_provider_enabled('trojanws', db=db):
                 providers.append(init_provider_info(
                     type='trojan-ws',
@@ -111,7 +126,7 @@ def get_providers(connect_url, db):
             if settings.get_provider_enabled('ssv2ray', db=db):
                 providers.append(init_provider_info(
                     type='ss-v2ray',
-                    name='ssV-' + str(idx) + "-" + server,
+                    name='ssW-' + str(idx) + "-" + server,
                     port=port,
                     password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),

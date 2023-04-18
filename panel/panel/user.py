@@ -1,6 +1,7 @@
 import json
 import base64
 import urllib.parse
+from . import utils
 from . import config
 from . import settings
 from . import health_check
@@ -56,10 +57,28 @@ def user_dashboard(id):
     manual_conf_url = request.url_root.replace('http://', 'https://') + str(id) + '/mconfig.yaml'
 
     clash_conf_url = "clash://install-config?url=" + urllib.parse.quote_plus(conf_url) + "&name=" + urllib.parse.quote(name)
+    
+    enabled_tiers_items = utils.get_user_tiers_enabled_for_subscription(user['_id'])
+    enabled_tiers = []
+    for i in ['1','2','3','4']:
+        if enabled_tiers_items[i]:
+            enabled_tiers.append(i)
+
+    v2ray_subscription_url = request.url_root.replace('http://', 'https://') + str(id) + '/subscribe/b64?shadowsocks=false'
+    v2ray_server_links = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=True, trojan=True, shadowsocks=False, enabled_tiers=enabled_tiers)
+
+    ss_subscription_url = request.url_root.replace('http://', 'https://') + str(id) + '/subscribe/ss'
+    ss_server_links = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=False, trojan=False, shadowsocks=True, enabled_tiers=enabled_tiers)
+
     return render_template('user.jinja', 
         user=user, 
         clash_conf_url=clash_conf_url,
-        clash_manual_conf_url=manual_conf_url
+        clash_manual_conf_url=manual_conf_url,
+        subscription_enabled=len(v2ray_server_links) > 0,
+        v2ray_server_links=v2ray_server_links,
+        v2ray_subscription_url=v2ray_subscription_url,
+        ss_server_links=ss_server_links,
+        ss_subscription_url=ss_subscription_url,
     )
 
 @blueprint.route('/<id>/<file_name>.yaml')

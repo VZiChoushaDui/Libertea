@@ -230,6 +230,7 @@ def user(user):
         user['max_ips'] = settings.get_default_max_ips()
 
     user['panel_url'] = "https://" + config.get_panel_domain() + "/" + user['_id'] + "/"
+    user['tier_enabled_for_subscription'] = utils.get_user_tiers_enabled_for_subscription(user['_id'])
 
     return render_template('admin/user.jinja',
         back_to='users',
@@ -248,6 +249,7 @@ def user_save(user):
     max_ips_default = request.form.get('max_ips_default', None)
     max_ips = int(request.form.get('max_ips', 0))
     note = request.form.get('note', None)
+    tier_enabled_for_subscription = {str(i): request.form.get(f'tier_enabled_for_subscription_{i}', None) for i in [1,2,3,4, 'default']}
 
     if max_ips < 0:
         max_ips = 0
@@ -259,11 +261,12 @@ def user_save(user):
         uid, _ = utils.create_user(note=note, max_ips=max_ips)
         if note.strip() == '':
             utils.update_user(uid, note=uid)
+        utils.update_user(uid, tier_enabled_for_subscription=tier_enabled_for_subscription)
         return redirect(url_for('admin.user', user=uid))
         
     if note.strip() == '':
         note = user
-    utils.update_user(user, max_ips=max_ips, note=note)
+    utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription)        
     return redirect(url_for('admin.users', user=user))
 
 @blueprint.route(root_url + 'users/<user>/', methods=['DELETE'])
@@ -461,10 +464,12 @@ def app_settings():
             if camouflage_domain_status != "":
                 camouflage_error = camouflage_domain_status
         
-    
+    tier_enabled_for_subscription = {}
     proxygroup_type_selected = {}
     for i in [1,2,3,4]:
         proxygroup_type_selected[str(i)] = settings.get_tier_proxygroup_type(i)
+        tier_enabled_for_subscription[str(i)] = settings.get_tier_enabled_for_subscription(i)
+    print(tier_enabled_for_subscription)
 
     return render_template('admin/settings.jinja',
         page='settings',
@@ -479,8 +484,9 @@ def app_settings():
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
-        provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'trojangrpc', 'ssv2ray']},
+        provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'ssv2ray', 'ssgrpc']},
         proxygroup_type_selected=proxygroup_type_selected,
+        tier_enabled_for_subscription=tier_enabled_for_subscription,
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
@@ -490,14 +496,16 @@ def app_settings_save():
     single_file_clash = request.form.get('single_file_clash', None)
     providers_from_all_endpoints = request.form.get('providers_from_all_endpoints', None)
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
-    provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'trojangrpc', 'ssv2ray']}
+    provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'ssv2ray', 'ssgrpc']}
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
 
+    tier_enabled_for_subscription = {i: request.form.get(f'tier_enabled_for_subscription_{i}', None) for i in [1,2,3,4]}
     tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
     for i in tiers_proxygroup_type.keys():
         settings.set_tier_proxygroup_type(i, tiers_proxygroup_type[i])
+        settings.set_tier_enabled_for_subscription(i, tier_enabled_for_subscription[i] == 'on')
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
@@ -511,11 +519,11 @@ def app_settings_save():
     settings.set_periodic_health_check(health_check == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
-    for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc']:
+    for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'ssgrpc']:
         settings.set_provider_enabled(x, provider_enabled[x] == 'on')
 
     # if none of trojanws, ssv2ray and trojangrpc is enabled, enable trojangrpc
-    if not settings.get_provider_enabled('trojanws') and not settings.get_provider_enabled('ssv2ray') and not settings.get_provider_enabled('trojangrpc'):
+    if not settings.get_provider_enabled('trojanws') and not settings.get_provider_enabled('ssv2ray') and not settings.get_provider_enabled('trojangrpc') and not settings.get_provider_enabled('ssgrpc'):
         settings.set_provider_enabled('trojangrpc', True)
 
     if camouflage_domain is not None:

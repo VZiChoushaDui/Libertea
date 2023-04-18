@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from flask import render_template
 from datetime import datetime, timedelta
 
-def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=True):
+def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=True, enabled_tiers=None):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -18,7 +18,16 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
     db = client[config.MONGODB_DB_NAME]
 
     providers = clash_conf_generator.get_providers(connect_url, db)
+
+    if enabled_tiers is not None:
+        providers = [p for p in providers if p['tier'] in enabled_tiers]
+
     provider_urls = []
+
+    try:
+        providers = sorted(providers, key=lambda k: int(k['tier']))
+    except:
+        pass
 
     for provider in providers:
         # generate url for each provider
@@ -37,6 +46,7 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
             provider_urls.append('ss://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?plugin=v2ray-plugin%3Btls%3Bhost%3D' + provider['host'] + '%3Bpath%3D' + provider['path'] + '%3Bmux%3D4' + 
                                  '#' + config.get_panel_domain() + ' ' + provider['name'])
+        # TODO: Add vless-grpc and trojan-grpc and ss-grpc
         elif provider['type'] == 'vmess-ws':
             # vmess is a base64 encoded json
             vmess_json = {

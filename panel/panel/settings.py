@@ -185,3 +185,20 @@ def set_tier_proxygroup_type(tier_index, val, db=None):
     
     db.settings.update_one({"_id": "tier_proxygroup_type_" + str(tier_index)}, {"$set": {"value": val}}, upsert=True)
     return True
+
+def get_tier_enabled_for_subscription(tier_index, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "tier_enabled_for_subscription_" + str(tier_index)})
+    if setting is None:
+        return True
+    return setting["value"]
+
+def set_tier_enabled_for_subscription(tier_index, val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    
+    db.settings.update_one({"_id": "tier_enabled_for_subscription_" + str(tier_index)}, {"$set": {"value": val}}, upsert=True)
+    return True

@@ -47,12 +47,16 @@ services:
     environment:
       - CONN_VLESS_WS_URL=${CONN_VLESS_WS_URL}
       - CONN_VLESS_WS_IP=${CONN_VLESS_WS_IP}
+      - CONN_VLESS_GRPC_URL=${CONN_VLESS_GRPC_URL}
+      - CONN_VLESS_GRPC_IP=${CONN_VLESS_GRPC_IP}
       - CONN_TROJAN_WS_URL=${CONN_TROJAN_WS_URL}
       - CONN_TROJAN_WS_IP=${CONN_TROJAN_WS_IP}
       - CONN_TROJAN_GRPC_URL=${CONN_TROJAN_GRPC_URL}
       - CONN_TROJAN_GRPC_IP=${CONN_TROJAN_GRPC_IP}
       - CONN_SHADOWSOCKS_V2RAY_URL=${CONN_SHADOWSOCKS_V2RAY_URL}
       - CONN_SHADOWSOCKS_V2RAY_IP=${CONN_SHADOWSOCKS_V2RAY_IP}
+      - CONN_SHADOWSOCKS_GRPC_URL=${CONN_SHADOWSOCKS_GRPC_URL}
+      - CONN_SHADOWSOCKS_GRPC_IP=${CONN_SHADOWSOCKS_GRPC_IP}
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
@@ -119,6 +123,21 @@ services:
       - './providers/vless-ws/config.json:/etc/xray/config.json'
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  provider-vless-grpc:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+    image: libertea/provider-vless-grpc
+    ports:
+      - "127.0.0.1:2005:2005"
+    cap_add:
+      - NET_ADMIN
+    container_name: libertea-provider-vless-grpc
+    restart: always
+    volumes:
+      - './providers/vless-grpc/config.json:/etc/xray/config.json'
+      - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-shadowsocks-v2ray:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
@@ -132,3 +151,19 @@ services:
     restart: always
     volumes:
       - './providers/shadowsocks-v2ray/config.env:/etc/xray/config.env'
+  # provider-shadowsocks-grpc:
+  #   environment:
+  #     - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+  #     - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+  #   build: ./providers/shadowsocks-grpc
+  #   ports:
+  #     - "127.0.0.1:2006:2006"
+  #   cap_add:
+  #     - NET_ADMIN
+  #   container_name: libertea-provider-shadowsocks-grpc
+  #   restart: always
+  #   volumes:
+  #     - './providers/shadowsocks-grpc/config.json:/etc/xray/config.json'
+  #     - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+  #     - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  

@@ -77,7 +77,7 @@ def create_user(note, referrer=None, max_ips=None):
 
     raise Exception("Failed to update HAProxy users list")
 
-def update_user(panel_id, note=None, max_ips=None, referrer=None):
+def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_for_subscription=None):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
@@ -88,8 +88,29 @@ def update_user(panel_id, note=None, max_ips=None, referrer=None):
         users.update_one({"_id": panel_id}, {"$set": {"max_ips": int(max_ips)}})
     if referrer is not None:
         users.update_one({"_id": panel_id}, {"$set": {"referrer": referrer}})
+    if tier_enabled_for_subscription is not None:
+        users.update_one({"_id": panel_id}, {"$set": {"tier_enabled_for_subscription": tier_enabled_for_subscription}})
 
     return sysops.haproxy_update_users_list()
+
+def get_user_tiers_enabled_for_subscription(panel_id):
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+    users = db.users
+
+    user = users.find_one({"_id": panel_id})
+    if user is None:
+        return None
+    
+    if not 'tier_enabled_for_subscription' in user:
+        user['tier_enabled_for_subscription'] = {
+            'default': True
+        }
+    if 'default' in user['tier_enabled_for_subscription'] and user['tier_enabled_for_subscription']['default']:
+        for i in [1,2,3,4]:
+            user['tier_enabled_for_subscription'][str(i)] = settings.get_tier_enabled_for_subscription(i)
+
+    return user['tier_enabled_for_subscription']
 
 def get_panel_id_from_note(note):
     client = config.get_mongo_client()
@@ -385,14 +406,14 @@ def domain_cache_update_db(domain, status=None, cdn=None, db=None):
         domains.update_one({"_id": domain}, {"$set": {"__cache_domain_cdn": cdn}}, upsert=False)
 
 
-def update_domain_cache(domain, try_count=3, db=None):
+def update_domain_cache(domain, try_count=3, db=None):       
     # send a request to https://[domain]/[get_admin_uuid]/. It should return 401 unauthorized
     try:
         r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=5)
         if r.status_code == 401:
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
-                domain_cache_update_db(domain, cdn='Cloudflare', db=db)
+                domain_cache_update_db(domain, cdn='Cloudflare', db=db)                
             else:
                 domain_cache_update_db(domain, cdn='Unknown', db=db)
 

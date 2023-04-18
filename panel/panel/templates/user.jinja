@@ -89,6 +89,18 @@
             a.libertea-link:hover {
                 text-decoration: underline;
             }
+
+            .instructions-container {
+                width: 600px;
+                max-width: 90vw;
+                border: 1px solid #ccc;
+                background-color: #f6f6f6;
+                border-radius: 16px;
+                margin: 0 auto;
+                padding-top: 24px;
+                padding-bottom: 24px;
+                margin-top: 24px;
+            }
         </style>
     </head>
     <body>
@@ -234,70 +246,169 @@
         </div>
 
 
-
-
-        <div class="step mt-5">
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <h2>Step 1</h2>
-                </div>
+        <div class="step mt-3" {% if not subscription_enabled %}style="display: none"{% endif %}>
+            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                <input type="radio" class="btn-check instruction-group" name="configuration" id="clash" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="clash">Clash</label>
+              
+                <input type="radio" class="btn-check instruction-group" name="configuration" id="v2ray" autocomplete="off">
+                <label class="btn btn-outline-primary" for="v2ray">V2Ray</label>
+              
+                <input type="radio" class="btn-check instruction-group" name="configuration" id="shadowsocks" autocomplete="off">
+                <label class="btn btn-outline-primary" for="shadowsocks">Shadowsocks</label>
             </div>
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <h3>Download the app</h3>
-                    
-                    <div class="row mx-4" class="button-container">
-                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
-                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#androidModal">
-                                <i class="fa-brands fa-android"></i>
-                                Android
-                            </a>
-                        </div>
-                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
-                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#windowsModal">
-                                <i class="fa-brands fa-windows"></i>
-                                Windows
-                            </a>
-                        </div>
-                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
-                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#iosModal">
-                                <i class="fa-brands fa-apple"></i>
-                                iOS
-                            </a>
-                        </div>
-                        <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
-                            <a class="btn btn-primary w-100" role="button" data-bs-toggle="modal" data-bs-target="#macModal">
-                                <i class="fa-brands fa-apple"></i>
-                                Mac
-                            </a>
+        </div>
+
+        <div class="instructions-container" data-for="clash">
+            <div class="step">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h2>Step 1</h2>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h3>Download the app</h3>
+                        
+                        <div class="row mx-4" class="button-container">
+                            <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                                <a class="btn btn-outline-dark w-100" role="button" data-bs-toggle="modal" data-bs-target="#androidModal">
+                                    <i class="fa-brands fa-android"></i>
+                                    Android
+                                </a>
+                            </div>
+                            <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                                <a class="btn btn-outline-dark w-100" role="button" data-bs-toggle="modal" data-bs-target="#windowsModal">
+                                    <i class="fa-brands fa-windows"></i>
+                                    Windows
+                                </a>
+                            </div>
+                            <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                                <a class="btn btn-outline-dark w-100" role="button" data-bs-toggle="modal" data-bs-target="#iosModal">
+                                    <i class="fa-brands fa-apple"></i>
+                                    iOS
+                                </a>
+                            </div>
+                            <div class="col-6 col-sm-6 col-md-3 px-1 py-1">
+                                <a class="btn btn-outline-dark w-100" role="button" data-bs-toggle="modal" data-bs-target="#macModal">
+                                    <i class="fa-brands fa-apple"></i>
+                                    Mac
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="step mt-5">
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <h2>Step 2</h2>
+            <div class="step mt-5">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h2>Step 2</h2>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h3>Install server</h3>
+                        <div class="row mx-4">
+                            <div class="col-12 px-5 px-sm-2 py-1 text-center">
+                                <a class="btn btn-success w-100 link-button" href="{{ clash_conf_url }}" role="button">
+                                    <i class="fa-sharp fa-solid fa-circle-down"></i>
+                                    Install
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12" style="font-style: italic; font-size: 0.8em;">
+                        If server import fails, download the configuration file and import it manually by <a href="{{ clash_manual_conf_url }}">clicking here</a>.
+                    </div>
                 </div>
             </div>
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <h3>Install server</h3>
-                    <div class="row mx-4">
-                        <div class="col-12 px-5 px-sm-2 py-1 text-center">
-                            <a class="btn btn-success w-100 link-button" href="{{ clash_conf_url }}" role="button">
-                                <i class="fa-sharp fa-solid fa-circle-down"></i>
-                                Install
-                            </a>
+        </div>
+
+
+        <div class="instructions-container px-3" data-for="v2ray">
+            {% if subscription_enabled %}
+                <div class="step" style="text-align: left;">
+                    <div class="form-group">
+                        <label for="v2raySubcriptionUrl">Subscription link</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control text-copyable" id="v2raySubcriptionUrl" readonly value="{{ v2ray_subscription_url }}">
+                            <button class="btn btn-outline-secondary btn-qr-code" type="button" data-value="{{ v2ray_subscription_url }}">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-copy" type="button" data-value="{{ v2ray_subscription_url }}">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">You can add this link as a subscription to your V2Ray client, to automatically get all servers and updates.</div>
+
+                        <div class="mt-3 show-v2ray-individual-link">
+                            <a href="#">Show individual server configurations</a>
                         </div>
                     </div>
                 </div>
-                <div class="col-12" style="font-style: italic; font-size: 0.8em;">
-                    If server import fails, download the configuration file and import it manually by <a href="{{ clash_manual_conf_url }}">clicking here</a>.
+                <div class="step mt-4 v2ray-individual-server" style="text-align: left; display: none;">
+                    Individual servers
                 </div>
-            </div>
+                {% for server in v2ray_server_links %}
+                    <div class="step mt-2 v2ray-individual-server" style="text-align: left; display: none;">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <input type="text" class="form-control text-copyable" id="panelUrl" readonly value="{{ server }}">
+                                <button class="btn btn-outline-secondary btn-qr-code" type="button" data-value="{{ server }}">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-copy" type="button" data-value="{{ server }}">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
+        
+        <div class="instructions-container px-3" data-for="shadowsocks">
+            {% if subscription_enabled %}
+                <div class="step" style="text-align: left;">
+                    <div class="form-group">
+                        <label for="v2raySubcriptionUrl">Subscription link</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control text-copyable" id="ssSubcriptionUrl" readonly value="{{ ss_subscription_url }}">
+                            <button class="btn btn-outline-secondary btn-qr-code" type="button" data-value="{{ ss_subscription_url }}">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-copy" type="button" data-value="{{ ss_subscription_url }}">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">You can add this link as a subscription to your Shadowsocks client, to automatically get all servers and updates.</div>
+
+                        <div class="mt-3 show-ss-individual-link">
+                            <a href="#">Show individual server configurations</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="step mt-4 ss-individual-server" style="text-align: left; display: none;">
+                    Individual servers
+                </div>
+                {% for server in ss_server_links %}
+                    <div class="step mt-2 ss-individual-server" style="text-align: left; display: none;">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <input type="text" class="form-control text-copyable" id="panelUrl" readonly value="{{ server }}">
+                                <button class="btn btn-outline-secondary btn-qr-code" type="button" data-value="{{ server }}">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-copy" type="button" data-value="{{ server }}">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
         <div class="step mt-5">
             <div class="row justify-content-center">
                 <div class="col-12">
@@ -309,7 +420,7 @@
                     <h3>Share this page to your other devices</h3>
                     <div class="row mx-4 justify-content-center">
                         <div class="col-12 col-sm-6 col-md-3 px-5 px-sm-2 py-1">
-                            <a class="btn btn-outline-dark w-100 link-button qr-button" role="button">
+                            <a class="btn btn-outline-dark w-100 link-button page-share-qr-button" role="button">
                                 <i class="fa-solid fa-qrcode"></i>
                                 QR Code
                             </a>
@@ -348,21 +459,63 @@
 
 
         <script>
-            document.querySelector('.qr-button').addEventListener('click', function (event) {
-                var url = window.location.href;
+            function showQrCode(text) {
                 var size = 400;
                 size = Math.min(size, window.innerWidth - 120);
-
-                new QRCode(document.getElementById("qr-code"), {
-                    text: url,
-                    width: size,
-                    height: size,
-                });
-
+                
+                document.getElementById("qr-code").innerHTML = '';
                 document.querySelector('.qr-modal').style.display = 'block';
                 requestAnimationFrame(function () {
                     document.querySelector('.qr-modal').style.opacity = 1;
-                });                
+                });
+                setTimeout(function() {
+                    new QRCode(document.getElementById("qr-code"), {
+                        text: text,
+                        width: size,
+                        height: size,
+                        correctLevel : QRCode.CorrectLevel.L
+                    });
+                }, 50);
+            }
+
+            document.querySelector('.page-share-qr-button').addEventListener('click', function (event) {
+                var url = window.location.href;
+                showQrCode(url);                
+            });
+
+            document.querySelectorAll('.btn-qr-code').forEach(function (button) {
+                button.addEventListener('click', function (event) {
+                    showQrCode(event.target.dataset.value);
+                });
+            });
+
+            document.querySelectorAll('.btn-copy').forEach(function (button) {
+                button.addEventListener('click', function (event) {
+                    var value = event.target.dataset.value;
+                    navigator.clipboard.writeText(value);
+
+                    var buttonElem = event.target;
+                    while (buttonElem.classList && !buttonElem.classList.contains('btn-copy')) {
+                        buttonElem = buttonElem.parentNode;
+                    }
+                    buttonElem.querySelector('i').classList.remove('fa-copy');
+                    buttonElem.querySelector('i').classList.add('fa-check');
+                    buttonElem.classList.remove('btn-outline-secondary');
+                    buttonElem.classList.add('btn-secondary');
+                    setTimeout(function () {
+                        buttonElem.querySelector('i').classList.remove('fa-check');
+                        buttonElem.querySelector('i').classList.add('fa-copy');
+                        buttonElem.classList.remove('btn-secondary');
+                        buttonElem.classList.add('btn-outline-secondary');
+                    }, 1000);
+                });
+            });
+
+            document.querySelectorAll('.text-copyable').forEach(function (element) {
+                element.addEventListener('click', function (event) {
+                    // click on the adjacent .btn-copy button
+                    event.target.parentNode.querySelector('.btn-copy').click();
+                });
             });
 
             document.querySelector('.qr-modal-close').addEventListener('click', function (event) {
@@ -379,6 +532,38 @@
                 var body = 'Please install the Clash VPN by clicking the link below:\n\n' + url;
                 var mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
                 window.location.href = mailto;
+            });
+
+            document.querySelectorAll('.instruction-group').forEach(function (group) {
+                group.addEventListener('click', function (event) {
+                    var elementId = event.target.id;
+                    console.log(elementId);
+                    
+                    document.querySelectorAll('.instructions-container').forEach(function (element) {
+                        element.style.display = 'none';
+                    });
+                    
+                    var instructionsContainer = document.querySelector('.instructions-container[data-for="' + elementId + '"]');
+                    instructionsContainer.style.display = 'block';
+                });
+            });
+
+            document.querySelector('#clash.instruction-group').click();
+        
+            document.querySelector('.show-v2ray-individual-link a').addEventListener('click', function (event) {
+                event.preventDefault();
+                document.querySelectorAll('.v2ray-individual-server').forEach(function (element) {
+                    element.style.display = 'block';
+                });
+                document.querySelector('.show-v2ray-individual-link a').style.display = 'none';
+            });
+
+            document.querySelector('.show-ss-individual-link a').addEventListener('click', function (event) {
+                event.preventDefault();
+                document.querySelectorAll('.ss-individual-server').forEach(function (element) {
+                    element.style.display = 'block';
+                });
+                document.querySelector('.show-ss-individual-link a').style.display = 'none';
             });
         </script>
     </body>
