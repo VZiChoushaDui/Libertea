@@ -261,6 +261,7 @@ def user_save(user):
         uid, _ = utils.create_user(note=note, max_ips=max_ips)
         if note.strip() == '':
             utils.update_user(uid, note=uid)
+        tier_enabled_for_subscription['default'] = True
         utils.update_user(uid, tier_enabled_for_subscription=tier_enabled_for_subscription)
         return redirect(url_for('admin.user', user=uid))
         
