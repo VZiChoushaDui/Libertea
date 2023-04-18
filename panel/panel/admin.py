@@ -484,7 +484,7 @@ def app_settings():
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
-        provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'ssv2ray', 'ssgrpc']},
+        provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssv2ray', 'ssgrpc']},
         proxygroup_type_selected=proxygroup_type_selected,
         tier_enabled_for_subscription=tier_enabled_for_subscription,
     )
@@ -496,7 +496,7 @@ def app_settings_save():
     single_file_clash = request.form.get('single_file_clash', None)
     providers_from_all_endpoints = request.form.get('providers_from_all_endpoints', None)
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
-    provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'ssv2ray', 'ssgrpc']}
+    provider_enabled = {x: request.form.get('provider_' + x, None) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssv2ray', 'ssgrpc']}
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
@@ -519,7 +519,7 @@ def app_settings_save():
     settings.set_periodic_health_check(health_check == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
-    for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'ssgrpc']:
+    for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssgrpc']:
         settings.set_provider_enabled(x, provider_enabled[x] == 'on')
 
     # if none of trojanws, ssv2ray and trojangrpc is enabled, enable trojangrpc

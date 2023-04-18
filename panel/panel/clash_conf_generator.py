@@ -95,6 +95,20 @@ def get_providers(connect_url, db):
                     server=s,
                     tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
+            if settings.get_provider_enabled('vmessgrpc', db=db):
+                providers.append(init_provider_info(
+                    type='vmess-grpc',
+                    name='VmG-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_VMESS_GRPC_AUTH_UUID'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_GRPC_URL'),
+                    meta_only=True,
+                    entry_type=server_entry_type,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                ))
             if settings.get_provider_enabled('trojanws', db=db):
                 providers.append(init_provider_info(
                     type='trojan-ws',

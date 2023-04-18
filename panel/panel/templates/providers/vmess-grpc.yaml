@@ -1,0 +1,16 @@
+  - name: "{{name}}"
+    type: vmess
+    server: {{server}}
+    port: {{port}}
+    uuid: {{password}}
+    alterId: 0
+    cipher: auto
+    udp: true
+    tls: true
+    skip-cert-verify: {{skip_cert_verify}}
+    #servername: test.com # priority over wss host
+    network: grpc
+    sni: {{sni}}
+    grpc-opts:
+      grpc-service-name: "{{ path[1:] }}"
+  
