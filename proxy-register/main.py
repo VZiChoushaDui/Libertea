@@ -6,7 +6,7 @@ import socket
 import requests
 from datetime import datetime
 
-LIBERTEA_PROXY_VERSION = 1001
+LIBERTEA_PROXY_VERSION = 1002
 
 # Force ipv4 for requests
 old_getaddrinfo = socket.getaddrinfo
