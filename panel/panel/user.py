@@ -131,7 +131,13 @@ def user_subscribeb64(id):
     trojan = request.args.get('trojan', 'true') == 'true'
     shadowsocks = request.args.get('shadowsocks', 'true') == 'true'
 
-    data = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=vless, trojan=trojan, shadowsocks=shadowsocks)
+    enabled_tiers_items = utils.get_user_tiers_enabled_for_subscription(user['_id'])
+    enabled_tiers = []
+    for i in ['1','2','3','4']:
+        if enabled_tiers_items[i]:
+            enabled_tiers.append(i)
+
+    data = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=vless, trojan=trojan, shadowsocks=shadowsocks, enabled_tiers=enabled_tiers)
 
     result = ""
     for provider_url in data:
@@ -149,7 +155,13 @@ def user_subscribe(id):
     trojan = request.args.get('trojan', 'true') == 'true'
     shadowsocks = request.args.get('shadowsocks', 'true') == 'true'
 
-    data = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=vless, trojan=trojan, shadowsocks=shadowsocks)
+    enabled_tiers_items = utils.get_user_tiers_enabled_for_subscription(user['_id'])
+    enabled_tiers = []
+    for i in ['1','2','3','4']:
+        if enabled_tiers_items[i]:
+            enabled_tiers.append(i)
+
+    data = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=vless, trojan=trojan, shadowsocks=shadowsocks, enabled_tiers=enabled_tiers)
 
     result = ""
     for provider_url in data:
@@ -163,7 +175,13 @@ def user_subscribe_ss(id):
     if user is None:
         return "", 404
 
-    data = subscription_conf_generator.generate_conf_json(user['_id'], user['connect_url'])
+    enabled_tiers_items = utils.get_user_tiers_enabled_for_subscription(user['_id'])
+    enabled_tiers = []
+    for i in ['1','2','3','4']:
+        if enabled_tiers_items[i]:
+            enabled_tiers.append(i)
+
+    data = subscription_conf_generator.generate_conf_json(user['_id'], user['connect_url'], enabled_tiers=enabled_tiers)
 
     return json.dumps(data)
 

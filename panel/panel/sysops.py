@@ -56,6 +56,7 @@ def haproxy_update_users_list():
         for user in users.find():
             # write each user to file
             f.write('/' + user['connect_url'] + '/' + '\n')
+            f.write('/' + user['connect_url'] + '___' + '\n')
             count += 1
 
     print("Wrote " + str(count) + " users to haproxy-lists/valid-user-endpoints.lst")

@@ -39,11 +39,14 @@ def ___update_max_ips_cache(db=None):
 def ___get_max_ips(panel_id_or_connect_url, db=None):
     global ___max_ips
 
-    ___update_max_ips_cache(db)
-    user_max_ips = ___max_ips.get(panel_id_or_connect_url, ___default_max_ips)
-    if user_max_ips <= 0:
+    try:
+        ___update_max_ips_cache(db)
+        user_max_ips = int(___max_ips.get(panel_id_or_connect_url, ___default_max_ips))
+        if user_max_ips <= 0:
+            return ___default_max_ips
+        return user_max_ips
+    except:
         return ___default_max_ips
-    return user_max_ips
 
 def create_user(note, referrer=None, max_ips=None):
     client = config.get_mongo_client()
