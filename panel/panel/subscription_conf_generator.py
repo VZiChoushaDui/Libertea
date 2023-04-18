@@ -49,15 +49,14 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
             provider_urls.append('ss://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?plugin=v2ray-plugin%3Btls%3Bhost%3D' + provider['host'] + '%3Bpath%3D' + provider['path'] + '%3Bmux%3D4' + 
                                  '#' + config.get_panel_domain() + ' ' + provider['name'])
-        # TODO: Add vless-grpc, trojan-grpc, vmess-grpc
         elif provider['type'] == 'vless-grpc':
-            provider_urls.append('vless://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + fix_path_for_grpc_clients(provider['path']) +
-                                    '?sni=' + provider['sni'] + '&type=grpc&host=' + provider['host'] + '&path=' + fix_path_for_grpc_clients(provider['path']) +
+            provider_urls.append('vless://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) +
+                                    '?sni=' + provider['sni'] + '&type=grpc&host=' + provider['host'] +
                                     '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&serviceName=' + fix_path_for_grpc_clients(provider['path'])[1:] +
                                     '&security=tls&encryption=none&fp=chrome#' + config.get_panel_domain() + ' ' + provider['name'])
         elif provider['type'] == 'trojan-grpc':
-            provider_urls.append('trojan://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + fix_path_for_grpc_clients(provider['path']) +
-                                    '?sni=' + provider['sni'] + '&type=grpc&host=' + provider['host'] + '&path=' + fix_path_for_grpc_clients(provider['path']) +
+            provider_urls.append('trojan://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) +
+                                    '?sni=' + provider['sni'] + '&type=grpc&host=' + provider['host'] + '&path=' +
                                     '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&serviceName=' + fix_path_for_grpc_clients(provider['path'])[1:] +
                                     '&fp=chrome#' + config.get_panel_domain() + ' ' + provider['name'])
         elif provider['type'] == 'vmess-ws':

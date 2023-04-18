@@ -485,19 +485,25 @@
 
             document.querySelectorAll('.btn-qr-code').forEach(function (button) {
                 button.addEventListener('click', function (event) {
-                    showQrCode(event.target.dataset.value);
+                    var buttonElem = event.target;
+                    while (buttonElem.classList && !buttonElem.classList.contains('btn-copy')) {
+                        buttonElem = buttonElem.parentNode;
+                    }
+
+                    showQrCode(buttonElem.dataset.value);
                 });
             });
 
             document.querySelectorAll('.btn-copy').forEach(function (button) {
                 button.addEventListener('click', function (event) {
-                    var value = event.target.dataset.value;
-                    navigator.clipboard.writeText(value);
-
                     var buttonElem = event.target;
                     while (buttonElem.classList && !buttonElem.classList.contains('btn-copy')) {
                         buttonElem = buttonElem.parentNode;
                     }
+
+                    var value = buttonElem.dataset.value;
+                    navigator.clipboard.writeText(value);
+
                     buttonElem.querySelector('i').classList.remove('fa-copy');
                     buttonElem.querySelector('i').classList.add('fa-check');
                     buttonElem.classList.remove('btn-outline-secondary');
