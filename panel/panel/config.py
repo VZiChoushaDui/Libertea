@@ -17,7 +17,7 @@ def new_getaddrinfo(*args, **kwargs):
             if response[0] == socket.AF_INET]
 socket.getaddrinfo = new_getaddrinfo
 
-LIBERTEA_VERSION = 1029
+LIBERTEA_VERSION = 1030
 LIBERTEA_PROXY_VERSION = 1002
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/version.txt"
 
