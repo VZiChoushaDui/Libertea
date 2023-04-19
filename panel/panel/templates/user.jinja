@@ -486,7 +486,7 @@
             document.querySelectorAll('.btn-qr-code').forEach(function (button) {
                 button.addEventListener('click', function (event) {
                     var buttonElem = event.target;
-                    while (buttonElem.classList && !buttonElem.classList.contains('btn-copy')) {
+                    while (buttonElem.classList && !buttonElem.classList.contains('btn-qr-code')) {
                         buttonElem = buttonElem.parentNode;
                     }
 
