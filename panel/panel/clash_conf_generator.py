@@ -139,19 +139,21 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
             if settings.get_provider_enabled('ssv2ray', db=db):
-                providers.append(init_provider_info(
-                    type='ss-v2ray',
-                    name='ssW-' + str(idx) + "-" + server,
-                    port=port,
-                    password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
-                    path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
-                    meta_only=False,
-                    entry_type=server_entry_type,
-                    sni=utils.get_domain_sni(server, db=db),
-                    host=server,
-                    server=s,
-                    tier=utils.get_domain_or_online_route_tier(server, db=db),
-                ))
+                if not is_for_subscription or server_entry_type != 'SecondaryProxy':
+                    # subscription does not support secondary proxy (invalid cert)
+                    providers.append(init_provider_info(
+                        type='ss-v2ray',
+                        name='ssW-' + str(idx) + "-" + server,
+                        port=port,
+                        password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
+                        path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
+                        meta_only=False,
+                        entry_type=server_entry_type,
+                        sni=utils.get_domain_sni(server, db=db),
+                        host=server,
+                        server=s,
+                        tier=utils.get_domain_or_online_route_tier(server, db=db),
+                    ))
             idx += 1
 
     return providers

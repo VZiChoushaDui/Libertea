@@ -16,7 +16,7 @@ def fix_path_for_grpc_clients(path):
         path = '/' + path[3:]
     return path
 
-def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=True, enabled_tiers=None):
+def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=True, vmess=True, enabled_tiers=None, websocket=True, grpc=True):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -24,7 +24,7 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
     db = client[config.MONGODB_DB_NAME]
 
     provider_urls = []
-    providers = clash_conf_generator.get_providers(connect_url, db)
+    providers = clash_conf_generator.get_providers(connect_url, db, is_for_subscription=True)
     if enabled_tiers is not None:
         providers = [p for p in providers if p['tier'] in enabled_tiers]
     try:
@@ -34,32 +34,32 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
 
     for provider in providers:
         # generate url for each provider
-        if provider['type'] == 'trojan-ws' and trojan:
+        if provider['type'] == 'trojan-ws' and trojan and websocket:
             provider_urls.append('trojan://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?sni=' + provider['sni'] + '&type=ws&host=' + provider['host'] + '&path=' + provider['path'] + 
                                  '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&fp=chrome' +
                                  '#' + config.get_panel_domain() + ' ' + provider['name'])
-        elif provider['type'] == 'vless-ws' and vless:
+        elif provider['type'] == 'vless-ws' and vless and websocket:
             provider_urls.append('vless://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?sni=' + provider['sni'] + '&type=ws&host=' + provider['host'] + '&path=' + provider['path'] + 
                                  '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&security=tls&encryption=none&fp=chrome'
                                  '#' + config.get_panel_domain() + ' ' + provider['name'])
-        elif provider['type'] == 'ss-v2ray' and shadowsocks:
+        elif provider['type'] == 'ss-v2ray' and shadowsocks and websocket:
             # add xray plugin to url
             provider_urls.append('ss://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) + provider['path'] + 
                                  '?plugin=v2ray-plugin%3Btls%3Bhost%3D' + provider['host'] + '%3Bpath%3D' + provider['path'] + '%3Bmux%3D4' + 
                                  '#' + config.get_panel_domain() + ' ' + provider['name'])
-        elif provider['type'] == 'vless-grpc':
+        elif provider['type'] == 'vless-grpc' and vless and grpc:
             provider_urls.append('vless://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) +
                                     '?sni=' + provider['sni'] + '&type=grpc&host=' + provider['host'] +
                                     '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&serviceName=' + fix_path_for_grpc_clients(provider['path'])[1:] +
                                     '&security=tls&encryption=none&fp=chrome#' + config.get_panel_domain() + ' ' + provider['name'])
-        elif provider['type'] == 'trojan-grpc':
+        elif provider['type'] == 'trojan-grpc' and trojan and grpc:
             provider_urls.append('trojan://' + provider['password'] + '@' + provider['server'] + ':' + str(provider['port']) +
                                     '?sni=' + provider['sni'] + '&type=grpc&host=' + provider['host'] + '&path=' +
                                     '&alpn=http/1.1&allowInsecure=' + (provider['skip_cert_verify']) + '&serviceName=' + fix_path_for_grpc_clients(provider['path'])[1:] +
                                     '&fp=chrome#' + config.get_panel_domain() + ' ' + provider['name'])
-        elif provider['type'] == 'vmess-ws':
+        elif provider['type'] == 'vmess-ws' and vmess and websocket:
             # vmess is a base64 encoded json
             vmess_json = {
                 'v': '2',
@@ -77,7 +77,7 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
                 'allowInsecure': provider['skip_cert_verify'],
             }
             provider_urls.append('vmess://' + base64.b64encode(json.dumps(vmess_json).encode('utf-8')).decode('utf-8'))
-        elif provider['type'] == 'vmess-grpc':
+        elif provider['type'] == 'vmess-grpc' and vmess and grpc:
             vmess_json = {
                 'v': '2',
                 'ps': provider['name'],
@@ -108,7 +108,7 @@ def generate_conf_json(user_id, connect_url, enabled_tiers=None):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
 
-    providers = clash_conf_generator.get_providers(connect_url, db)
+    providers = clash_conf_generator.get_providers(connect_url, db, is_for_subscription=True)
     provider_confs = []    
     if enabled_tiers is not None:
         providers = [p for p in providers if p['tier'] in enabled_tiers]
