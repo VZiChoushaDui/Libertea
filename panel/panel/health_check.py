@@ -143,7 +143,6 @@ def parse():
         health_check_ping_interval = 290
         max_hits_per_protocol = {}
         window_current_time = start_time
-        distinct_protocols = 
         while window_current_time + timedelta(seconds=health_check_ping_interval) < end_time:
             window_current_time += timedelta(seconds=health_check_ping_interval)
             # online user is defined as a user who has at least one health check in the last 290 seconds
