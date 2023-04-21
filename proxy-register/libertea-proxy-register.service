@@ -1,0 +1,17 @@
+[Unit]
+Description=LiberteaProxyRegister
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+User=root
+EnvironmentFile={rootpath}/.env
+WorkingDirectory={rootpath}/proxy-register
+Type=simple
+ExecStart=/usr/bin/python3 {rootpath}/proxy-register/main.py
+StandardInput=tty-force
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

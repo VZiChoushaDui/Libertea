@@ -139,12 +139,30 @@ def parse():
             continue
 
         # get success rate for each domain
+        # max hits per protocol is for every 290 seconds, number of the online users at that time
+        health_check_ping_interval = 290
         max_hits_per_protocol = {}
-        for domain, domain_dns, protocol in hit_counts:
-            if not protocol in max_hits_per_protocol:
-                max_hits_per_protocol[protocol] = 0
-            max_hits_per_protocol[protocol] = max(max_hits_per_protocol[protocol], hit_counts[(domain, domain_dns, protocol)])
+        window_current_time = start_time
+        distinct_protocols = 
+        while window_current_time + timedelta(seconds=health_check_ping_interval) < end_time:
+            window_current_time += timedelta(seconds=health_check_ping_interval)
+            # online user is defined as a user who has at least one health check in the last 290 seconds
+            online_users = list(health_checks_raw.distinct('user_id', {
+                'timestamp': {
+                    '$gt': window_current_time - timedelta(seconds=health_check_ping_interval),
+                    '$lt': window_current_time,
+                }
+            }))
 
+            print(f"Health check parse: {len(online_users)} online users at {window_current_time} for {len(hit_counts)} domains")
+
+            for protocol in protocols:
+                if not protocol in max_hits_per_protocol:
+                    max_hits_per_protocol[protocol] = 0
+                max_hits_per_protocol[protocol] += len(online_users)
+                print(f"Health check parse: {protocol} max hits at {window_current_time} updated with {len(online_users)} online users")
+                print(f"Health check parse: {protocol} max hits is now {max_hits_per_protocol[protocol]}")
+            
         for protocol in set(max_hits_per_protocol.keys()):
             if max_hits_per_protocol[protocol] < min_hits_per_protocol_per_interval:
                 print(f"Health check parse: skipped {protocol} because not enough data")
