@@ -139,7 +139,7 @@ else
     echo "     - haproxy"
     systemctl stop haproxy
     rm -f /etc/haproxy/haproxy.cfg
-    cp haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
+    cp proxy-haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
     sed -i "s|\${CONN_PROXY_IP}|$CONN_PROXY_IP|g" /etc/haproxy/haproxy.cfg
     systemctl start haproxy
 fi
