@@ -173,6 +173,8 @@ def parse():
                 continue
             success_rates[(domain, domain_dns, protocol)] = hit_counts[(domain, domain_dns, protocol)] / max_hits_per_protocol[protocol]
             print(f"  {domain} ({domain_dns}) {protocol}: {hit_counts[(domain, domain_dns, protocol)]} hits, {success_rates[(domain, domain_dns, protocol)]} success rate")
+            if success_rates[(domain, domain_dns, protocol)] > 1:
+                success_rates[(domain, domain_dns, protocol)] = 1
 
         
         
