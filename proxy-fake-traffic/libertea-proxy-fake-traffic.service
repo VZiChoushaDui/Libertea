@@ -1,0 +1,17 @@
+[Unit]
+Description=LiberteaProxyFakeTraffic
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+User=root
+EnvironmentFile={rootpath}/.env
+WorkingDirectory={rootpath}/proxy-fake-traffic
+Type=simple
+ExecStart=/bin/bash "{rootpath}/proxy-fake-traffic/generate-traffic.sh"
+StandardInput=tty-force
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
