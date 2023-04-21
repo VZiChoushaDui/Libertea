@@ -11,7 +11,7 @@ fi
 CONN_PROXY_IP="$1"
 PANEL_SECRET_KEY="$2"
 PROXY_REGISTER_ENDPOINT="$3"
-DOCKERIZED_PROXY="1"
+DOCKERIZED_PROXY="0"
 
 if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTER_ENDPOINT" ]; then
     echo "Usage: $0 <CONN_PROXY_IP> <PANEL_SECRET_KEY> <PROXY_REGISTER_ENDPOINT>"
@@ -141,6 +141,7 @@ else
     rm -f /etc/haproxy/haproxy.cfg
     cp proxy-haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
     sed -i "s|\${CONN_PROXY_IP}|$CONN_PROXY_IP|g" /etc/haproxy/haproxy.cfg
+    systemctl enable haproxy
     systemctl start haproxy
 fi
 
