@@ -505,8 +505,9 @@ def has_active_endpoints(db=None):
     } for domain in domains.find()]
 
     for domain in all_domains:
-        if domain['status'] == 'active':
+        if domain['status'] in ['active', 'cdn-disabled']:
             return True
+        
 
     return False
 
