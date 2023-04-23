@@ -115,7 +115,26 @@ if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then
 fi
 
 echo " ** Getting public IP..."
-my_ip=$(curl -s https://ifconfig.io/ip)
+# my_ip=$(curl -s https://ifconfig.io/ip)
+# set timeout to 5 seconds
+my_ip=$(curl -s --max-time 3 https://ifconfig.io/ip)
+if [[ ! $my_ip ]]; then
+    my_ip=$(curl -s --max-time 3 https://api.ipify.org)
+fi
+if [[ ! $my_ip ]]; then
+    my_ip=$(curl -s --max-time 3 https://icanhazip.com)
+fi
+if [[ ! $my_ip ]]; then
+    my_ip=$(curl -s --max-time 3 https://ident.me)
+fi
+if [[ ! $my_ip ]]; then
+    my_ip=$(curl -s --max-time 3 https://checkip.amazonaws.com)
+fi
+if [[ ! $my_ip ]]; then
+    echo " ** Failed to get public IP. Please check your internet connection."
+    exit 1
+fi
+
 
 # if .env does not exist, copy sample.env and fill it with random values
 if [ ! -f .env ]; then
