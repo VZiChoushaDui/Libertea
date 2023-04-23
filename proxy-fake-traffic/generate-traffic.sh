@@ -1,7 +1,20 @@
 #!/bin/bash
 
 # get country code
-COUNTRY_CODE=$(curl -s https://ifconfig.io/country_code)
+COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
+if [ -z "$COUNTRY_CODE" ]; then
+    COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
+fi
+if [ -z "$COUNTRY_CODE" ]; then
+    COUNTRY_CODE=$(curl -s --max-time 3 https://ipinfo.io/country)
+fi
+if [ -z "$COUNTRY_CODE" ]; then
+    COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
+fi
+if [ -z "$COUNTRY_CODE" ]; then
+    echo "Could not get country code. Will generate fake traffic."
+    COUNTRY_CODE="CN"
+fi
 
 countries=("CN" "RU" "CU" "TH" "TM" "IR" "SY" "SA" "TR")
 
