@@ -115,8 +115,7 @@ if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then
 fi
 
 echo " ** Getting public IP..."
-# my_ip=$(curl -s https://ifconfig.io/ip)
-# set timeout to 5 seconds
+set +e
 my_ip=$(curl -s --max-time 3 https://ifconfig.io/ip)
 if [[ ! $my_ip ]]; then
     my_ip=$(curl -s --max-time 3 https://api.ipify.org)
@@ -134,6 +133,7 @@ if [[ ! $my_ip ]]; then
     echo " ** Failed to get public IP. Please check your internet connection."
     exit 1
 fi
+set -e
 
 
 # if .env does not exist, copy sample.env and fill it with random values
