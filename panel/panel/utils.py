@@ -2,9 +2,11 @@ import uuid
 import socket
 import pymongo
 import requests
+import threading
 from . import stats
 from . import config
 from . import sysops
+from . import certbot
 from . import settings
 from datetime import datetime
 from pymongo import MongoClient
@@ -182,10 +184,14 @@ def add_domain(domain, dns_domain=None, sni=None):
     if not sysops.haproxy_update_domains_list():
         remove_domain(domain)
         return 500
+    
+    # try issuing a cert for the new domain in the background
+    # this is not critical, so we don't care if it fails
+    def issue_cert():
+        certbot.generate_certificate(domain)
 
-    # if not sysops.haproxy_renew_certs():
-    #     remove_domain(domain)
-    #     return 501
+    thread = threading.Thread(target=issue_cert)
+    thread.start()
 
     return 200
 

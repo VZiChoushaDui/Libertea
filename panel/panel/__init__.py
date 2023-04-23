@@ -2,6 +2,7 @@ import requests
 from . import stats
 from . import utils
 from . import config
+from . import certbot
 from . import health_check
 from . import sysops
 from . import admin
@@ -41,6 +42,15 @@ def save_connected_ips(signal):
     stats.save_connected_ips_count()
     print("CRON: done")
 
+@uwsgidecorators.cron(-5, -1, -1, -1, -1)
+def update_certificates(signal):
+    print("CRON: Updating certificates")
+    domains = utils.get_domains()
+    domains.append(config.get_panel_domain())
+    for domain in domains:
+        certbot.generate_certificate(domain)
+    print("CRON: done")
+
 
 def create_app():
     app = Flask(__name__)
@@ -49,6 +59,8 @@ def create_app():
     sysops.haproxy_update_users_list()
     sysops.haproxy_update_domains_list()
     sysops.haproxy_update_camouflage_list()
+
+    update_certificates(None)
 
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(user.blueprint)

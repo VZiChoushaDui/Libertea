@@ -10,7 +10,7 @@
                 {% elif status == 'inactive' %}
                 ❌ Inactive
                 {% elif status == 'cdn-disabled' %}
-                ❌ Inactive (CDN disabled)
+                ⚠️ Active (CDN disabled)
                 {% else %}
                 ⚠️ Unknown status
                 {% endif %}
@@ -80,7 +80,7 @@
         <div class="col-12">
             CDN Provider: 
             {% if status == 'cdn-disabled' %}
-            <strong>No CDN ⚠️</strong>
+            <strong>No CDN</strong>
             {% else %}
             <strong>{{ cdn_provider }}</strong>
             {% endif %}
@@ -89,8 +89,7 @@
     {% if status == 'cdn-disabled' %}
     <div class="row mt-5">
         <div class="col-12">
-            ⚠️ Make sure CDN is enabled for your domain.<br />
-            (Orange cloud icon in CloudFlare)<br />
+            ⚠️ If you want to route traffic through CDN, make sure you enable it (Orange cloud icon in CloudFlare)<br />
         </div>
     </div>
     {% endif %}
