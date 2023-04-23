@@ -60,7 +60,10 @@ def create_app():
     sysops.haproxy_update_domains_list()
     sysops.haproxy_update_camouflage_list()
 
-    update_certificates(None)
+    try:
+        update_certificates(None)
+    except:
+        pass
 
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(user.blueprint)
