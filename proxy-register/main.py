@@ -20,8 +20,21 @@ socket.getaddrinfo = new_getaddrinfo
 def get_ip_api_url():
     return random.choice([
         'https://api.ipify.org',
+        'http://api.ipify.org',
         'https://ifconfig.io/ip',
         'http://ifconfig.io/ip',
+        'https://icanhazip.com',
+        'http://icanhazip.com',
+        'https://ident.me',
+        'http://ident.me',
+        'https://ipecho.net/plain',
+        'http://ipecho.net/plain',
+        'https://myexternalip.com/raw',
+        'http://myexternalip.com/raw',
+        'https://wtfismyip.com/text',
+        'http://wtfismyip.com/text',
+        'https://checkip.amazonaws.com',
+        'http://checkip.amazonaws.com',
     ])
 SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
 

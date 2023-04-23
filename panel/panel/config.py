@@ -74,7 +74,12 @@ def get_ip_api_url():
     return random.choice([
         'https://api.ipify.org',
         'https://ifconfig.io/ip',
-        'http://ifconfig.io/ip',
+        'https://icanhazip.com',
+        'https://ident.me',
+        'https://ipecho.net/plain',
+        'https://myexternalip.com/raw',
+        'https://wtfismyip.com/text',
+        'https://checkip.amazonaws.com',
     ])
 
 SERVER_MAIN_IP = None
@@ -88,7 +93,7 @@ for i in range(5):
         SERVER_MAIN_IP = ip
         break
     except Exception as e:
-        print("Failed to get server ip.")
+        print("Failed to get server ip: " + str(e))
 
 if SERVER_MAIN_IP is None:
     raise Exception("couldn't fetch SERVER_MAIN_IP")
