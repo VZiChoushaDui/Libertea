@@ -52,6 +52,14 @@ for file in os.listdir(logs_path):
                     items = dict(match.groupdict())
 
                     item_key = items['endpoint']
+                    if item_key.startswith('https://') or item_key.startswith('http://'):
+                        # remove protocol://[domain] from endpoint
+                        item_key = item_key[item_key.find('://') + 3:]
+                        if '/' in item_key:
+                            item_key = item_key[item_key.find('/'):]
+                        else:
+                            item_key = '/'
+                    
                     if items['domain_name'] is not None:
                         if items['domain_name'] == 'google.com':
                             # this is a Libertea secondary proxy, will use remote_conn_addr (without port) instead of google.com
