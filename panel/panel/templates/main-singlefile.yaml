@@ -66,7 +66,7 @@ proxy-groups:
 
 {% for tier in tiers %}
 {% if tier.exists %}
-{% with name="tier" + (tier.index) + "-group-udp", proxies=providers, tier=tier, udp_only=False, panel_domain=panel_domain, user_id=user_id, udp_only=True %}
+{% with name="tier" + (tier.index) + "-group-udp", proxies=providers, tier=tier, panel_domain=panel_domain, user_id=user_id, udp_only=True %}
 {% if tier.type == 'urltest' %}{% include "groups/urltest.yaml" %}{% endif %}
 {% if tier.type == 'fallback' %}{% include "groups/fallback.yaml" %}{% endif %}
 {% if tier.type == 'loadbalance' %}{% include "groups/loadbalance.yaml" %}{% endif %}

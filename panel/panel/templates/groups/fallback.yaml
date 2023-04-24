@@ -1,7 +1,7 @@
   - name: "{{name}}"
     type: fallback
     proxies:
-{% for provider in providers %}{% if provider.tier == tier.index %}{% if not provider.meta_only or meta %}{% if not udp_only or provider.type == 'trojan-ws' %}
+{% for provider in providers %}{% if provider.tier == tier.index %}{% if not provider.meta_only or meta %}{% if not udp_only or provider.type == 'trojan-ws' or provider.type == 'trojan-grpc' or provider.type == 'vless-ws' or provider.type == 'vless-grpc' or provider.type == 'vmess-ws' or provider.type == 'vless-grpc' %}
       - {{ provider.name }}
 {% endif %}{% endif %}{% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
