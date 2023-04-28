@@ -28,7 +28,7 @@ if [ -f .libertea.main ]; then
 fi
 
 touch .libertea.proxy
-
+export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
 apt-get update >/dev/null

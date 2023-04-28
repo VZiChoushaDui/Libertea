@@ -20,7 +20,7 @@ if [ -f .libertea.proxy ]; then
 fi
 
 touch .libertea.main
-
+export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
 apt-get update >/dev/null
@@ -31,8 +31,8 @@ apt-get update >/dev/null
 #         # if ubuntu version is 20.04, add certbot repository
 #         add-apt-repository -y ppa:certbot/certbot > /dev/null
 #     fi
-#     sudo apt-get update > /dev/null
-#     sudo apt-get install -qq -y certbot > /dev/null
+#     apt-get update > /dev/null
+#     apt-get install -qq -y certbot > /dev/null
 # fi
 
 if ! command -v ufw &> /dev/null; then
