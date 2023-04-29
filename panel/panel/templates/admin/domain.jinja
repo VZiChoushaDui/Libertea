@@ -195,7 +195,7 @@
         <script>
             var country = localStorage.getItem('ip-country-{{ domain }}');
             if (country) {
-                country = JSON.parse(country);
+                var data = JSON.parse(country);
                 document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
                 document.querySelector('.server-country-flag').innerText = '';
                 document.querySelector('.server-country-flag-name').innerText = data.country_name;
