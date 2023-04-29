@@ -1,5 +1,10 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+/>
+
 <div class="mt-4 px-2">
     <a class="btn btn-primary float-start float-sm-end mx-1 mb-1" href="/{{ admin_uuid }}/domains/new/">
         Add new domain
@@ -108,6 +113,7 @@
         <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
             <div class="row">
                 <div class="col-12 list-item-title">
+                    <span class="secondary-proxy-flag fi" data-ip="{{ proxy.ip }}"></span>
                     {{ proxy.ip }}
                     {% if proxy.tier != None %}<div class="list-item-badge">{{ proxy.tier }}</div>{% endif %}
                     {% if proxy.update_available %}⚠️{% endif %}
@@ -158,6 +164,14 @@
 
                 var avg_percent = Math.round(sum / count * 100);
                 elem.innerText = avg_percent + '%';
+            });
+    });
+
+    document.querySelectorAll('.secondary-proxy-flag').forEach(elem => {
+        fetch('https://ipapi.co/' + elem.dataset.ip + '/json/')
+            .then(r => r.json())
+            .then(data => {
+                elem.classList.add('fi-' + data.country.toLowerCase());
             });
     });
 </script>

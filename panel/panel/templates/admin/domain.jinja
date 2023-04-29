@@ -1,5 +1,9 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+/>
 <h1 class="mt-5">{{ domain }}</h1>
 <div class="section">
     <div class="row">
@@ -30,6 +34,11 @@
     </div>
 {% endif %}
 {% if secondary_proxy %}
+    <div class="row">
+        <div class="col-12">
+            Location: <strong><span class="fi server-country-flag">⌛</span><span class="server-country-flag-name mx-1"></span></strong>
+        </div>
+    </div>
     {% if secondary_proxy_update_available %}
     <div class="row mt-5">
         <div class="col-12">
@@ -181,6 +190,19 @@
             </div>
         </div>
 {% endif %}
+
+{% if secondary_proxy %}
+        <script>
+            fetch('https://ipapi.co/{{ domain }}/json/')
+                .then(r => r.json())
+                .then(data => {
+                    document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
+                    document.querySelector('.server-country-flag').innerText = '';
+                    document.querySelector('.server-country-flag-name').innerText = data.country_name;
+                });
+        </script>
+{% endif %}
+
 {% if not secondary_proxy %}
         <script>
             document.querySelector('.btn-delete-domain').addEventListener('click', function() {
