@@ -168,10 +168,18 @@
     });
 
     document.querySelectorAll('.secondary-proxy-flag').forEach(elem => {
+        var country = localStorage.getItem('ip-country-' + elem.dataset.ip);
+        if (country) {
+            country = JSON.parse(country);
+            elem.classList.add('fi-' + country.country_code.toLowerCase());
+            return;
+        }
+
         fetch('https://ipapi.co/' + elem.dataset.ip + '/json/')
             .then(r => r.json())
             .then(data => {
-                elem.classList.add('fi-' + data.country.toLowerCase());
+                elem.classList.add('fi-' + data.country_code.toLowerCase());
+                localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
             });
     });
 </script>

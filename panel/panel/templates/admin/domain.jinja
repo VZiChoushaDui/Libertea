@@ -193,13 +193,23 @@
 
 {% if secondary_proxy %}
         <script>
-            fetch('https://ipapi.co/{{ domain }}/json/')
-                .then(r => r.json())
-                .then(data => {
-                    document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
-                    document.querySelector('.server-country-flag').innerText = '';
-                    document.querySelector('.server-country-flag-name').innerText = data.country_name;
-                });
+            var country = localStorage.getItem('ip-country-{{ domain }}');
+            if (country) {
+                country = JSON.parse(country);
+                document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
+                document.querySelector('.server-country-flag').innerText = '';
+                document.querySelector('.server-country-flag-name').innerText = data.country_name;
+            } else {
+                fetch('https://ipapi.co/{{ domain }}/json/')
+                    .then(r => r.json())
+                    .then(data => {
+                        document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
+                        document.querySelector('.server-country-flag').innerText = '';
+                        document.querySelector('.server-country-flag-name').innerText = data.country_name;
+
+                        localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
+                    });
+            }
         </script>
 {% endif %}
 
