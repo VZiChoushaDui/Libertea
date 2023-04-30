@@ -149,23 +149,32 @@
             .then(r => r.json())
             .then(data => {
                 // group data by time_slice, and keep the max success_rate
-                var grouped = {};
+                var grouped_success_rate = {};
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
-                    if (grouped[item.time_slice] == undefined) {
-                        grouped[item.time_slice] = item;
-                    } else {
-                        if (item.success_rate > grouped[item.time_slice].success_rate) {
-                            grouped[item.time_slice] = item;
-                        }
+                    if (item.success_rate == null) {
+                        continue;
+                    } 
+
+                    if (grouped_success_rate[item.time_slice] == undefined) {
+                        grouped_success_rate[item.time_slice] = 0;
                     }
+
+                    grouped_success_rate[item.time_slice] = Math.max(grouped_success_rate[item.time_slice], item.success_rate);
+                }
+                
+                var success_rates = [];
+                for (var key in grouped_success_rate) {
+                    success_rates.push({
+                        time_slice: key,
+                        success_rate: grouped_success_rate[key]
+                    });
                 }
 
                 var sum = 0;
                 var count = 0;
-                for (var i = 0; i < grouped.length; i++) {
-                    var item = grouped[i];
-                    console.log(item);
+                for (var i = 0; i < success_rates.length; i++) {
+                    var item = success_rates[i];
                     sum += item.success_rate;
                     count += 1;
                 }
