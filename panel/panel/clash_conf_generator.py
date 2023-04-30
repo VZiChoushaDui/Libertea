@@ -1,5 +1,6 @@
 import os
 import re
+import binascii
 from . import utils
 from . import config
 from . import settings
@@ -183,8 +184,17 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
             'type': settings.get_tier_proxygroup_type(i+1, db=db),
         })
 
+    health_check_group = ''
+    try:
+        for p in sorted(providers, key=lambda x: x['host'] + x['server']):
+            health_check_group += p['host'] + p['server']
+        health_check_group = str(hex(binascii.crc32(health_check_group.encode('utf-8')) & 0xffffffff))[2:]
+    except:
+        pass
+
     result = render_template('main-singlefile.yaml', 
         providers=providers,
+        health_check_group=health_check_group,
         meta=meta,
         premium=premium,
         ips_direct_countries=ips_direct_countries,

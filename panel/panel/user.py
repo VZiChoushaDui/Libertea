@@ -198,6 +198,8 @@ def user_health(id):
     if protocol is None or domain is None or domain_dns is None:
         return "", 404
 
-    health_check.register_data(id, domain, domain_dns, protocol)
+    group = request.args.get('group', 'legacy')
+
+    health_check.register_data(id, domain, domain_dns, protocol, group)
 
     return "", 200

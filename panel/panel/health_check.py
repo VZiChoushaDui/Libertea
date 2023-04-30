@@ -21,7 +21,7 @@ def ___save_to_database():
     health_checks_raw.insert_many(___health_checks)
     ___health_checks = []
 
-def register_data(user_id, domain, domain_dns, protocol):
+def register_data(user_id, domain, domain_dns, protocol, group):
     global ___health_checks
     global ___health_checks_last_save
     global ___health_checks_save_interval
@@ -33,6 +33,7 @@ def register_data(user_id, domain, domain_dns, protocol):
         'protocol': protocol,
         'domain': domain,
         'domain_dns': domain_dns,
+        'group': group,
         'timestamp': datetime.utcnow(),
     }
     ___health_checks.append(data_obj)
