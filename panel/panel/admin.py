@@ -474,6 +474,8 @@ def app_settings():
 
     return render_template('admin/settings.jinja',
         page='settings',
+        main_domain=config.get_panel_domain(),
+        server_ip=config.SERVER_MAIN_IP,
         admin_uuid=config.get_admin_uuid(),
         max_ips=settings.get_default_max_ips(),
         proxy_port=settings.get_secondary_proxy_ports(),

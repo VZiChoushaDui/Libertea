@@ -4,27 +4,41 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
 />
+<style>
+    .form-group small {
+        display: block;
+        padding-top: 2px;
+    }
+</style>
 <form method="post" class="mt-5 px-3">
     <div class="form-group mb-4">
-        <label for="camouflage_domain">Camouflage Domain</label>
+        <label for="server_ip" class="fw-bold">Server IP Address</label>
+        <input type="text" class="form-control" id="server_ip" name="server_ip" value="{{ server_ip }}" style="max-width: 400px; background: #eee;" readonly>
+    </div>
+    <div class="form-group mb-4">
+        <label for="main_domain" class="fw-bold">User Link & Admin Panel Domain</label>
+        <input type="text" class="form-control" id="main_domain" name="main_domain" value="{{ main_domain }}" style="max-width: 400px; background: #eee;" readonly>
+        <small class="form-text text-muted">Links generated for each user will be served from this domain. If you want to change it, run the <a href="https://github.com/VZiChoushaDui/Libertea#installation" target="_blank">install script</a> again.</small>
+    </div>
+    <div class="form-group mb-4">
+        <label for="camouflage_domain" class="fw-bold">Camouflage Domain</label>
         <input type="text" class="form-control" id="camouflage_domain" name="camouflage_domain" value="{{ camouflage_domain }}" style="max-width: 400px;" placeholder="https://">
 
         {% if camouflage_error != None %}
             {% if camouflage_error == "camouflage_domain_not_https" %}
-            <small class="form-text text-danger">Camouflage domain must start with https://</small>
+            <small class="form-text text-danger fw-bold">Camouflage domain must start with https://</small>
             {% elif camouflage_error == "camouflage_domain_not_reachable" %}
-            <small class="form-text text-danger">Camouflage domain is not reachable. Please check the domain name, or use another one.</small>
+            <small class="form-text text-danger fw-bold">Camouflage domain is not reachable. Please check the domain name, or use another one.</small>
             {% else %}
-            <small class="form-text text-danger">{{ camouflage_error }}</small>
+            <small class="form-text text-danger fw-bold">{{ camouflage_error }}</small>
             {% endif %}
-            <br />
         {% endif %}
 
-        <small class="form-text text-muted">When you visit the home page of your domains, contents of this domain will be shown instead.</small><br />
+        <small class="form-text text-muted">When you visit the home page of your domains, contents of this domain will be shown instead.</small>
         <small class="form-text text-muted">Be creative in choosing your domain, so the chance of your domains being blocked decreases.</small>
     </div>
     <div class="form-group">
-        <label class="form-check-label">
+        <label class="form-check-label fw-bold">
             Protocols<br />
         </label>
     </div>
@@ -67,7 +81,7 @@
         </div>
     </div>
     <div class="form-group">
-        <label class="form-check-label">
+        <label class="form-check-label fw-bold">
             Route regional IPs directly (Without VPN)<br />
         </label>
     </div>
@@ -82,7 +96,7 @@
         {% endfor %}
     </div>
     <div class="form-group mb-4">
-        <label for="concurrentIps">Default max concurrent IPs to connect</label>
+        <label for="concurrentIps" class="fw-bold">Default max concurrent IPs to connect</label>
         <input type="number" class="form-control" id="concurrentIps" name="max_ips" value="{{ max_ips }}" style="max-width: 400px;">
     </div>
     <div class="form-group mb-4">
@@ -97,7 +111,7 @@
     </script>
     <div class="advanced-settings" style="display: none">
         <div class="form-group">
-            <label class="form-check-label">
+            <label class="form-check-label fw-bold">
                 Default available servers in V2ray/Shadowsocks clients<br />
                 <span style="opacity: 0.75; font-size: 12px;">
                     Select which priority groups should be visible to each user by default in V2Ray/Shadowsocks clients.
@@ -115,7 +129,7 @@
             {% endfor %}
         </div>
         <div class="form-group">
-            <label class="form-check-label">
+            <label class="form-check-label fw-bold">
                 Server selection method<br />
             </label>
         </div>
@@ -133,7 +147,7 @@
         </div>
 
         <div class="form-group mb-4">
-            <label for="proxy_port">Secondary proxy port</label>
+            <label for="proxy_port" class="fw-bold">Secondary proxy port</label>
             <select class="form-select" aria-label="Secondary proxy port" id="proxy_port" name="proxy_port">
                 <option value="443" {% if proxy_port == '443' %}selected{% endif %}>443</option>
                 <option value="80" {% if proxy_port == '80' %}selected{% endif %}>80</option>
