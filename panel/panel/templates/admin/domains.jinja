@@ -148,6 +148,19 @@
         fetch('/{{admin_uuid}}/health/' + elem.dataset.domainid + '?hours=24')
             .then(r => r.json())
             .then(data => {
+                // group data by time_slice, and keep the max success_rate
+                var grouped = {};
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    if (grouped[item.time_slice] == undefined) {
+                        grouped[item.time_slice] = item;
+                    } else {
+                        if (item.success_rate > grouped[item.time_slice].success_rate) {
+                            grouped[item.time_slice] = item;
+                        }
+                    }
+                }
+
                 var sum = 0;
                 var count = 0;
                 for (var i = 0; i < data.length; i++) {

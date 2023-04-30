@@ -237,13 +237,25 @@
             fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=24')
                 .then(r => r.json())
                 .then(data => {
+                    // group data by time_slice, and keep the max success_rate
+                    var grouped = {};
+                    for (var i = 0; i < data.length; i++) {
+                        var item = data[i];
+                        if (grouped[item.time_slice] == undefined) {
+                            grouped[item.time_slice] = item;
+                        } else {
+                            if (item.success_rate > grouped[item.time_slice].success_rate) {
+                                grouped[item.time_slice] = item;
+                            }
+                        }
+                    }
+
                     var elem = document.querySelector('.health-percent');
                     var sum = 0;
                     var count = 0;
-                    for (var i = 0; i < data.length; i++) {
-                        var item = data[i];
-                        console.log(item);
-                        sum += item.success_rate;
+                    for (var i = 0; i < grouped.length; i++) {
+                        var item = grouped[i];
+                        sum += item;
                         count += 1;
                     }
 
@@ -273,17 +285,20 @@
                         var time = times[i];
                         var sum = 0;
                         var count = 0;
+                        var max = 0;
                         for (var j = 0; j < data.length; j++) {
                             var item = data[j];
                             if (item.time_slice == time) {
                                 sum += item.success_rate;
                                 count += 1;
+                                max = Math.max(max, item.success_rate);
                             }
                         }
 
                         var avg = sum / count;
                         chart_data_x.push(time.substring(0, time.length - 3));
-                        chart_data_y.push(Math.round(100 * avg));
+                        // chart_data_y.push(Math.round(100 * avg));
+                        chart_data_y.push(Math.round(100 * max));
                     }
 
                     const ctx = document.querySelector('#healthChart');
