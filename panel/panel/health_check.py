@@ -230,6 +230,7 @@ def get_health_data(domain, hours=24, db=None):
             'domain_dns': item['domain_dns'],
             'protocol': item['protocol'],
             'success_rate': item['success_rate'],
+            'data_count': item['data_count'] if 'data_count' in item else None,
         })
 
     items.sort(key=lambda x: x['time_slice'])
