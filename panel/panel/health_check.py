@@ -190,7 +190,8 @@ def parse():
                 }, {
                     '$set': {
                         'success_rate': success_rates[(domain, domain_dns, protocol)],
-                        'data_count': hit_counts[(domain, domain_dns, protocol)],
+                        'success_count': hit_counts[(domain, domain_dns, protocol)],
+                        'expected_hits': max_hits_per_protocol[protocol],
                         'calculate_timestamp': datetime.utcnow(),
                     }
                 }, upsert=True)
@@ -203,7 +204,8 @@ def parse():
                 }, {
                     '$setOnInsert': {
                         'success_rate': None,
-                        'data_count': None,
+                        'success_count': None,
+                        'expected_hits': None,
                         'calculate_timestamp': datetime.utcnow(),
                     }
                 }, upsert=True)
@@ -230,7 +232,8 @@ def get_health_data(domain, hours=24, db=None):
             'domain_dns': item['domain_dns'],
             'protocol': item['protocol'],
             'success_rate': item['success_rate'],
-            'data_count': item['data_count'] if 'data_count' in item else None,
+            'success_count': item['success_count'] if 'success_count' in item else None,
+            'expected_hits': item['expected_hits'] if 'expected_hits' in item else None,
         })
 
     items.sort(key=lambda x: x['time_slice'])
