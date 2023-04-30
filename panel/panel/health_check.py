@@ -190,6 +190,7 @@ def parse():
                 }, {
                     '$set': {
                         'success_rate': success_rates[(domain, domain_dns, protocol)],
+                        'data_count': hit_counts[(domain, domain_dns, protocol)],
                         'calculate_timestamp': datetime.utcnow(),
                     }
                 }, upsert=True)
@@ -202,6 +203,7 @@ def parse():
                 }, {
                     '$setOnInsert': {
                         'success_rate': None,
+                        'data_count': None,
                         'calculate_timestamp': datetime.utcnow(),
                     }
                 }, upsert=True)
