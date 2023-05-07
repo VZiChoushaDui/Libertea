@@ -127,14 +127,14 @@ else
     sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-proxy-register.service
     systemctl daemon-reload
     systemctl enable libertea-proxy-register.service
-    systemctl start libertea-proxy-register.service
+    systemctl restart libertea-proxy-register.service
 
     echo "     - proxy-fake-traffic"
     cp proxy-fake-traffic/libertea-proxy-fake-traffic.service /etc/systemd/system/libertea-proxy-fake-traffic.service
     sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-proxy-fake-traffic.service
     systemctl daemon-reload
     systemctl enable libertea-proxy-fake-traffic.service
-    systemctl start libertea-proxy-fake-traffic.service
+    systemctl restart libertea-proxy-fake-traffic.service
 
     echo "     - haproxy"
     systemctl stop haproxy
