@@ -3,7 +3,7 @@ Description=Libertea SSH Tunnel
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/autossh -NT -o ServerAliveInterval=1 -o ExitOnForwardFailure=yes -L LOCALPORT:TARGETIP:TARGETPORT TARGETUSER@TARGETIP
+ExecStart=/usr/bin/autossh -NT -o ServerAliveInterval=1 -o ExitOnForwardFailure=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -L LOCALPORT:TARGETIP:TARGETPORT TARGETUSER@TARGETIP
 RestartSec=5
 Restart=always
 
