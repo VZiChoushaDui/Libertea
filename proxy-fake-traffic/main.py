@@ -67,6 +67,7 @@ while True:
         break
 
 FAKE_TRAFFIC_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT') + '/fake-traffic'
+FAKE_TRAFFIC_ENDPOINT = FAKE_TRAFFIC_ENDPOINT.replace(os.environ.get('CONN_PROXY_IP'), '127.0.0.1')
 
 def get_random_data_size_bytes():
     # generate expovariate random data size, with a bias towards smaller sizes, with min size of 1 byte and average size of get_average_bytes_per_request()
