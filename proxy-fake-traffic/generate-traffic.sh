@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### DEPRECATED ###
+
+
 # get country code
 COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
 if [ -z "$COUNTRY_CODE" ]; then
@@ -48,6 +51,6 @@ while true; do
 
     SLEEP_MS=$(( 10 * (( $rand % 300 )  + 1 ) ))
     SLEEP_S=$(echo "scale=2; $SLEEP_MS / 1000" | bc)
-    # echo "Sleeping for $SLEEP_S seconds"
+    echo "Sleeping for $SLEEP_S seconds"
     sleep $SLEEP_S
 done

@@ -1,0 +1,101 @@
+import os
+import re
+import time
+import random
+import socket
+import requests
+from datetime import datetime
+from urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
+AVERAGE_GIGABYTES_PER_DAY = 10
+AVERAGE_DELAY_BETWEEN_REQUESTS = 0.25
+MIN_DELAY_BETWEEN_REQUESTS = 0.01
+LOG_LEVEL = 3
+
+COUNTRIES_LIST = ["CN", "RU", "CU", "TH", "TM", "IR", "SY", "SA", "TR"]
+
+def get_average_bytes_per_second():
+    return AVERAGE_GIGABYTES_PER_DAY * 1024 * 1024 * 1024 / (24 * 60 * 60)
+
+def get_average_bytes_per_request():
+    return get_average_bytes_per_second() * AVERAGE_DELAY_BETWEEN_REQUESTS
+
+
+# Force ipv4 for requests
+old_getaddrinfo = socket.getaddrinfo
+def new_getaddrinfo(*args, **kwargs):
+    responses = old_getaddrinfo(*args, **kwargs)
+    return [response
+            for response in responses
+            if response[0] == socket.AF_INET]
+socket.getaddrinfo = new_getaddrinfo
+
+def get_ip_api_url():
+    return random.choice([
+        'https://ifconfig.io/country_code',
+        'https://ipinfo.io/country',
+        'https://ipapi.co/country_code'
+    ])
+SERVER_COUNTRY = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+if not len(SERVER_COUNTRY) == 2:
+    raise Exception("couldn't fetch SERVER_MAIN_COUNTRY. Result was: " + str(SERVER_COUNTRY))
+if not SERVER_COUNTRY in COUNTRIES_LIST:
+    print("SERVER_COUNTRY", SERVER_COUNTRY, "not in countries list. Will not send fake traffic.")
+    while True:
+        time.sleep(999999999)
+    exit(1)
+
+FAKE_TRAFFIC_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT') + '/fake-traffic'
+
+def get_random_data_size_bytes():
+    # generate expovariate random data size, with a bias towards smaller sizes, with min size of 1 byte and average size of get_average_bytes_per_request()
+    return max(1, int(random.expovariate(1 / get_average_bytes_per_request()))) 
+
+def get_sleep_time_secs():
+    return MIN_DELAY_BETWEEN_REQUESTS + random.random() * (AVERAGE_DELAY_BETWEEN_REQUESTS * 2 - MIN_DELAY_BETWEEN_REQUESTS)
+
+def get_random_data():
+    return os.urandom(get_random_data_size_bytes())
+
+def random_sleep():
+    sleep_time_secs = get_sleep_time_secs()
+    if LOG_LEVEL >= 3:
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sleeping for", sleep_time_secs, "seconds")
+    time.sleep(sleep_time_secs)
+
+start_time = datetime.now()
+total_len = 0
+while True:
+    try:
+        # generate random data 
+        data = get_random_data()
+
+        if LOG_LEVEL >= 2:
+            total_len += len(data)
+
+        if LOG_LEVEL >= 3:
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending", len(data), "bytes to", FAKE_TRAFFIC_ENDPOINT)
+        result = requests.post(FAKE_TRAFFIC_ENDPOINT,
+            verify=False, timeout=5,
+            data=data,
+            headers={
+                'Content-Type': 'application/octet-stream',
+            },
+        )
+
+    except Exception as e:
+        if LOG_LEVEL >= 1:
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e)
+
+    random_sleep()
+
+    if LOG_LEVEL >= 2:
+        avg_per_second = total_len / (datetime.now() - start_time).total_seconds()
+        avg_gb_per_day = avg_per_second * 60 * 60 * 24 / (1024 * 1024 * 1024)
+        avg_per_second = int(avg_per_second)
+        avg_gb_per_day = round(avg_gb_per_day, 2)
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Total sent:", total_len, "bytes in ", (datetime.now() - start_time).total_seconds(), "seconds")
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Average:", avg_per_second, "bytes per second, or", avg_gb_per_day, "GB per day")
+
