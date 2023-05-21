@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import time
 import random
 import socket
@@ -36,16 +37,34 @@ def get_ip_api_url():
     return random.choice([
         'https://ifconfig.io/country_code',
         'https://ipinfo.io/country',
-        'https://ipapi.co/country_code'
+        'https://ipapi.co/country_code',
+        'https://ifconfig.co/country-iso',
+        'https://api.myip.com',
+        'https://api.ipregistry.co/?key=tryout'
     ])
-SERVER_COUNTRY = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
-if not len(SERVER_COUNTRY) == 2:
-    raise Exception("couldn't fetch SERVER_MAIN_COUNTRY. Result was: " + str(SERVER_COUNTRY))
-if not SERVER_COUNTRY in COUNTRIES_LIST:
-    print("SERVER_COUNTRY", SERVER_COUNTRY, "not in countries list. Will not send fake traffic.")
-    while True:
-        time.sleep(999999999)
-    exit(1)
+
+def get_country_code():
+    try:
+        url = get_ip_api_url()
+        result = requests.get(url, timeout=20).content.decode('utf8').strip()
+        if url == 'https://api.myip.com':
+            result = json.loads(result)['cc']
+        elif url == 'https://api.ipregistry.co/?key=tryout':
+            result = json.loads(result)['location']['country']['code']
+        return result
+    except Exception as e:
+        print(e)
+        return ''
+
+while True:
+    SERVER_COUNTRY = get_country_code()
+    if not len(SERVER_COUNTRY) == 2:
+        raise Exception("couldn't fetch SERVER_MAIN_COUNTRY. Result was: " + str(SERVER_COUNTRY))
+    if not SERVER_COUNTRY in COUNTRIES_LIST:
+        print("SERVER_COUNTRY", SERVER_COUNTRY, "not in countries list. Will not send fake traffic.")
+        time.sleep(3 * 3600)
+    else:
+        break
 
 FAKE_TRAFFIC_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT') + '/fake-traffic'
 
