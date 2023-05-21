@@ -1,0 +1,13 @@
+[Unit]
+Description=Setup a secure tunnel
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/ssh -NT -o ServerAliveInterval=1 -o ExitOnForwardFailure=yes -L LOCALPORT:TARGETIP:TARGETPORT TARGETUSER@TARGETIP
+
+# Restart every >2 seconds to avoid StartLimitInterval failure
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
