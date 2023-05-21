@@ -59,8 +59,11 @@ def get_sleep_time_secs():
 def get_random_data():
     return os.urandom(get_random_data_size_bytes())
 
-def random_sleep():
-    sleep_time_secs = get_sleep_time_secs()
+def random_sleep(request_time_elapsed_secs):
+    sleep_time_secs = get_sleep_time_secs() - request_time_elapsed_secs
+    if sleep_time_secs < MIN_DELAY_BETWEEN_REQUESTS:
+        sleep_time_secs = MIN_DELAY_BETWEEN_REQUESTS
+
     if LOG_LEVEL >= 3:
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sleeping for", sleep_time_secs, "seconds")
     time.sleep(sleep_time_secs)
@@ -68,6 +71,8 @@ def random_sleep():
 start_time = datetime.now()
 total_len = 0
 while True:
+    req_time_start = datetime.now()
+
     try:
         # generate random data 
         data = get_random_data()
@@ -89,7 +94,9 @@ while True:
         if LOG_LEVEL >= 1:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e)
 
-    random_sleep()
+    req_time_end = datetime.now()
+
+    random_sleep((req_time_end - req_time_start).total_seconds())
 
     if LOG_LEVEL >= 2:
         avg_per_second = total_len / (datetime.now() - start_time).total_seconds()
