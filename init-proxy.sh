@@ -137,8 +137,7 @@ else
     systemctl restart libertea-proxy-fake-traffic.service
 
     echo "    - proxy-ssh-tunnel"
-    cd proxy-ssh-tunnel
-    ./install-services.sh "$CONN_PROXY_IP" "443" "root" # TODO: Replace user with non-root user
+    ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "443" "root" # TODO: Replace user with non-root user
 
     echo "     - haproxy"
     systemctl stop haproxy
