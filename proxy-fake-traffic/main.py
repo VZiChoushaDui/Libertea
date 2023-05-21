@@ -15,7 +15,7 @@ AVERAGE_DELAY_BETWEEN_REQUESTS = 0.25
 MIN_DELAY_BETWEEN_REQUESTS = 0.01
 LOG_LEVEL = 3
 
-COUNTRIES_LIST = ["CN", "RU", "CU", "TH", "TM", "IR", "SY", "SA", "TR"]
+COUNTRIES_LIST = ["CN", "CU", "TH", "TM", "IR", "SY", "SA", "TR"]
 
 def get_average_bytes_per_second():
     return AVERAGE_GIGABYTES_PER_DAY * 1024 * 1024 * 1024 / (24 * 60 * 60)
