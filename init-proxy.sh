@@ -74,8 +74,10 @@ else
 
     echo "    - Installing haproxy..."
     apt-get install -qq -y haproxy >/dev/null
-fi
 
+    echo "    - Installing autossh..."
+    apt-get install -qq -y autossh >/dev/null
+fi
 
 echo " ** Creating .env file..."
 if [ -f .env ]; then
