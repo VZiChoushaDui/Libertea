@@ -23,5 +23,5 @@ for i in $(seq 1 $CONNECTIONS_COUNT); do
     
     systemctl daemon-reload
     systemctl enable libertea-proxy-ssh-tunnel-$i.service
-    systemctl start libertea-proxy-ssh-tunnel-$i.service
+    systemctl restart libertea-proxy-ssh-tunnel-$i.service
 done
