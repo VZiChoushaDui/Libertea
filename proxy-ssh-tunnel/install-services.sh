@@ -3,16 +3,16 @@
 TARGET_IP="$1"
 TARGET_PORT="$2"
 TARGET_USER="$3"
-
-CONNECTIONS_COUNT=4
+LOCAL_PORT_START="$4"
+CONNECTIONS_COUNT="$5"
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
 # Install CONNECTIONS_COUNT variants of systemd service
 
-for i in $(seq 1 $CONNECTIONS_COUNT); do
-    LOCALPORT=$((10000 + $i))
+for i in $(seq 0 $(($CONNECTIONS_COUNT - 1))); do
+    LOCALPORT=$(($LOCAL_PORT_START + $i))
 
     cp template.service /etc/systemd/system/libertea-proxy-ssh-tunnel-$i.service
 
