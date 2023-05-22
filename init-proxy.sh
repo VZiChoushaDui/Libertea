@@ -142,7 +142,7 @@ else
     ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "root" 10001 4 # TODO: Replace user with non-root user
 
     echo "     - proxy-ssh-tunnel-syslog"
-    ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "514" "root" 10514 1
+    ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "514" "root" 10514 1 "-syslog"
 
     echo "     - haproxy"
     systemctl stop haproxy
