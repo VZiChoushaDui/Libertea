@@ -15,7 +15,7 @@ cd "$DIR"
 for i in $(seq 0 $(($CONNECTIONS_COUNT - 1))); do
     LOCALPORT=$(($LOCAL_PORT_START + $i))
 
-    cp template.service /etc/systemd/system/libertea-proxy-ssh-tunnel-$i.service
+    cp template.service /etc/systemd/system/libertea-proxy-ssh-tunnel-$i$SERVICE_POSTFIX.service
 
     sed -i "s/LOCALPORT/$LOCALPORT/g" /etc/systemd/system/libertea-proxy-ssh-tunnel-$i$SERVICE_POSTFIX.service
     sed -i "s/TARGETIP/$TARGET_IP/g" /etc/systemd/system/libertea-proxy-ssh-tunnel-$i$SERVICE_POSTFIX.service
