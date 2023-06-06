@@ -175,7 +175,7 @@
     }
 
     function updateConnectionChart() {
-        fetch('/{{ admin_uuid }}/stats/connections?days=14')
+        fetch('/{{ admin_uuid }}/stats/connections?days=30')
             .then(function(response) {
                 return response.json()
             })
@@ -184,18 +184,24 @@
                 ctx.innerHTML = "";
 
                 new Chart(ctx, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
                         labels: data.x,
                         datasets: [{
                             label: 'IPs connected',
                             data: data.y,
                             borderWidth: 1,
-                            backgroundColor: 'rgba(229, 89, 119, 0.75)',
-                            borderColor: 'rgba(229, 89, 119, 0.75)',
+                            fill: true,
+                            backgroundColor: 'rgba(229, 89, 119, 0.2)',
+                            borderColor: 'rgba(229, 89, 119, 1)',
+                            pointRadius: 0,
                         }]
                     },
                     options: {
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
                         scales: {
                             y: {
                                 title: {
@@ -224,14 +230,21 @@
                                     mode: 'x',
                                 }
                             }
-                        },
+                        }
                     }
                 });
+
+                // Zoom to last 7 days
+                const chart = Chart.getChart(ctx);
+                chart.resetZoom();
+                chart.options.scales.x.min = data.x[data.x.length - 7 * 24 * (60 / 10)];
+                chart.options.scales.x.max = data.x[data.x.length - 1];
+                chart.update();
             });
     }
 
     function updateTrafficChart() {
-        fetch('/{{ admin_uuid }}/stats/traffic?days=30')
+        fetch('/{{ admin_uuid }}/stats/traffic?days=90')
             .then(function(response) {
                 return response.json()
             })
@@ -285,9 +298,16 @@
                                     mode: 'x',
                                 }
                             }
-                        },
+                        }
                     }
                 });
+
+                // Zoom to last 30 days
+                const chart = Chart.getChart(ctx);
+                chart.resetZoom();
+                chart.options.scales.x.min = data.x[data.x.length - 30];
+                chart.options.scales.x.max = data.x[data.x.length - 1];
+                chart.update();
             });
     }
 
