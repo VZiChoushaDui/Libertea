@@ -6,7 +6,7 @@ core.Info("Hello HAProxy!\n")
 
 -- User connected IP limitations will be in the last (ip_user_connected_list_items * flush_interval) secs.
 local path_ips_list_count = 10
-local ip_user_connected_list_items = 3
+local ip_user_connected_list_items = 2
 local flush_interval = 30 -- seconds
 local connected_ip_log_interval = 10 * 60 -- seconds
 local max_ips_cache_duration = 15 * 60 -- seconds
