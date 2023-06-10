@@ -52,7 +52,9 @@ def health_domain(domain):
 @blueprint.route(root_url + "stats/user", methods=['GET'])
 def user_stats():
     ips_now = stats.get_total_connected_ips_right_now()
+    ips_now_long = stats.get_total_connected_ips_right_now(long=True)
     users_now = stats.get_connected_users_now()
+    users_now_long = stats.get_connected_users_now(long=True)
     traffic_today = stats.get_gigabytes_today_all()
     traffic_this_month = stats.get_gigabytes_this_month_all()
     ips_today = stats.get_ips_today_all()
@@ -71,7 +73,9 @@ def user_stats():
 
     return {
         'ips_now': ips_now,
+        'ips_now_long': ips_now_long,
         'users_now': users_now,
+        'users_now_long': users_now_long,
         'traffic_today': traffic_today,
         'traffic_this_month': traffic_this_month,
         'ips_today': ips_today,
