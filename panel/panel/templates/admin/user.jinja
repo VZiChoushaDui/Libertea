@@ -213,7 +213,7 @@
 
 
         function get_ips_connected_right_now() {
-            fetch('/{{ user.connect_url }}/connected-ips-count')
+            fetch('/{{ user.connect_url }}/connected-ips-count-long')
                 .then(function(response) {
                     return response.text()
                 })

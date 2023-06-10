@@ -5,7 +5,7 @@ local ltn12 = require("ltn12")
 core.Info("Hello HAProxy!\n")
 
 -- User connected IP limitations will be in the last (ip_user_connected_list_items * flush_interval) secs.
-local path_ips_list_count = 10
+local path_ips_list_count = 15
 local ip_user_connected_list_items = 3
 local flush_interval = 30 -- seconds
 local connected_ip_log_interval = 10 * 60 -- seconds
@@ -101,8 +101,8 @@ local function flush_if_needed()
         last_flush = now
         
         -- rotate path_ips_list, and flush the newest 
-        for i = 1, path_ips_list_count - 1 do
-            path_ips_list[i + 1] = path_ips_list[i]
+        for i = path_ips_list_count, 2, -1 do
+            path_ips_list[i] = path_ips_list[i - 1]
         end
         path_ips_list[1] = {}
 
