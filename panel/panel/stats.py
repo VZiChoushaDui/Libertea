@@ -149,7 +149,7 @@ def get_ips_this_month_all():
     file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
     return ___get_total_ips(file_name, '[total]')
     
-def get_connected_ips_right_now(user_id, db=None):
+def get_connected_ips_right_now(user_id, long=False, db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -158,7 +158,7 @@ def get_connected_ips_right_now(user_id, db=None):
     conn_url = user['connect_url']
     
     try:
-        req = requests.get(f'https://localhost/{ conn_url }/connected-ips-count', verify=False, timeout=0.1)
+        req = requests.get(f'https://localhost/{ conn_url }/connected-ips-count' + ('-long' if long else ''), verify=False, timeout=0.1)
         if req.status_code == 200:
             return req.text
     except:
@@ -166,9 +166,9 @@ def get_connected_ips_right_now(user_id, db=None):
 
     return None
 
-def get_total_connected_ips_right_now():
+def get_total_connected_ips_right_now(long=False):
     try:
-        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-ips-count', verify=False, timeout=0.1)
+        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-ips-count' + ('-long' if long else ''), verify=False, timeout=0.1)
         if req.status_code == 200:
             return int(req.text)
     except:
@@ -190,7 +190,7 @@ def save_connected_ips_count(db=None):
     connected_user_ids = []
     for user_id in user_ids:
         user_id = user_id['_id']
-        connected_ips = get_connected_ips_right_now(user_id, db)
+        connected_ips = get_connected_ips_right_now(user_id, long=True, db=db)
         if connected_ips is not None:
             if connected_ips.isdigit():
                 connected_ips = int(connected_ips)
@@ -260,9 +260,9 @@ def get_connected_ips_over_time(user_id, year, month, day, db=None):
 def get_all_connected_ips_over_time(year, month, day, db=None):
     return get_connected_ips_over_time('ALL', year, month, day, db)
 
-def get_connected_users_now():
+def get_connected_users_now(long=False):
     try:
-        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-users-count', verify=False, timeout=0.1)
+        req = requests.get(f'https://localhost/{ config.get_admin_uuid() }/total-connected-users-count' + ('-long' if long else ''), verify=False, timeout=0.1)
         if req.status_code == 200:
             return int(req.text)
     except:
