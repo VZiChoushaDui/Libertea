@@ -141,6 +141,16 @@ else
     echo "     - proxy-ssh-tunnel-tls"
     ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "root" 10001 4 # TODO: Replace user with non-root user
 
+    CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
+    # if CPU_COUNT is 1, disable two of the four tunnels
+    if [ "$CPU_COUNT" == "1" ]; then
+        echo "     - proxy-ssh-tunnel-tls (disabling two tunnels due to low CPU count)"
+        systemctl stop libertea-proxy-ssh-tunnel-2.service
+        systemctl disable libertea-proxy-ssh-tunnel-2.service
+        systemctl stop libertea-proxy-ssh-tunnel-3.service
+        systemctl disable libertea-proxy-ssh-tunnel-3.service
+    fi
+
     echo "     - proxy-ssh-tunnel-syslog"
     ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "514" "root" 10514 1 "-syslog"
 
