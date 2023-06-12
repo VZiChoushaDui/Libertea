@@ -144,7 +144,6 @@ else
     CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
     # if CPU_COUNT is 1, disable two of the four tunnels
     if [ "$CPU_COUNT" == "1" ]; then
-        echo "     - proxy-ssh-tunnel-tls (disabling two tunnels due to low CPU count)"
         systemctl stop libertea-proxy-ssh-tunnel-2.service
         systemctl disable libertea-proxy-ssh-tunnel-2.service
         systemctl stop libertea-proxy-ssh-tunnel-3.service
