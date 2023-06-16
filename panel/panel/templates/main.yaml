@@ -54,6 +54,16 @@ rule-providers:
 
 proxy-groups:
   - name: "main-group"
+    type: select
+    proxies:
+      - auto-group
+{% if manual_tier_select_clash %}
+{% for tier in tiers %}{% if tier.exists %}
+      - tier{{tier.index}}-group
+{% endif %}{% endfor %}
+{% endif %}
+
+  - name: "auto-group"
     type: fallback
     proxies:
 {% for tier in tiers %}{% if tier.exists %}

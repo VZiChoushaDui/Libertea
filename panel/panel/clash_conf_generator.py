@@ -203,6 +203,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
         udp_exists=udp_exists,
         health_check=settings.get_periodic_health_check(),
         tiers=tiers,
+        manual_tier_select_clash=settings.get_manual_tier_select_clash(),
     )
 
     return result
@@ -273,4 +274,5 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
         domains=list(domains),
         udp_exists=udp_exists,
         tiers=tiers,
+        manual_tier_select_clash=settings.get_manual_tier_select_clash(),
     )
