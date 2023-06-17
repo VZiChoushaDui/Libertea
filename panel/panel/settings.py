@@ -204,3 +204,20 @@ def set_tier_enabled_for_subscription(tier_index, val, db=None):
     
     db.settings.update_one({"_id": "tier_enabled_for_subscription_" + str(tier_index)}, {"$set": {"value": val}}, upsert=True)
     return True
+
+def get_manual_tier_select_clash(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "manual_tier_select_clash"})
+    if setting is None:
+        return True
+    return setting["value"]
+
+def set_manual_tier_select_clash(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    
+    db.settings.update_one({"_id": "manual_tier_select_clash"}, {"$set": {"value": val}}, upsert=True)
+    return True
