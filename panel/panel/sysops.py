@@ -103,3 +103,22 @@ def haproxy_update_camouflage_list():
 
     print("Wrote " + str(count) + " domains to haproxy-lists/camouflage-hosts.lst")
     return haproxy_reload()
+
+def add_ssh_key(ssh_key):
+    ssh_keys_dir = '/home/libertea/.ssh'
+    ssh_key_file = ssh_keys_dir + '/authorized_keys'
+
+    if not os.path.exists(ssh_keys_dir):
+        os.makedirs(ssh_keys_dir)
+
+    # check if the key already exists
+    with open(ssh_key_file, 'r') as f:
+        for line in f.readlines():
+            if ssh_key in line:
+                return True
+            
+    # append the key to the file
+    with open(ssh_key_file, 'a') as f:
+        f.write(ssh_key + '\n')
+
+    return True

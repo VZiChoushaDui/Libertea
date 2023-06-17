@@ -263,6 +263,23 @@ cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/cert
 mkdir -p /etc/ssl/ha-certs
 cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 
+echo " ** Initializing ssh tunnel..."
+# create a user for ssh tunnel named "libertea" if not exists
+if ! id -u libertea >/dev/null 2>&1; then
+    useradd -m -s /bin/bash libertea
+    echo "libertea:$(openssl rand -hex 32)" | chpasswd
+fi
+# Add ssh restrictions to sshd_config if not exists
+if ! grep -q "Match User libertea" /etc/ssh/sshd_config; then
+    echo "Match User libertea" >> /etc/ssh/sshd_config
+    echo "    AllowTcpForwarding yes" >> /etc/ssh/sshd_config
+    echo "    X11Forwarding no" >> /etc/ssh/sshd_config
+    echo "    PermitTunnel yes" >> /etc/ssh/sshd_config
+    echo "    AllowAgentForwarding no" >> /etc/ssh/sshd_config
+    echo "    ForceCommand /bin/false" >> /etc/ssh/sshd_config
+    systemctl reload sshd
+fi
+
 echo " ** Initializing providers..."
 echo "    - trojan-ws..."
 ./providers/trojan-ws/init.sh 2001 12001 "$CONN_TROJAN_WS_URL" "$CONN_TROJAN_WS_AUTH_PASSWORD"

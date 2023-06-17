@@ -518,5 +518,3 @@ def top_level_domain_equivalent(domain1, domain2):
     domain1 = '.'.join(domain1.split('.')[-2:])
     domain2 = '.'.join(domain2.split('.')[-2:])
     return domain1 == domain2
-
-    

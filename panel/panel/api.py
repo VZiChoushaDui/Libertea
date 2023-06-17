@@ -1,6 +1,7 @@
 import re
 from . import utils
 from . import config
+from . import sysops
 from pymongo import MongoClient
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
@@ -161,5 +162,11 @@ def add_route():
     version = int(version)
 
     utils.online_route_ping(ip, version)
+    
+    ssh_key = request.form.get('sshKey')
+    # add the public key to authorized_keys file of user "libertea"
+    if ssh_key != None and ssh_key != "":
+        sysops.add_ssh_key(ssh_key)
+    
     return "", 200
     

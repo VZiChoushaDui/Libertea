@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import urllib
 import random
 import socket
 import requests
@@ -44,6 +45,10 @@ if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
 REGISTER_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT')
 API_KEY = os.environ.get('PANEL_SECRET_KEY')
 
+SSH_PUBLIC_KEY_PATH = '/root/.ssh/id_rsa.pub'
+with open(SSH_PUBLIC_KEY_PATH, 'r') as f:
+    SSH_PUBLIC_KEY = f.read().strip()
+    
 while True:
     try:
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT)
@@ -52,8 +57,8 @@ while True:
             headers={
                 "X-API-KEY": API_KEY,
                 "Content-Type": "application/x-www-form-urlencoded"
-            }, 
-            data="ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION))
+            },
+            data="ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION) + "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY))
         # print status code and response text
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), result.status_code, result.text)
     except Exception as e:
