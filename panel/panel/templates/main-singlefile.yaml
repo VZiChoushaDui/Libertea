@@ -30,7 +30,7 @@ proxies:
 {% endfor %}
 
 proxy-groups:
-  - name: "main-group"
+  - name: "main"
     type: select
     proxies:
       - auto-group
@@ -64,7 +64,7 @@ proxy-groups:
 
 {% if udp_exists %}
 {% if meta or premium %}
-  - name: "main-group-udp"
+  - name: "main-udp"
     type: fallback
     proxies:
 {% for tier in tiers %}{% if tier.exists %}
@@ -113,11 +113,11 @@ rules:
 
 {% if udp_exists %}
 {% if meta %}
-  - AND,((NETWORK,UDP)),main-group-udp
+  - AND,((NETWORK,UDP)),main-udp
 {% else %}
 {% if premium %}
-  - SCRIPT,udpnetwork,main-group-udp
+  - SCRIPT,udpnetwork,main-udp
 {% endif %}
 {% endif %}
 {% endif %}
-  - MATCH,main-group
+  - MATCH,main
