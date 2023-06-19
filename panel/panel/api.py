@@ -1,4 +1,5 @@
 import re
+import json
 from . import utils
 from . import config
 from . import sysops
@@ -167,6 +168,15 @@ def add_route():
     # add the public key to authorized_keys file of user "libertea"
     if ssh_key != None and ssh_key != "":
         sysops.add_ssh_key(ssh_key)
+
+    traffic_data = request.form.get('trafficData')
+    try:
+        traffic_data = json.loads(traffic_data)
+        if traffic_data != None:
+            utils.online_route_update_traffic(ip, traffic_data)
+    except:
+        print("Error parsing bytes data: " + traffic_data)
+        pass
     
     return "", 200
     

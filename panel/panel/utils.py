@@ -402,6 +402,25 @@ def online_route_get_all(max_age_secs=300, db=None):
 
     return ips
 
+def online_route_update_traffic(ip, traffic_data, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+
+    cur_date = datetime.now().strftime("%Y-%m-%d")
+
+    # NOTE: FAKE traffic is *probably* counted twice, both in FAKE key and also in 443 key (because it gets sent to port 443)
+    for traffic_port in traffic_data.keys():
+        traffic = traffic_data[traffic_port]
+        delta_received_bytes = traffic["received"] if "received" in traffic else 0
+        delta_sent_bytes = traffic["sent"] if "sent" in traffic else 0
+
+        online_routes.update_one({"_id": ip}, {"$inc": {
+            f"traffic.{cur_date}.{traffic_port}.received_bytes": delta_received_bytes,
+            f"traffic.{cur_date}.{traffic_port}.sent_bytes": delta_sent_bytes,
+        }}, upsert=True)
+
 check_domain_set_properly_cache_max_time = 60
 
 def domain_cache_update_db(domain, status=None, cdn=None, db=None):

@@ -8,20 +8,18 @@ import requests
 from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-
-AVERAGE_GIGABYTES_PER_DAY = 10
-AVERAGE_DELAY_BETWEEN_REQUESTS = 0.25
-MIN_DELAY_BETWEEN_REQUESTS = 0.01
+FAKE_TRAFFIC_AVERAGE_GIGABYTES_PER_DAY = 10
+FAKE_TRAFFIC_AVERAGE_DELAY_BETWEEN_REQUESTS = 0.25
+FAKE_TRAFFIC_MIN_DELAY_BETWEEN_REQUESTS = 0.01
 LOG_LEVEL = 3
 
-COUNTRIES_LIST = ["CN", "CU", "TH", "TM", "IR", "SY", "SA", "TR"]
+FAKE_TRAFFIC_COUNTRIES_LIST = ["CN", "CU", "TH", "TM", "IR", "SY", "SA", "TR"]
 
-def get_average_bytes_per_second():
-    return AVERAGE_GIGABYTES_PER_DAY * 1024 * 1024 * 1024 / (24 * 60 * 60)
+def get_fake_traffic_average_bytes_per_second():
+    return FAKE_TRAFFIC_AVERAGE_GIGABYTES_PER_DAY * 1024 * 1024 * 1024 / (24 * 60 * 60)
 
-def get_average_bytes_per_request():
-    return get_average_bytes_per_second() * AVERAGE_DELAY_BETWEEN_REQUESTS
+def get_fake_traffic_average_bytes_per_request():
+    return get_fake_traffic_average_bytes_per_second() * FAKE_TRAFFIC_AVERAGE_DELAY_BETWEEN_REQUESTS
 
 
 # Force ipv4 for requests
@@ -60,7 +58,7 @@ while True:
     SERVER_COUNTRY = get_country_code()
     if not len(SERVER_COUNTRY) == 2:
         raise Exception("couldn't fetch SERVER_MAIN_COUNTRY. Result was: " + str(SERVER_COUNTRY))
-    if not SERVER_COUNTRY in COUNTRIES_LIST:
+    if not SERVER_COUNTRY in FAKE_TRAFFIC_COUNTRIES_LIST:
         print("SERVER_COUNTRY", SERVER_COUNTRY, "not in countries list. Will not send fake traffic.")
         time.sleep(3 * 3600)
     else:
@@ -69,20 +67,20 @@ while True:
 FAKE_TRAFFIC_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT') + '/fake-traffic'
 FAKE_TRAFFIC_ENDPOINT = FAKE_TRAFFIC_ENDPOINT.replace(os.environ.get('CONN_PROXY_IP'), '127.0.0.1')
 
-def get_random_data_size_bytes():
+def get_fake_traffic_random_data_size_bytes():
     # generate expovariate random data size, with a bias towards smaller sizes, with min size of 1 byte and average size of get_average_bytes_per_request()
-    return max(1, int(random.expovariate(1 / get_average_bytes_per_request()))) 
+    return max(1, int(random.expovariate(1 / get_fake_traffic_average_bytes_per_request()))) 
 
-def get_sleep_time_secs():
-    return MIN_DELAY_BETWEEN_REQUESTS + random.random() * (AVERAGE_DELAY_BETWEEN_REQUESTS * 2 - MIN_DELAY_BETWEEN_REQUESTS)
+def get_fake_traffic_sleep_time_secs():
+    return FAKE_TRAFFIC_MIN_DELAY_BETWEEN_REQUESTS + random.random() * (FAKE_TRAFFIC_AVERAGE_DELAY_BETWEEN_REQUESTS * 2 - FAKE_TRAFFIC_MIN_DELAY_BETWEEN_REQUESTS)
 
-def get_random_data():
-    return os.urandom(get_random_data_size_bytes())
+def get_fake_traffic_random_data():
+    return os.urandom(get_fake_traffic_random_data_size_bytes())
 
-def random_sleep(request_time_elapsed_secs):
-    sleep_time_secs = get_sleep_time_secs() - request_time_elapsed_secs
-    if sleep_time_secs < MIN_DELAY_BETWEEN_REQUESTS:
-        sleep_time_secs = MIN_DELAY_BETWEEN_REQUESTS
+def fake_traffic_random_sleep(request_time_elapsed_secs):
+    sleep_time_secs = get_fake_traffic_sleep_time_secs() - request_time_elapsed_secs
+    if sleep_time_secs < FAKE_TRAFFIC_MIN_DELAY_BETWEEN_REQUESTS:
+        sleep_time_secs = FAKE_TRAFFIC_MIN_DELAY_BETWEEN_REQUESTS
 
     if LOG_LEVEL >= 3:
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sleeping for", sleep_time_secs, "seconds")
@@ -95,7 +93,7 @@ while True:
 
     try:
         # generate random data 
-        data = get_random_data()
+        data = get_fake_traffic_random_data()
 
         if LOG_LEVEL >= 2:
             total_len += len(data)
@@ -116,7 +114,7 @@ while True:
 
     req_time_end = datetime.now()
 
-    random_sleep((req_time_end - req_time_start).total_seconds())
+    fake_traffic_random_sleep((req_time_end - req_time_start).total_seconds())
 
     if LOG_LEVEL >= 2:
         avg_per_second = total_len / (datetime.now() - start_time).total_seconds()

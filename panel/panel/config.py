@@ -18,7 +18,7 @@ def new_getaddrinfo(*args, **kwargs):
 socket.getaddrinfo = new_getaddrinfo
 
 LIBERTEA_VERSION = 1032
-LIBERTEA_PROXY_VERSION = 1003
+LIBERTEA_PROXY_VERSION = 1004
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/version.txt"
 
 HAPROXY_CONTAINER_NAME = 'libertea-haproxy'
