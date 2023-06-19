@@ -137,11 +137,18 @@ else
     set +e
     echo " ** Cleaning up old Libertea proxies..."
     docker compose -f proxy-docker-compose.yml down >/dev/null
-    systemctl stop libertea-proxy-ssh-tunnel-0.service
-    systemctl stop libertea-proxy-ssh-tunnel-1.service
-    systemctl stop libertea-proxy-ssh-tunnel-2.service
-    systemctl stop libertea-proxy-ssh-tunnel-3.service
-    systemctl stop libertea-proxy-ssh-tunnel-4.service
+    systemctl stop libertea-proxy-ssh-tunnel-0.service >/dev/null
+    systemctl stop libertea-proxy-ssh-tunnel-1.service >/dev/null
+    systemctl stop libertea-proxy-ssh-tunnel-2.service >/dev/null
+    systemctl stop libertea-proxy-ssh-tunnel-3.service >/dev/null
+    systemctl stop libertea-proxy-ssh-tunnel-4.service >/dev/null
+    systemctl disable libertea-proxy-ssh-tunnel-0.service >/dev/null
+    systemctl disable libertea-proxy-ssh-tunnel-1.service >/dev/null
+    systemctl disable libertea-proxy-ssh-tunnel-2.service >/dev/null
+    systemctl disable libertea-proxy-ssh-tunnel-3.service >/dev/null
+    systemctl disable libertea-proxy-ssh-tunnel-4.service >/dev/null
+    systemctl stop libertea-proxy-fake-traffic.service >/dev/null
+    systemctl disable libertea-proxy-fake-traffic.service >/dev/null
     set -e
 
     echo " ** Installing services..."
@@ -151,13 +158,6 @@ else
     systemctl daemon-reload
     systemctl enable libertea-proxy-register.service
     systemctl restart libertea-proxy-register.service
-
-    echo "     - proxy-fake-traffic"
-    cp proxy-fake-traffic/libertea-proxy-fake-traffic.service /etc/systemd/system/libertea-proxy-fake-traffic.service
-    sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-proxy-fake-traffic.service
-    systemctl daemon-reload
-    systemctl enable libertea-proxy-fake-traffic.service
-    systemctl restart libertea-proxy-fake-traffic.service
 
     if [ "$PROXY_TYPE" == "ssh" ]; then
         echo "     - proxy-ssh-tunnel-tls"
@@ -182,8 +182,6 @@ else
         echo "ERROR: Invalid proxy type: $PROXY_TYPE"
         exit 1
     fi
-        
-    
     sed -i "s|\${CONN_PROXY_IP}|$CONN_PROXY_IP|g" /etc/haproxy/haproxy.cfg
     systemctl enable haproxy
     systemctl start haproxy
