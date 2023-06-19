@@ -19,12 +19,39 @@ if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTE
     exit 1
 fi
 
-if [ "$4" == "tcp-docker" ]; then
+if [ "$PROXY_TYPE" == "tcp-docker" ]; then
     DOCKERIZED_PROXY="1"
-elif [ "$4" == "tcp" ] || [ "$4" == "ssh" ]; then
+elif [ "$PROXY_TYPE" == "tcp" ] || [ "$PROXY_TYPE" == "ssh" ]; then
     DOCKERIZED_PROXY="0"
+elif [ "$PROXY_TYPE" == "auto" ]; then
+    echo "Determining proxy type..."
+    # get country code
+    COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
+    if [ -z "$COUNTRY_CODE" ]; then
+        COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
+    fi
+    if [ -z "$COUNTRY_CODE" ]; then
+        COUNTRY_CODE=$(curl -s --max-time 3 https://ipinfo.io/country)
+    fi
+    if [ -z "$COUNTRY_CODE" ]; then
+        COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
+    fi
+    if [ -z "$COUNTRY_CODE" ]; then
+        echo "Could not get country code. Will use ssh proxy."
+        PROXY_TYPE="ssh"
+    else
+        countries=("CN" "CU" "TH" "TM" "IR" "SY" "SA" "TR")
+
+        if [[ " ${countries[@]} " =~ " ${COUNTRY_CODE} " ]]; then
+            echo "Will use ssh proxy because server is in $COUNTRY_CODE"
+            PROXY_TYPE="ssh"
+        else
+            echo "Will use tcp proxy"
+            PROXY_TYPE="tcp"
+        fi
+    fi
 else
-    echo "Invalid proxy type. Valid proxy types: tcp, ssh"
+    echo "Invalid proxy type. Valid proxy types: tcp, ssh, auto"
     exit 1
 fi
 
