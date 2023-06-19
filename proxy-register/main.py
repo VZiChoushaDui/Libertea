@@ -240,7 +240,7 @@ if __name__ == "__main__":
     threading.Thread(target=fake_traffic).start()
 
     try:
-        server = socketserver.UDPServer(("127.0.0.1", 514), SyslogUDPHandler)
+        server = socketserver.UDPServer(("127.0.0.1", 10514), SyslogUDPHandler)
         server.serve_forever(poll_interval=0.5)
     except (IOError, SystemExit):
         raise
