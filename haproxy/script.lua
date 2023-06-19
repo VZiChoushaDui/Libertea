@@ -190,9 +190,7 @@ end
 
 
 local function connected_ips_count(applet)
-    local path = applet.path
-    path = string.gsub(path, "___", "/")
-    local username = string.sub(path, 2, string.find(path, "/", 2) - 1)
+    local username = string.sub(applet.path, 2, string.find(applet.path, "/", 2) - 1)
 
     local response = "0"
     if path_ips_list[ip_user_connected_list_items][username] ~= nil then
@@ -207,9 +205,7 @@ local function connected_ips_count(applet)
 end
 
 local function connected_ips_count_long(applet)
-    local path = applet.path
-    path = string.gsub(path, "___", "/")
-    local username = string.sub(path, 2, string.find(path, "/", 2) - 1)
+    local username = string.sub(applet.path, 2, string.find(applet.path, "/", 2) - 1)
 
     local response = "0"
     if path_ips_list[path_ips_list_count][username] ~= nil then
