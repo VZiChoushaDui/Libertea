@@ -68,11 +68,11 @@ touch .libertea.proxy
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
-apt-get update -q
+apt-get update -q | sed 's/^/        /'
 
 if ! command -v ufw &> /dev/null; then
     echo "    - Installing ufw..."
-    apt-get install -q -y ufw
+    apt-get install -q -y ufw | sed 's/^/        /'
 fi
 
 echo "    - Initializing firewall..."
@@ -98,7 +98,7 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
     fi
 else
     echo "    - Installing python, haproxy, autossh..."
-    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh
+    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh | sed 's/^/        /'
     
     echo "    - Installing python dependencies..."
     pip3 install -r proxy-register/requirements.txt | sed 's/^/        /'
