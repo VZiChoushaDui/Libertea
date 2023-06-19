@@ -11,10 +11,21 @@ fi
 CONN_PROXY_IP="$1"
 PANEL_SECRET_KEY="$2"
 PROXY_REGISTER_ENDPOINT="$3"
+PROXY_TYPE="$4"
 DOCKERIZED_PROXY="0"
 
-if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTER_ENDPOINT" ]; then
-    echo "Usage: $0 <CONN_PROXY_IP> <PANEL_SECRET_KEY> <PROXY_REGISTER_ENDPOINT>"
+if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTER_ENDPOINT" ] || [ -z "$PROXY_TYPE" ]; then
+    echo "Usage: $0 <CONN_PROXY_IP> <PANEL_SECRET_KEY> <PROXY_REGISTER_ENDPOINT> <PROXY_TYPE>"
+    exit 1
+fi
+
+# Valid proxy types: tcp, tcp-docker, ssh
+if [ "$4" == "tcp-docker" ]; then
+    DOCKERIZED_PROXY="1"
+elif [ "$4" == "tcp" ] || [ "$4" == "ssh" ]; then
+    DOCKERIZED_PROXY="0"
+else
+    echo "Invalid proxy type. Valid proxy types: tcp, tcp-docker, ssh"
     exit 1
 fi
 
@@ -144,23 +155,31 @@ else
     systemctl enable libertea-proxy-fake-traffic.service
     systemctl restart libertea-proxy-fake-traffic.service
 
-    echo "     - proxy-ssh-tunnel-tls"
-    ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "root" 10001 4 # TODO: Replace user with non-root user
+    if [ "$PROXY_TYPE" == "ssh" ]; then
+        echo "     - proxy-ssh-tunnel-tls"
+        ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "root" 10001 4 # TODO: Replace user with non-root user
 
-    CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
-    # if CPU_COUNT is 1, disable two of the four tunnels
-    if [ "$CPU_COUNT" == "1" ]; then
-        systemctl stop libertea-proxy-ssh-tunnel-3.service
-        systemctl disable libertea-proxy-ssh-tunnel-3.service
+        CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
+        # if CPU_COUNT is 1, disable two of the four tunnels
+        if [ "$CPU_COUNT" == "1" ]; then
+            systemctl stop libertea-proxy-ssh-tunnel-3.service
+            systemctl disable libertea-proxy-ssh-tunnel-3.service
+        fi
     fi
-
-    echo "     - proxy-ssh-tunnel-syslog"
-    ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "514" "root" 10514 1 "-syslog"
 
     echo "     - haproxy"
     systemctl stop haproxy
     rm -f /etc/haproxy/haproxy.cfg
-    cp proxy-haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
+    if [ "$PROXY_TYPE" == "ssh" ]; then
+        cp proxy-haproxy/haproxy.ssh.cfg /etc/haproxy/haproxy.cfg
+    elif [ "$PROXY_TYPE" == "tcp" ]; then
+        cp proxy-haproxy/haproxy.tcp.cfg /etc/haproxy/haproxy.cfg
+    else
+        echo "ERROR: Invalid proxy type: $PROXY_TYPE"
+        exit 1
+    fi
+        
+    
     sed -i "s|\${CONN_PROXY_IP}|$CONN_PROXY_IP|g" /etc/haproxy/haproxy.cfg
     systemctl enable haproxy
     systemctl start haproxy
