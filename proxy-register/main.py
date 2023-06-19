@@ -2,12 +2,12 @@ import os
 import re
 import json
 import time
-import urllib
 import random
 import socket
 import requests
 import threading
 import socketserver
+import urllib.parse
 from datetime import datetime
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -131,15 +131,17 @@ def register_periodically():
             bytes_data = json.dumps(bytes_data)
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT, "with bytes =", bytes_data)
 
+            data = "ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION) + \
+                "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY) + \
+                "&trafficData=" + urllib.parse.quote(bytes_data)
+
             result = requests.post(REGISTER_ENDPOINT,
                 verify=False, timeout=5,
                 headers={
                     "X-API-KEY": API_KEY,
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
-                data="ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION) + 
-                    "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY) +
-                    "&trafficData=" + urllib.parse.quote(bytes_data)
+                data=data
             )
             # print status code and response text
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), result.status_code, result.text)
