@@ -157,7 +157,7 @@ else
 
     if [ "$PROXY_TYPE" == "ssh" ]; then
         echo "     - proxy-ssh-tunnel-tls"
-        ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "root" 10001 4 # TODO: Replace user with non-root user
+        ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "libertea" 10001 4 # TODO: Replace user with non-root user
 
         CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
         # if CPU_COUNT is 1, disable two of the four tunnels

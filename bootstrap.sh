@@ -68,7 +68,7 @@ elif [ "$COMMAND" = "update" ]; then
 elif [ "$COMMAND" = "install-proxy" ]; then
     # Install the proxy
     echo "Installing $PROJECT_NAME-proxy..."
-    ./init-proxy.sh "$2" "$3" "$4"
+    ./init-proxy.sh "$2" "$3" "$4" "$5"
 elif [ "$COMMAND" = "uninstall" ]; then
     set +e
 
