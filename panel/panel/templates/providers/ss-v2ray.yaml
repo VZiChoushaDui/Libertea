@@ -11,5 +11,5 @@
       skip-cert-verify: {{skip_cert_verify}}
       host: {{host}}
       path: "{{path}}"
-      mux: 8
+      mux: 4
     
