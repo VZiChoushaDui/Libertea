@@ -68,7 +68,18 @@ touch .libertea.proxy
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
-apt-get update -q | sed 's/^/        /'
+
+if ! command -v sed &> /dev/null; then
+    apt-get update -q
+else
+    apt-get update -q | sed 's/^/        /'
+fi
+
+
+if ! command -v sed &> /dev/null; then
+    echo "    - Installing sed..."
+    apt-get install -q -y sed
+fi
 
 if ! command -v ufw &> /dev/null; then
     echo "    - Installing ufw..."
