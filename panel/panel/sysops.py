@@ -111,6 +111,11 @@ def add_ssh_key(ssh_key):
     if not os.path.exists(ssh_keys_dir):
         os.makedirs(ssh_keys_dir)
 
+    if not os.path.exists(ssh_key_file):
+        with open(ssh_key_file, 'w') as f:
+            f.write(ssh_key + '\n')
+        return True
+
     # check if the key already exists
     with open(ssh_key_file, 'r') as f:
         for line in f.readlines():

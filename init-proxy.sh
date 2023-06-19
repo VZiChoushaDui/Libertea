@@ -19,13 +19,12 @@ if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTE
     exit 1
 fi
 
-# Valid proxy types: tcp, tcp-docker, ssh
 if [ "$4" == "tcp-docker" ]; then
     DOCKERIZED_PROXY="1"
 elif [ "$4" == "tcp" ] || [ "$4" == "ssh" ]; then
     DOCKERIZED_PROXY="0"
 else
-    echo "Invalid proxy type. Valid proxy types: tcp, tcp-docker, ssh"
+    echo "Invalid proxy type. Valid proxy types: tcp, ssh"
     exit 1
 fi
 
@@ -138,6 +137,11 @@ else
     set +e
     echo " ** Cleaning up old Libertea proxies..."
     docker compose -f proxy-docker-compose.yml down >/dev/null
+    systemctl stop libertea-proxy-ssh-tunnel-0.service
+    systemctl stop libertea-proxy-ssh-tunnel-1.service
+    systemctl stop libertea-proxy-ssh-tunnel-2.service
+    systemctl stop libertea-proxy-ssh-tunnel-3.service
+    systemctl stop libertea-proxy-ssh-tunnel-4.service
     set -e
 
     echo " ** Installing services..."

@@ -175,7 +175,7 @@ def add_route():
         if traffic_data != None:
             utils.online_route_update_traffic(ip, traffic_data)
     except:
-        print("Error parsing bytes data: " + traffic_data)
+        print("Error parsing bytes data:", traffic_data)
         pass
     
     return "", 200
