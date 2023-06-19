@@ -68,14 +68,14 @@ touch .libertea.proxy
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
-apt-get update >/dev/null
+apt-get update -q
 
 if ! command -v ufw &> /dev/null; then
     echo "    - Installing ufw..."
-    apt-get install -qq -y ufw >/dev/null
+    apt-get install -q -y ufw
 fi
 
-echo " ** Initializing firewall..."
+echo "    - Initializing firewall..."
 ufw allow ssh >/dev/null
 ufw allow http >/dev/null
 ufw allow https >/dev/null
@@ -97,23 +97,11 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
         service docker restart
     fi
 else
-    echo "    - Installing python..."
-    if ! command -v python3 &> /dev/null; then
-        apt-get install -qq -y python3 >/dev/null
-    fi
-    apt-get install -qq -y python3-dev >/dev/null
-    if ! command -v pip3 &> /dev/null; then
-        apt-get install -qq -y python3-pip >/dev/null
-    fi
-
+    echo "    - Installing python, haproxy, autossh..."
+    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh
+    
     echo "    - Installing python dependencies..."
     pip3 install -r proxy-register/requirements.txt | sed 's/^/        /'
-
-    echo "    - Installing haproxy..."
-    apt-get install -qq -y haproxy >/dev/null
-
-    echo "    - Installing autossh..."
-    apt-get install -qq -y autossh >/dev/null
 fi
 
 echo " ** Creating .env file..."
