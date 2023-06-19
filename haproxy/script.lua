@@ -147,6 +147,7 @@ local function auth_request(txn)
 
     -- get http request path from Fetches class of haproxy
     local path = txn.f:path()
+    path = string.gsub(path, "___", "/")
 
     -- get first part of path if path contains at least two slashes
     if string.find(path, "/", 2) ~= nil then
@@ -189,7 +190,9 @@ end
 
 
 local function connected_ips_count(applet)
-    local username = string.sub(applet.path, 2, string.find(applet.path, "/", 2) - 1)
+    local path = applet.path
+    path = string.gsub(path, "___", "/")
+    local username = string.sub(path, 2, string.find(path, "/", 2) - 1)
 
     local response = "0"
     if path_ips_list[ip_user_connected_list_items][username] ~= nil then
@@ -204,7 +207,9 @@ local function connected_ips_count(applet)
 end
 
 local function connected_ips_count_long(applet)
-    local username = string.sub(applet.path, 2, string.find(applet.path, "/", 2) - 1)
+    local path = applet.path
+    path = string.gsub(path, "___", "/")
+    local username = string.sub(path, 2, string.find(path, "/", 2) - 1)
 
     local response = "0"
     if path_ips_list[path_ips_list_count][username] ~= nil then
