@@ -144,7 +144,6 @@ def register_periodically():
             last_bytes_sent.clear()
 
             bytes_data = json.dumps(bytes_data)
-            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT, "with bytes =", bytes_data)
 
             data = "ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION) + \
                 "&proxyType=" + PROXY_TYPE + \
@@ -152,6 +151,8 @@ def register_periodically():
                 "&ramUsage=" + get_system_stats_ram() + \
                 "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY) + \
                 "&trafficData=" + urllib.parse.quote(bytes_data)
+            
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT, "with data ", data)
 
             result = requests.post(REGISTER_ENDPOINT,
                 verify=False, timeout=5,
