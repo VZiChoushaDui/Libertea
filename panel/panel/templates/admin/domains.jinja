@@ -139,7 +139,10 @@
                 elem.innerText = avg_percent + '%';
             });
     });
+</script>
+{% endif %}
 
+<script>
     document.querySelectorAll('.secondary-proxy-flag').forEach(elem => {
         var country = localStorage.getItem('ip-country-' + elem.dataset.ip);
         if (country) {
@@ -156,6 +159,5 @@
             });
     });
 </script>
-{% endif %}
 
 {% endblock %}
