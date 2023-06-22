@@ -13,10 +13,24 @@ PANEL_SECRET_KEY="$2"
 PROXY_REGISTER_ENDPOINT="$3"
 PROXY_TYPE="$4"
 DOCKERIZED_PROXY="0"
+IS_UPDATING="0"
 
-if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTER_ENDPOINT" ] || [ -z "$PROXY_TYPE" ]; then
+DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cd "$DIR"
+
+if [ "$1" == "update" ]; then
+    . .env
+    IS_UPDATING="1"
+fi
+
+if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTER_ENDPOINT" ]; then
     echo "Usage: $0 <CONN_PROXY_IP> <PANEL_SECRET_KEY> <PROXY_REGISTER_ENDPOINT> <PROXY_TYPE>"
+    echo "    or $0 update"
     exit 1
+fi
+
+if [ -z "$PROXY_TYPE" ]; then
+    PROXY_TYPE="auto"
 fi
 
 if [ "$PROXY_TYPE" == "tcp-docker" ]; then
@@ -50,13 +64,17 @@ elif [ "$PROXY_TYPE" == "auto" ]; then
             PROXY_TYPE="tcp"
         fi
     fi
+elif [ "$PROXY_TYPE" == "same" ]; then
+    if [ -f .libertea.proxy_type ]; then
+        PROXY_TYPE=$(cat .libertea.proxy_type)
+    else
+        echo "Could not determine proxy type. Please run the install script again on this server."
+        exit 1
+    fi
 else
     echo "Invalid proxy type. Valid proxy types: tcp, ssh, auto"
     exit 1
 fi
-
-DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-cd "$DIR"
 
 # if .libertea.main file exists, then this is a main server. don't install proxy
 if [ -f .libertea.main ]; then
@@ -115,14 +133,17 @@ else
     pip3 install -r proxy-register/requirements.txt | sed 's/^/        /'
 fi
 
-echo " ** Creating .env file..."
-if [ -f .env ]; then
-    rm -f .env.bak
-    mv .env .env.bak
+if [ "$IS_UPDATING" == "0" ]; then  
+    echo " ** Creating .env file..."
+    if [ -f .env ]; then
+        rm -f .env.bak
+        mv .env .env.bak
+    fi
+    echo "CONN_PROXY_IP=$CONN_PROXY_IP" >> .env
+    echo "PANEL_SECRET_KEY=$PANEL_SECRET_KEY" >> .env
+    echo "PROXY_REGISTER_ENDPOINT=$PROXY_REGISTER_ENDPOINT" >> .env
+    echo "PROXY_TYPE=$PROXY_TYPE" >> .env
 fi
-echo "CONN_PROXY_IP=$CONN_PROXY_IP" >> .env
-echo "PANEL_SECRET_KEY=$PANEL_SECRET_KEY" >> .env
-echo "PROXY_REGISTER_ENDPOINT=$PROXY_REGISTER_ENDPOINT" >> .env
 
 # Generate self-signed certificate to a single file
 echo " ** Generating self-signed certificate..."

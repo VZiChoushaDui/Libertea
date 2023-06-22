@@ -5,10 +5,10 @@
   href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
 />
 <h1 class="mt-5">{{ domain }}</h1>
-<div class="section">
+<div class="section text-center mt-1">
     <div class="row">
         <div class="col-12">
-            Status: <strong>
+            <strong>
                 {% if status == 'active' %}
                 ✅ Active
                 {% elif status == 'inactive' %}
@@ -21,31 +21,61 @@
             </strong>
         </div>
     </div>
+</div>
+
+<div class="section stats">
     <div class="row">
-        <div class="col-12">
-            Traffic usage in <span class="traffic-month-name"></span>: <strong><span class="traffic-month-value">⌛</span></strong>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="traffic-month-value">⌛</span></div>
+            <div class="stats-item-desc">Traffic in <span class="traffic-month-name"></span></div>
         </div>
-    </div>
-{% if health_check %}
-    <div class="row">
-        <div class="col-12">
-            Health in the past 24 hours: <strong><span class="health-percent">⌛</span></strong>
+        {% if health_check %}
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="health-percent">⌛</span></div>
+            <div class="stats-item-desc">Health in the past 24 hours</div>
         </div>
+        {% endif %}
+        
+        {% if secondary_proxy %}       
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="fi server-country-flag" style="font-size: 16px;">⌛</span><span class="server-country-flag-name mx-1"></span></div>
+            <div class="stats-item-desc">Location</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="server-tunnel-type">⌛</span></div>
+            <div class="stats-item-desc">Tunnel type</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="cpu-percent">⌛</span></div>
+            <div class="stats-item-desc">Current CPU usage</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="ram-percent">⌛</span></div>
+            <div class="stats-item-desc">Current RAM usage</div>
+        </div>
+        {% else %}
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">
+                {% if status == 'cdn-disabled' %}
+                    No CDN
+                {% else %}
+                    {{ cdn_provider }}
+                {% endif %}
+            </div>
+            <div class="stats-item-desc">CDN provider</div>
+        </div>
+        {% endif %}
     </div>
-{% endif %}
+</div>
+
 {% if secondary_proxy %}
-    <div class="row">
-        <div class="col-12">
-            Location: <strong><span class="fi server-country-flag">⌛</span><span class="server-country-flag-name mx-1"></span></strong>
-        </div>
-    </div>
     {% if secondary_proxy_update_available %}
     <div class="row mt-5">
         <div class="col-12">
             ⚠️ There's a new update available for this secondary proxy server.<br />
             <div style="font-size: 14px; margin-left: 26px; margin-top: 8px;">
                 To update, run this command in the SSH shell of this server:<br />
-                <code id="codeToCopy">curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
+                <code id="codeToCopy">curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy update</code>
                 <br />
                 <br />
                 <button class="btn btn-outline-primary btn-code-copy">
@@ -82,19 +112,9 @@
     
     
     {% endif %}
-    
 {% endif %}
+
 {% if not secondary_proxy %}
-    <div class="row">
-        <div class="col-12">
-            CDN Provider: 
-            {% if status == 'cdn-disabled' %}
-            <strong>No CDN</strong>
-            {% else %}
-            <strong>{{ cdn_provider }}</strong>
-            {% endif %}
-        </div>
-    </div>
     {% if status == 'cdn-disabled' %}
     <div class="row mt-5">
         <div class="col-12">
@@ -210,6 +230,19 @@
                         localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
                     });
             }
+
+            function updateServerMetadata() {
+                fetch('/{{ admin_uuid }}/stats/system/{{ domain }}')
+                    .then(r => r.json())
+                    .then(data => {
+                        document.querySelector('.cpu-percent').innerText = data.cpu;
+                        document.querySelector('.ram-percent').innerText = data.ram;
+                        document.querySelector('.server-tunnel-type').innerText = data.proxy_type.toUpperCase();
+                    });
+            }
+
+            setInterval(updateServerMetadata, 15000);
+            updateServerMetadata();
         </script>
 {% endif %}
 

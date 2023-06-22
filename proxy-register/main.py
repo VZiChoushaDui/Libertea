@@ -3,6 +3,7 @@ import re
 import json
 import time
 import random
+import psutil
 import socket
 import requests
 import threading
@@ -99,6 +100,7 @@ if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
 
 REGISTER_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT')
 API_KEY = os.environ.get('PANEL_SECRET_KEY')
+PROXY_TYPE = os.environ.get('PROXY_TYPE')
 
 SSH_PUBLIC_KEY_PATH = '/root/.ssh/id_rsa.pub'
 with open(SSH_PUBLIC_KEY_PATH, 'r') as f:
@@ -106,8 +108,21 @@ with open(SSH_PUBLIC_KEY_PATH, 'r') as f:
 
 last_bytes_received = {}
 last_bytes_sent = {}
-FUCKINGSHIT = {"a": 34}
-__fuckingshit = {"b": 45}
+
+def get_system_stats_cpu():
+    try:
+        return str(int(psutil.cpu_percent())) + '%'
+    except:
+        pass
+    return '-'
+
+def get_system_stats_ram():
+    try:
+        return str(int(psutil.virtual_memory()[2])) + '%'
+    except:
+        pass
+    
+    return '-'
 
 def register_periodically():
     global last_bytes_received
@@ -132,6 +147,9 @@ def register_periodically():
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT, "with bytes =", bytes_data)
 
             data = "ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION) + \
+                "&proxyType=" + PROXY_TYPE + \
+                "&cpuUsage=" + get_system_stats_cpu() + \
+                "&ramUsage=" + get_system_stats_ram() + \
                 "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY) + \
                 "&trafficData=" + urllib.parse.quote(bytes_data)
 
@@ -145,7 +163,7 @@ def register_periodically():
             )
             # print status code and response text
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), result.status_code, result.text)
-            time.sleep(random.randint(30, 90))
+            time.sleep(random.randint(15, 45))
         except Exception as e:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e)
             time.sleep(30)

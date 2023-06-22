@@ -120,10 +120,15 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
 
     return xs, ys
 
-def get_traffic_per_day_all(days=7, domain=None):
+def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_route=False):
     xs = []
     ys = []
+
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+
     for i in range(days - 1, -1, -1):
+        date_obj = datetime.now() - timedelta(days=i)
         date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
         file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
@@ -131,6 +136,14 @@ def get_traffic_per_day_all(days=7, domain=None):
             traffic = ___get_total_gigabytes(file_name, '[total]', return_as_string=False, domain=domain)
             if traffic is None:
                 traffic = 0
+
+            if include_extra_data_for_online_route:
+                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
+                print("extra_traffic @", date, ":", extra_traffic)
+                if extra_traffic is not None:
+                    if '443' in extra_traffic:
+                        print(extra_traffic['443'])
+                        traffic += extra_traffic['443']['received_bytes'] + extra_traffic['443']['sent_bytes']
             ys.append(traffic)
         except:
             ys.append(None)

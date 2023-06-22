@@ -328,7 +328,7 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
         return ___get_max_ips(conn_url, db=db)
 
 
-def online_route_ping(ip, version, db=None):
+def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -336,6 +336,9 @@ def online_route_ping(ip, version, db=None):
     online_routes.update_one({"_id": ip}, {"$set": {
         "last_seen": datetime.now(),
         "version": version,
+        "proxy_type": proxy_type,
+        "latest_cpu_usage": cpu_usage,
+        "latest_ram_usage": ram_usage
     }}, upsert=True)
 
 
@@ -350,6 +353,17 @@ def online_route_get_last_seen(ip, db=None):
 
     return online_route["last_seen"]
 
+
+def online_route_get_metadata(ip, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    online_route = online_routes.find_one({"_id": ip})
+    if online_route is None:
+        return None
+
+    return online_route
 
 def online_route_get_version(ip, db=None):
     if db is None:
@@ -420,6 +434,32 @@ def online_route_update_traffic(ip, traffic_data, db=None):
             f"traffic.{cur_date}.{traffic_port}.received_bytes": delta_received_bytes,
             f"traffic.{cur_date}.{traffic_port}.sent_bytes": delta_sent_bytes,
         }}, upsert=True)
+
+def online_route_get_traffic(ip, year, month, day, db=None):
+    try:
+        
+        if db is None:
+            client = config.get_mongo_client()
+            db = client[config.MONGODB_DB_NAME]
+        online_routes = db.online_routes
+
+        cur_date = datetime(year, month, day).strftime("%Y-%m-%d")
+
+        online_route = online_routes.find_one({"_id": ip})
+        if online_route is None:
+            return None
+
+        if not 'traffic' in online_route:
+            return None
+
+        if not cur_date in online_route["traffic"]:
+            return None
+
+        return online_route["traffic"][cur_date]
+    except:
+        import traceback
+        traceback.print_exc()
+        return None
 
 check_domain_set_properly_cache_max_time = 60
 

@@ -162,7 +162,11 @@ def add_route():
         version = "1000"
     version = int(version)
 
-    utils.online_route_ping(ip, version)
+    proxy_type = request.form.get('proxyType', 'https')
+    cpu_usage = request.form.get('cpuUsage', 'Unknown')
+    ram_usage = request.form.get('ramUsage', 'Unknown')
+
+    utils.online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage)
     
     ssh_key = request.form.get('sshKey')
     # add the public key to authorized_keys file of user "libertea"
