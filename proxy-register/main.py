@@ -146,9 +146,9 @@ def register_periodically():
             bytes_data = json.dumps(bytes_data)
 
             data = "ip=" + SERVER_MAIN_IP + "&version=" + str(LIBERTEA_PROXY_VERSION) + \
-                "&proxyType=" + PROXY_TYPE + \
-                "&cpuUsage=" + get_system_stats_cpu() + \
-                "&ramUsage=" + get_system_stats_ram() + \
+                "&proxyType=" + urllib.parse.quote(PROXY_TYPE) + \
+                "&cpuUsage=" + urllib.parse.quote(get_system_stats_cpu()) + \
+                "&ramUsage=" + urllib.parse.quote(get_system_stats_ram()) + \
                 "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY) + \
                 "&trafficData=" + urllib.parse.quote(bytes_data)
             
