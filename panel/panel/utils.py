@@ -482,6 +482,8 @@ def update_domain_cache(domain, try_count=3, db=None):
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
                 domain_cache_update_db(domain, cdn='Cloudflare', db=db)                
+            elif header_server is not None and header_server != '':
+                domain_cache_update_db(domain, cdn=header_server, db=db)
             else:
                 domain_cache_update_db(domain, cdn='Unknown', db=db)
 

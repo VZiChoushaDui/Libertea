@@ -393,7 +393,10 @@
                         }
                     });
                 });
+        </script>
+{% endif %}
 
+        <script>    
             fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
                 .then(function(response) {
                     return response.json()
@@ -466,7 +469,6 @@
                     document.querySelector('.traffic-month-value').innerText = Math.round(sum * 100) / 100 + ' GB';
                 }); 
         </script>
-{% endif %}
     </div>
 </div>
 
