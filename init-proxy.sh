@@ -105,10 +105,18 @@ if ! command -v ufw &> /dev/null; then
 fi
 
 echo "    - Initializing firewall..."
-ufw allow ssh >/dev/null
-ufw allow http >/dev/null
-ufw allow https >/dev/null
-yes | ufw enable >/dev/null
+set +e
+yes | /usr/share/ufw/check-requirements >/dev/null
+if [ $? -ne 0 ]; then
+    echo "       WARNING: UFW requirements not met. Disabling UFW."
+    yes | ufw disable >/dev/null
+else
+    ufw allow ssh >/dev/null
+    ufw allow http >/dev/null
+    ufw allow https >/dev/null
+    yes | ufw enable >/dev/null
+fi
+set -e
 
 if [ "$DOCKERIZED_PROXY" == "1" ]; then
     echo " ** Installing docker..."
