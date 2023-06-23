@@ -101,6 +101,8 @@ if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
 REGISTER_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT')
 API_KEY = os.environ.get('PANEL_SECRET_KEY')
 PROXY_TYPE = os.environ.get('PROXY_TYPE')
+if PROXY_TYPE is None or PROXY_TYPE == '':
+    PROXY_TYPE = 'https'
 
 SSH_PUBLIC_KEY_PATH = '/root/.ssh/id_rsa.pub'
 with open(SSH_PUBLIC_KEY_PATH, 'r') as f:
@@ -224,8 +226,12 @@ class SyslogUDPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         global last_bytes_received
         global last_bytes_sent
+        global PROXY_TYPE
 
         try:
+            if PROXY_TYPE == 'https':
+                return # do not handle syslog for https proxy, traffic is logged by main server
+
             data = bytes.decode(self.request[0].strip())
             data = str(data)
 
