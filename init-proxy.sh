@@ -227,6 +227,8 @@ else
         cp proxy-haproxy/haproxy.ssh.cfg /etc/haproxy/haproxy.cfg
     elif [ "$PROXY_TYPE" == "tcp" ]; then
         cp proxy-haproxy/haproxy.tcp.cfg /etc/haproxy/haproxy.cfg
+    elif [ "$PROXY_TYPE" == "https" ]; then
+        cp proxy-haproxy/haproxy.https.cfg /etc/haproxy/haproxy.cfg
     else
         echo "ERROR: Invalid proxy type: $PROXY_TYPE"
         exit 1
