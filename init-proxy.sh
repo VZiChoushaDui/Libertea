@@ -40,6 +40,7 @@ elif [ "$PROXY_TYPE" == "tcp" ] || [ "$PROXY_TYPE" == "ssh" ] || [ "$PROXY_TYPE"
 elif [ "$PROXY_TYPE" == "auto" ]; then
     echo "Determining proxy type..."
     # get country code
+    set +e
     COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
     if [ -z "$COUNTRY_CODE" ]; then
         COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
@@ -50,6 +51,7 @@ elif [ "$PROXY_TYPE" == "auto" ]; then
     if [ -z "$COUNTRY_CODE" ]; then
         COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
     fi
+    set -e
     if [ -z "$COUNTRY_CODE" ]; then
         echo "Could not get country code. Will use ssh proxy."
         PROXY_TYPE="ssh"
