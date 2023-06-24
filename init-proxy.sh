@@ -43,13 +43,16 @@ elif [ "$PROXY_TYPE" == "auto" ]; then
     set +e
     COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
     if [ -z "$COUNTRY_CODE" ]; then
+        COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
+    fi
+    if [ -z "$COUNTRY_CODE" ]; then
+        COUNTRY_CODE=$(curl -s --max-time 3 http://ifconfig.io/country_code)
+    fi
+    if [ -z "$COUNTRY_CODE" ]; then
         COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
     fi
     if [ -z "$COUNTRY_CODE" ]; then
         COUNTRY_CODE=$(curl -s --max-time 3 https://ipinfo.io/country)
-    fi
-    if [ -z "$COUNTRY_CODE" ]; then
-        COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
     fi
     set -e
     if [ -z "$COUNTRY_CODE" ]; then
