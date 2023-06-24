@@ -35,7 +35,7 @@ fi
 
 if [ "$PROXY_TYPE" == "tcp-docker" ]; then
     DOCKERIZED_PROXY="1"
-elif [ "$PROXY_TYPE" == "tcp" ] || [ "$PROXY_TYPE" == "ssh" ]; then
+elif [ "$PROXY_TYPE" == "tcp" ] || [ "$PROXY_TYPE" == "ssh" ] || [ "$PROXY_TYPE" == "https" ]; then
     DOCKERIZED_PROXY="0"
 elif [ "$PROXY_TYPE" == "auto" ]; then
     echo "Determining proxy type..."
@@ -72,7 +72,7 @@ elif [ "$PROXY_TYPE" == "same" ]; then
         exit 1
     fi
 else
-    echo "Invalid proxy type. Valid proxy types: tcp, ssh, auto"
+    echo "Invalid proxy type. Valid proxy types: auto, tcp, ssh, https"
     exit 1
 fi
 
