@@ -141,17 +141,15 @@ else
     pip3 install -r proxy-register/requirements.txt | sed 's/^/        /'
 fi
 
-if [ "$IS_UPDATING" == "0" ]; then  
-    echo " ** Creating .env file..."
-    if [ -f .env ]; then
-        rm -f .env.bak
-        mv .env .env.bak
-    fi
-    echo "CONN_PROXY_IP=$CONN_PROXY_IP" >> .env
-    echo "PANEL_SECRET_KEY=$PANEL_SECRET_KEY" >> .env
-    echo "PROXY_REGISTER_ENDPOINT=$PROXY_REGISTER_ENDPOINT" >> .env
-    echo "PROXY_TYPE=$PROXY_TYPE" >> .env
+echo " ** Creating .env file..."
+if [ -f .env ]; then
+    rm -f .env.bak
+    mv .env .env.bak
 fi
+echo "CONN_PROXY_IP=$CONN_PROXY_IP" >> .env
+echo "PANEL_SECRET_KEY=$PANEL_SECRET_KEY" >> .env
+echo "PROXY_REGISTER_ENDPOINT=$PROXY_REGISTER_ENDPOINT" >> .env
+echo "PROXY_TYPE=$PROXY_TYPE" >> .env
 
 # Generate self-signed certificate to a single file
 echo " ** Generating self-signed certificate..."
