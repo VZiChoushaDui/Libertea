@@ -41,18 +41,23 @@ elif [ "$PROXY_TYPE" == "auto" ]; then
     echo "Determining proxy type..."
     # get country code
     set +e
-    COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
+    COUNTRY_CODE=$(curl -s --fail --max-time 3 https://ifconfig.io/country_code)
     if [ -z "$COUNTRY_CODE" ]; then
-        COUNTRY_CODE=$(curl -s --max-time 3 https://ifconfig.io/country_code)
+        COUNTRY_CODE=$(curl -s --fail --max-time 3 https://ifconfig.io/country_code)
     fi
     if [ -z "$COUNTRY_CODE" ]; then
-        COUNTRY_CODE=$(curl -s --max-time 3 http://ifconfig.io/country_code)
+        COUNTRY_CODE=$(curl -s --fail --max-time 3 http://ifconfig.io/country_code)
     fi
     if [ -z "$COUNTRY_CODE" ]; then
-        COUNTRY_CODE=$(curl -s --max-time 3 https://ipapi.co/country_code)
+        COUNTRY_CODE=$(curl -s --fail --max-time 3 https://ipapi.co/country_code)
     fi
     if [ -z "$COUNTRY_CODE" ]; then
-        COUNTRY_CODE=$(curl -s --max-time 3 https://ipinfo.io/country)
+        COUNTRY_CODE=$(curl -s --fail --max-time 3 https://ipinfo.io/country)
+    fi
+    if [ -z "$COUNTRY_CODE" ]; then
+        apt-get update
+        apt-get install -y jq
+        COUNTRY_CODE=$(curl -s --fail --max-time 3 https://api.myip.com/ | jq -r .cc)
     fi
     set -e
     if [ -z "$COUNTRY_CODE" ]; then
