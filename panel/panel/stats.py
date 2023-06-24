@@ -120,7 +120,7 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
                 extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
                 if extra_traffic is not None:
                     for port in extra_traffic:
-                        traffic += extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']
+                        traffic += (extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']) / 1024 / 1024 / 1024
 
             ys.append(traffic)
         except:
@@ -149,7 +149,7 @@ def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_r
                 extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
                 if extra_traffic is not None:
                     for port in extra_traffic:
-                        traffic += extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']
+                        traffic += (extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']) / 1024 / 1024 / 1024
             ys.append(traffic)
         except:
             ys.append(None)

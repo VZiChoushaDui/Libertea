@@ -435,8 +435,6 @@ def online_route_update_traffic(ip, traffic_data, db=None):
             f"traffic.{cur_date}.{traffic_port}.sent_bytes": delta_sent_bytes,
         }}, upsert=True)
 
-        print("online_route_update_traffic: ip", ip, "port", traffic_port, "received", delta_received_bytes, "sent", delta_sent_bytes)
-
 def online_route_get_traffic(ip, year, month, day, db=None):
     try:
         
