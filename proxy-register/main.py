@@ -200,6 +200,7 @@ def fake_traffic():
         if not len(SERVER_COUNTRY) == 2:
             print("Invalid SERVER_COUNTRY", SERVER_COUNTRY, "Will try again in 15 seconds.")
             time.sleep(15)
+            continue
         if not SERVER_COUNTRY in FAKE_TRAFFIC_COUNTRIES_LIST:
             print("SERVER_COUNTRY", SERVER_COUNTRY, "not in countries list. Will not send fake traffic.")
             time.sleep(3 * 3600)
