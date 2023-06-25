@@ -221,8 +221,7 @@ def fake_traffic():
                 last_bytes_sent['FAKE'] = 0
             last_bytes_sent['FAKE'] += len(data)
 
-            if LOG_LEVEL >= 2:
-                total_len += len(data)
+            total_len += len(data)
 
             if LOG_LEVEL >= 3:
                 print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending", len(data), "bytes to", FAKE_TRAFFIC_ENDPOINT)
@@ -248,6 +247,10 @@ def fake_traffic():
         avg_gb_per_day = round(avg_gb_per_day, 2)
 
         avg_fake_traffic_gb_per_day = avg_gb_per_day
+
+        if (datetime.now() - start_time).total_seconds() > 60 * 60 * 24:
+            start_time = datetime.now()
+            total_len = 0
 
         if LOG_LEVEL >= 2:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Total sent:", total_len, "bytes in ", (datetime.now() - start_time).total_seconds(), "seconds")
