@@ -183,8 +183,8 @@ def register_periodically():
                 },
                 data=data
             )
-            # print status code and response text
-            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), result.status_code, result.text)
+            if LOG_LEVEL >= 1:
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), result.status_code, result.text)
             time.sleep(random.randint(15, 45))
         except Exception as e:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e)
