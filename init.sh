@@ -23,7 +23,17 @@ touch .libertea.main
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
-apt-get update >/dev/null
+if ! command -v sed &> /dev/null; then
+    apt-get update -q
+else
+    apt-get update -q | sed 's/^/        /'
+fi
+
+
+if ! command -v sed &> /dev/null; then
+    echo "    - Installing sed..."
+    apt-get install -q -y sed
+fi
 
 # if ! command -v certbot &> /dev/null; then
 #     echo "    - Installing certbot..."
@@ -36,51 +46,11 @@ apt-get update >/dev/null
 # fi
 
 if ! command -v ufw &> /dev/null; then
-    echo "    - Installing ufw..."
-    apt-get install -qq -y ufw >/dev/null
-fi
-
-if ! command -v sed &> /dev/null; then
-    echo "    - Installing sed..."
-    apt-get install -qq -y sed >/dev/null
-fi
-
-if ! command -v dig &> /dev/null; then
-    echo "    - Installing dnsutils..."
-    apt-get install -qq -y dnsutils >/dev/null
-fi
-
-if ! command -v uuidgen &> /dev/null; then
-    echo "    - Installing uuidgen..."
-    apt-get install -qq -y uuid-runtime >/dev/null
-fi
-
-if ! command -v openssl &> /dev/null; then
-    echo "    - Installing openssl..."
-    apt-get install -qq -y openssl >/dev/null
-fi
-
-if ! command -v jq &> /dev/null; then
-    echo "    - Installing jq..."
-    apt-get install -qq -y jq >/dev/null
-fi
-
-if ! command -v cut &> /dev/null; then
-    echo "    - Installing coreutils..."
-    apt-get install -qq -y coreutils >/dev/null
-fi
-
-echo "    - Installing build tools..."
-apt-get install -qq -y build-essential >/dev/null
+    echo "    - Installing core dependencies..."
+    apt-get install -q -y ufw dnsutils uuid-runtime openssl jq coreutils build-essential | sed 's/^/        /'
 
 echo "    - Installing python..."
-if ! command -v python3 &> /dev/null; then
-    apt-get install -qq -y python3 >/dev/null
-fi
-apt-get install -qq -y python3-dev >/dev/null
-if ! command -v pip3 &> /dev/null; then
-    apt-get install -qq -y python3-pip >/dev/null
-fi
+apt-get install -q -y python3 python3-dev python3-pip | sed 's/^/        /'
 
 echo "    - Installing python dependencies..."
 pip3 install -r panel/requirements.txt | sed 's/^/        /'
@@ -91,12 +61,12 @@ if ! command -v docker &> /dev/null; then
     sh /tmp/get-docker.sh | sed 's/^/        /' >/dev/null
 fi
 echo "    - Installing docker compose..."
-apt-get install -qq docker-compose-plugin | sed 's/^/        /'
+apt-get install -q docker-compose-plugin | sed 's/^/        /'
 
 # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
 if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
     echo "    - Applying apparmor fix..."
-    apt-get install -qq -y apparmor apparmor-utils >/dev/null
+    apt-get install -q -y apparmor apparmor-utils | sed 's/^/        /'
     service docker restart
 fi
 
