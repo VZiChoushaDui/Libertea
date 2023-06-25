@@ -143,6 +143,8 @@ def register_periodically():
     global last_bytes_received
     global last_bytes_sent
 
+    time.sleep(5)
+
     while True:
         try:
             bytes_data = {}
@@ -315,11 +317,11 @@ class SyslogUDPHandler(socketserver.BaseRequestHandler):
 
 
 if __name__ == "__main__":
-    # create a new thread for periodic proxy registration
-    threading.Thread(target=register_periodically).start()
-
     # create a new thread for fake traffic
     threading.Thread(target=fake_traffic).start()
+
+    # create a new thread for periodic proxy registration
+    threading.Thread(target=register_periodically).start()
 
     try:
         server = socketserver.UDPServer(("127.0.0.1", 10514), SyslogUDPHandler)
