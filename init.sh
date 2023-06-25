@@ -344,6 +344,12 @@ touch ./data/haproxy-lists/domains.lst
 touch ./data/haproxy-lists/valid-panel-endpoints.lst
 touch ./data/haproxy-lists/valid-user-endpoints.lst
 
+echo " ** Adding auto-update cronjob..."
+# create a cronjob to run ./autoupdate.sh on bash and save the output to /tmp/libertea-autoupdate.log
+if ! crontab -l | grep -q "autoupdate.sh"; then
+    (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
+fi
+
 echo " ** Waiting for services to start..."
 
 # check status of the docker containers with name starting with "libertea" (max 30 seconds) and log each one that has been up for at least 5 seconds
