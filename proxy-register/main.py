@@ -41,9 +41,19 @@ def get_fake_traffic_average_bytes_per_second():
 def get_fake_traffic_average_bytes_per_request():
     return get_fake_traffic_average_bytes_per_second() * FAKE_TRAFFIC_AVERAGE_DELAY_BETWEEN_REQUESTS
 
+def get_country_api_url():
+    return random.choice([
+        'https://ifconfig.io/country_code',
+        'https://ipinfo.io/country',
+        'https://ipapi.co/country_code',
+        'https://ifconfig.co/country-iso',
+        'https://api.myip.com',
+        'https://api.ipregistry.co/?key=tryout'
+    ])
+
 def get_country_code():
     try:
-        url = get_ip_api_url()
+        url = get_country_api_url()
         result = requests.get(url, timeout=20).content.decode('utf8').strip()
         if url == 'https://api.myip.com':
             result = json.loads(result)['cc']
@@ -111,6 +121,9 @@ with open(SSH_PUBLIC_KEY_PATH, 'r') as f:
 last_bytes_received = {}
 last_bytes_sent = {}
 
+fake_traffic_enabled = False
+avg_fake_traffic_gb_per_day = 0
+
 def get_system_stats_cpu():
     try:
         return str(int(psutil.cpu_percent())) + '%'
@@ -132,7 +145,6 @@ def register_periodically():
 
     while True:
         try:
-            
             bytes_data = {}
             for listenport in last_bytes_received:
                 if not listenport in bytes_data:
@@ -151,10 +163,15 @@ def register_periodically():
                 "&proxyType=" + urllib.parse.quote(PROXY_TYPE) + \
                 "&cpuUsage=" + urllib.parse.quote(get_system_stats_cpu()) + \
                 "&ramUsage=" + urllib.parse.quote(get_system_stats_ram()) + \
+                "&fakeTrafficEnabled=" + urllib.parse.quote(str(fake_traffic_enabled)) + \
+                "&fakeTrafficAvgGbPerDay=" + urllib.parse.quote(str(avg_fake_traffic_gb_per_day)) + \
                 "&sshKey=" + urllib.parse.quote(SSH_PUBLIC_KEY) + \
                 "&trafficData=" + urllib.parse.quote(bytes_data)
             
-            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT, "with data ", data)
+            if LOG_LEVEL >= 1:
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Sending request to register proxy at", REGISTER_ENDPOINT)
+            if LOG_LEVEL >= 3:
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Data:", data)
 
             result = requests.post(REGISTER_ENDPOINT,
                 verify=False, timeout=5,
@@ -175,6 +192,20 @@ def register_periodically():
 def fake_traffic():
     global last_bytes_received
     global last_bytes_sent
+    global fake_traffic_enabled
+    global avg_fake_traffic_gb_per_day
+
+    while True:
+        SERVER_COUNTRY = get_country_code()
+        if not len(SERVER_COUNTRY) == 2:
+            time.sleep(3 * 3600)
+        if not SERVER_COUNTRY in FAKE_TRAFFIC_COUNTRIES_LIST:
+            print("SERVER_COUNTRY", SERVER_COUNTRY, "not in countries list. Will not send fake traffic.")
+            time.sleep(3 * 3600)
+        else:
+            break
+
+    fake_traffic_enabled = True
 
     start_time = datetime.now()
     total_len = 0
@@ -210,11 +241,14 @@ def fake_traffic():
 
         fake_traffic_random_sleep((req_time_end - req_time_start).total_seconds())
 
+        avg_per_second = total_len / (datetime.now() - start_time).total_seconds()
+        avg_gb_per_day = avg_per_second * 60 * 60 * 24 / (1024 * 1024 * 1024)
+        avg_per_second = int(avg_per_second)
+        avg_gb_per_day = round(avg_gb_per_day, 2)
+
+        avg_fake_traffic_gb_per_day = avg_gb_per_day
+
         if LOG_LEVEL >= 2:
-            avg_per_second = total_len / (datetime.now() - start_time).total_seconds()
-            avg_gb_per_day = avg_per_second * 60 * 60 * 24 / (1024 * 1024 * 1024)
-            avg_per_second = int(avg_per_second)
-            avg_gb_per_day = round(avg_gb_per_day, 2)
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Total sent:", total_len, "bytes in ", (datetime.now() - start_time).total_seconds(), "seconds")
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Average:", avg_per_second, "bytes per second, or", avg_gb_per_day, "GB per day")
 

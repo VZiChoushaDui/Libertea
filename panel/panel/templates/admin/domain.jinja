@@ -69,6 +69,13 @@
 </div>
 
 {% if secondary_proxy %}
+
+    <div class="row mt-5 fake-traffic" style="display: none;">
+        <div class="mb-2"><strong>🛡️ Fake traffic protection is enabled for this server.</strong></div>
+        <div>Due to the location of this server, Libertea will create fake traffic in addition to real traffic to reduce the chance of detection.</div><br />
+        <div style="opacity: 0.7">Libertea creates approximately <span class="fake-traffic-gb-per-day">⌛</span> GB of fake traffic every day.</div>
+    </div>
+
     {% if secondary_proxy_update_available %}
     <div class="row mt-5">
         <div class="col-12">
@@ -238,6 +245,10 @@
                         document.querySelector('.cpu-percent').innerText = data.cpu;
                         document.querySelector('.ram-percent').innerText = data.ram;
                         document.querySelector('.server-tunnel-type').innerText = data.proxy_type.toUpperCase();
+                        if (data.fake_traffic_enabled) {
+                            document.querySelector('.fake-traffic').style.display = 'block';
+                            document.querySelector('.fake-traffic-gb-per-day').innerText = data.fake_traffic_avg_gb_per_day;
+                        }
                     });
             }
 

@@ -328,7 +328,7 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
         return ___get_max_ips(conn_url, db=db)
 
 
-def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, db=None):
+def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, fake_traffic_enabled, fake_traffic_avg_gb_per_day, db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -338,7 +338,9 @@ def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, db=None):
         "version": version,
         "proxy_type": proxy_type,
         "latest_cpu_usage": cpu_usage,
-        "latest_ram_usage": ram_usage
+        "latest_ram_usage": ram_usage,
+        "fake_traffic_enabled": fake_traffic_enabled,
+        "fake_traffic_avg_gb_per_day": fake_traffic_avg_gb_per_day
     }}, upsert=True)
 
 

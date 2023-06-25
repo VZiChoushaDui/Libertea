@@ -165,8 +165,17 @@ def add_route():
     proxy_type = request.form.get('proxyType', 'https')
     cpu_usage = request.form.get('cpuUsage', 'Unknown')
     ram_usage = request.form.get('ramUsage', 'Unknown')
+    fake_traffic_enabled = request.form.get('fakeTrafficEnabled', 'False')
+    fake_traffic_avg_gb_per_day = request.form.get('fakeTrafficAvgGbPerDay', '0')
 
-    utils.online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage)
+    try:
+        fake_traffic_enabled = fake_traffic_enabled.lower() == 'true'
+        fake_traffic_avg_gb_per_day = float(fake_traffic_avg_gb_per_day)
+    except:
+        fake_traffic_enabled = False
+        fake_traffic_avg_gb_per_day = 0
+
+    utils.online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, fake_traffic_enabled, fake_traffic_avg_gb_per_day)
     
     ssh_key = request.form.get('sshKey')
     # add the public key to authorized_keys file of user "libertea"

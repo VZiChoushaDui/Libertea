@@ -97,6 +97,8 @@ def system_stats_ip(ip):
         'cpu': metadata['latest_cpu_usage'] if 'latest_cpu_usage' in metadata else 'N/A',
         'ram': metadata['latest_ram_usage'] if 'latest_ram_usage' in metadata else 'N/A',
         'proxy_type': metadata['proxy_type'] if 'proxy_type' in metadata else 'HTTPS',
+        'fake_traffic_enabled': metadata['fake_traffic_enabled'] if 'fake_traffic_enabled' in metadata else False,
+        'fake_traffic_avg_gb_per_day': metadata['fake_traffic_avg_gb_per_day'] if 'fake_traffic_avg_gb_per_day' in metadata else 0,
     }
 
 @blueprint.route(root_url + "stats/connections", methods=['GET'])
