@@ -93,18 +93,18 @@ fi
 
 echo " ** Getting public IP..."
 set +e
-my_ip=$(curl -s --fail --max-time 3 https://ifconfig.io/ip)
+my_ip=$(curl -s --ipv4 --fail --max-time 3 https://ifconfig.io/ip)
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --fail --max-time 3 https://api.ipify.org)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://api.ipify.org)
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --fail --max-time 3 https://icanhazip.com)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://icanhazip.com)
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --fail --max-time 3 https://ident.me)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://ident.me)
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --fail --max-time 3 https://checkip.amazonaws.com)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://checkip.amazonaws.com)
 fi
 if [[ ! $my_ip ]]; then
     echo " ** Failed to get public IP. Please check your internet connection."
