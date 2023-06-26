@@ -89,6 +89,18 @@ def system_stats():
         'ram': stats.get_system_stats_ram(),
     }
 
+@blueprint.route(root_url + "stats/system/<ip>", methods=['GET'])
+def system_stats_ip(ip):
+    metadata = utils.online_route_get_metadata(ip)
+
+    return {
+        'cpu': metadata['latest_cpu_usage'] if 'latest_cpu_usage' in metadata else 'N/A',
+        'ram': metadata['latest_ram_usage'] if 'latest_ram_usage' in metadata else 'N/A',
+        'proxy_type': metadata['proxy_type'] if 'proxy_type' in metadata else 'HTTPS',
+        'fake_traffic_enabled': metadata['fake_traffic_enabled'] if 'fake_traffic_enabled' in metadata else False,
+        'fake_traffic_avg_gb_per_day': metadata['fake_traffic_avg_gb_per_day'] if 'fake_traffic_avg_gb_per_day' in metadata else 0,
+    }
+
 @blueprint.route(root_url + "stats/connections", methods=['GET'])
 def connection_stats():
     connected_ips_over_time_xs = []
@@ -306,13 +318,20 @@ def domains():
         admin_uuid=config.get_admin_uuid(),
         domains=all_domains,
         proxies=proxies,
-        bootstrap_script_url=config.get_bootstrap_script_url(),
         server_ip=config.SERVER_MAIN_IP,
-        panel_secret_key=config.get_panel_secret_key(),
-        proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
         health_check=settings.get_periodic_health_check(db=db),
     )
 
+@blueprint.route(root_url + 'proxies/new/', methods=['GET'])
+def new_proxy():
+    return render_template('admin/new_secondary_proxy.jinja',
+        back_to='domains',
+        server_ip=config.SERVER_MAIN_IP,
+        admin_uuid=config.get_admin_uuid(),
+        bootstrap_script_url=config.get_bootstrap_script_url(),
+        panel_secret_key=config.get_panel_secret_key(),
+        proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+    )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['GET'])
 def domain(domain):

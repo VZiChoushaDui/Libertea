@@ -147,6 +147,7 @@ local function auth_request(txn)
 
     -- get http request path from Fetches class of haproxy
     local path = txn.f:path()
+    path = string.gsub(path, "___", "/")
 
     -- get first part of path if path contains at least two slashes
     if string.find(path, "/", 2) ~= nil then

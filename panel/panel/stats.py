@@ -107,30 +107,49 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
     xs = []
     ys = []
     for i in range(days - 1, -1, -1):
-        date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+        date_obj = datetime.now() - timedelta(days=i)
+        date = date_obj.strftime('%Y-%m-%d')
         file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
         try:
             traffic = ___get_total_gigabytes(file_name, conn_url, return_as_string=False, domain=domain)
             if traffic is None:
                 traffic = 0
+
+            if domain is not None:
+                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
+                if extra_traffic is not None:
+                    for port in extra_traffic:
+                        traffic += (extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']) / 1024 / 1024 / 1024
+
             ys.append(traffic)
         except:
             ys.append(None)
 
     return xs, ys
 
-def get_traffic_per_day_all(days=7, domain=None):
+def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_route=False):
     xs = []
     ys = []
+
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+
     for i in range(days - 1, -1, -1):
-        date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+        date_obj = datetime.now() - timedelta(days=i)
+        date = date_obj.strftime('%Y-%m-%d')
         file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
         try:
             traffic = ___get_total_gigabytes(file_name, '[total]', return_as_string=False, domain=domain)
             if traffic is None:
                 traffic = 0
+
+            if domain is not None:
+                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
+                if extra_traffic is not None:
+                    for port in extra_traffic:
+                        traffic += (extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']) / 1024 / 1024 / 1024
             ys.append(traffic)
         except:
             ys.append(None)

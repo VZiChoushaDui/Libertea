@@ -49,6 +49,12 @@ if [ "$COMMAND" != "uninstall" ]; then
         git clone "$REPO_URL" "/root/$PROJECT_NAME" >/dev/null
         cd "/root/$PROJECT_NAME"
     fi
+
+    if [ -n "$LIBERTEA_BRANCH" ]; then
+        echo " ** Checking out branch $LIBERTEA_BRANCH..."
+        git checkout "$LIBERTEA_BRANCH" >/dev/null
+        git pull --rebase >/dev/null
+    fi
 fi
 
 if [ "$COMMAND" = "install" ]; then
@@ -62,7 +68,7 @@ elif [ "$COMMAND" = "update" ]; then
 elif [ "$COMMAND" = "install-proxy" ]; then
     # Install the proxy
     echo "Installing $PROJECT_NAME-proxy..."
-    ./init-proxy.sh "$2" "$3" "$4"
+    ./init-proxy.sh "$2" "$3" "$4" "$5"
 elif [ "$COMMAND" = "uninstall" ]; then
     set +e
 

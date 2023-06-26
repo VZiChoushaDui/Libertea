@@ -9,7 +9,6 @@ EnvironmentFile={rootpath}/.env
 WorkingDirectory={rootpath}/proxy-register
 Type=simple
 ExecStart=/bin/bash -c '/usr/bin/python3 -u {rootpath}/proxy-register/main.py >> /tmp/libertea-proxy-register.log'
-StandardInput=tty-force
 Restart=always
 RestartSec=10
 

@@ -1,0 +1,142 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+<style>
+    p {
+        margin-bottom: 4px;
+    }
+
+    i {
+        opacity: 0.75;
+    }
+</style>
+<h1 class="mt-5">Add new secondary proxy</h1>
+<div class="section">
+    <div class="mt-5">
+        <div class="form-group mb-4">
+            <p>Secondary proxy is a separate server that will tunnel the traffic to your main server.</p>
+            <p>You can use it for redundancy, or use a domestic server as secondary proxy for better connection quality.</p>
+        </div>
+        <div class="form-group mb-3">
+            <p>
+                <strong>Tunnel type:</strong><span id="proxyTypeAutoSelectLabel"> Automatic</span>
+            </p>
+            <a href="#" id="showAdvancedOptions">Select tunnel type manually</a>
+        </div>
+        <div class="form-group mb-4" id="typesAdvanced" style="display: none">
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="proxyType" id="proxyTypeAuto" checked>
+                <label class="form-check-label" for="proxyTypeAuto">
+                    <p><strong>Automatic</strong></p>
+                    <p>This will use SSH tunnel if your secondary server is in a country with risk of censorship, otherwise will use TCP tunnel.</p>
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="proxyType" id="proxyTypeTcp">
+                <label class="form-check-label" for="proxyTypeTcp">
+                    <p><strong>TCP Tunnel</strong></p>
+                    <p>Your secondary server will forward traffic to your main server on TCP layer.</p>
+                    <p><i>Not recommended if your secondary server is NOT in a free country</i></p>
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="proxyType" id="proxyTypeSsh">
+                <label class="form-check-label" for="proxyTypeSsh">
+                    <p><strong>SSH Tunnel</strong></p>
+                    <p>Your secondary server will forward traffic to your main server via an SSH connection.</p>
+                    <p><i>This can use more resources on both secondary and main servers. If you're low on resources, use HTTPS tunnel instead.</i></p>
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="proxyType" id="proxyTypeHttps">
+                <label class="form-check-label" for="proxyTypeHttps">
+                    <p><strong>HTTPS Tunnel</strong></p>
+                    <p>Your secondary server will forward traffic to your main server via HTTPS connections.</p>
+                    <p></p>
+                </label>
+            </div>
+        </div>
+        <div class="form-group mt-3 mb-4">
+            <strong>To begin, copy and paste the following command into the SSH shell of your secondary server:</strong><br /><br />
+            <code id="codeToCopy"></code>
+            <br />
+            <br />
+            <button class="btn btn-outline-primary btn-copy">
+                Copy code to clipboard
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // show advanced options if proxyTypeBasicManual is selected, and hide it if not
+    var typesAdvanced = document.getElementById("typesAdvanced");
+
+    var proxyTypeAuto = document.getElementById("proxyTypeAuto");
+    var proxyTypeTcp = document.getElementById("proxyTypeTcp");
+    var proxyTypeSsh = document.getElementById("proxyTypeSsh");
+    var proxyTypeHttps = document.getElementById("proxyTypeHttps");
+
+    function getServerType() {
+        if (proxyTypeTcp.checked) {
+            return "tcp";
+        } else if (proxyTypeSsh.checked) {
+            return "ssh";
+        } else if (proxyTypeHttps.checked) {
+            return "https";
+        }
+        return "auto";
+    }
+
+    function setCodeToCopy() {
+        var code = "curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }} ";
+        code += getServerType();
+        document.getElementById("codeToCopy").innerHTML = code;
+    }
+
+    document.getElementById("showAdvancedOptions").addEventListener("click", function() {
+        typesAdvanced.style.display = "block";
+        document.getElementById("showAdvancedOptions").style.display = "none";
+        document.getElementById("proxyTypeAutoSelectLabel").innerText = "";
+    });
+
+    proxyTypeAuto.addEventListener("click", function() {
+        setCodeToCopy();
+    });
+    proxyTypeTcp.addEventListener("click", function() {
+        setCodeToCopy();
+    });
+    proxyTypeSsh.addEventListener("click", function() {
+        setCodeToCopy();
+    });
+    proxyTypeHttps.addEventListener("click", function() {
+        setCodeToCopy();
+    });
+    
+    function copyCode() {
+        var codeToCopy = document.querySelector("#codeToCopy").innerText;
+        navigator.clipboard.writeText(codeToCopy);
+
+        document.querySelector(".btn-copy").innerText = "Copied!";
+        setTimeout(function() {
+            document.querySelector(".btn-copy").innerText = "Copy code to clipboard";
+        }, 2000);
+    }
+
+    document.querySelector("#codeToCopy").addEventListener("click", function() {
+        copyCode();
+
+        // select the whole code
+        var range = document.createRange();
+        range.selectNode(document.querySelector("#codeToCopy"));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    });
+
+    document.querySelector(".btn-copy").addEventListener("click", function() {
+        copyCode();
+    });
+
+    setCodeToCopy();
+</script>
+
+{% endblock %}

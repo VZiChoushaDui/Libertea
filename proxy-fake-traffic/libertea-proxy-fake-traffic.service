@@ -8,8 +8,7 @@ User=root
 EnvironmentFile={rootpath}/.env
 WorkingDirectory={rootpath}/proxy-fake-traffic
 Type=simple
-ExecStart=/bin/bash -c "/bin/bash {rootpath}/proxy-fake-traffic/generate-traffic.sh  >> /tmp/libertea-proxy-fake-traffic.log"
-StandardInput=tty-force
+ExecStart=/bin/bash -c '/usr/bin/python3 -u {rootpath}/proxy-fake-traffic/main.py >> /tmp/libertea-proxy-fake-traffic.log 2>&1'
 Restart=always
 RestartSec=10
 
