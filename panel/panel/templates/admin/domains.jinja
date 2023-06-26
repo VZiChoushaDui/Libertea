@@ -64,8 +64,8 @@
         <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
             <div class="row">
                 <div class="col-12 list-item-title">
-                    <span class="secondary-proxy-flag fi" data-ip="{{ proxy.ip }}"></span>
                     {{ proxy.ip }}
+                    <span class="secondary-proxy-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
                     {% if proxy.tier != None %}<div class="list-item-badge">{{ proxy.tier }}</div>{% endif %}
                     {% if proxy.update_available %}⚠️{% endif %}
                 </div>
