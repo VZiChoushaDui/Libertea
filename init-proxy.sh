@@ -173,9 +173,9 @@ mkdir -p /etc/ssl/ha-certs
 cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 
 # check if ssh key exists for user
-if [ ! -f ~/.ssh/id_rsa.pub ]; then
+if [ ! -f /root/.ssh/id_rsa.pub ]; then
     echo " ** Generating ssh key..."
-    ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa >/dev/null
+    ssh-keygen -t rsa -b 4096 -N "" -f /root/.ssh/id_rsa >/dev/null
 fi
 
 if [ "$DOCKERIZED_PROXY" == "1" ]; then
