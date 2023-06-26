@@ -79,6 +79,7 @@ else
     ufw allow ssh >/dev/null
     ufw allow http >/dev/null
     ufw allow https >/dev/null
+    ufw allow 8443 >/dev/null
     yes | ufw enable >/dev/null
 fi
 set -e
