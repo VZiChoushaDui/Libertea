@@ -4,7 +4,7 @@ set -e
 
 # if not elevated, elevate
 if [ "$EUID" -ne 0 ]; then
-    sudo /bin/bash "$0" "$@"
+    sudo -E /bin/bash "$0" "$@"
     exit
 fi
 
