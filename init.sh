@@ -84,12 +84,14 @@ else
 fi
 set -e
 
-# check if cpu supports avx2, or true
-if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
-    echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
-    echo "    Please consider upgrading your CPU to support AVX2."
-    # change docker-compose.yml to use compatibility image
-    sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
+# check if cpu supports avx2 (on x86/x64 based systems)
+if [[ $(uname -m) == *"x86"* ]]; then
+    if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
+        echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
+        echo "    Please consider upgrading your CPU to support AVX2."
+        # change docker-compose.yml to use compatibility image
+        sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
+    fi
 fi
 
 echo " ** Getting public IP..."
