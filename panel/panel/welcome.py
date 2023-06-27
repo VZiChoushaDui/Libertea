@@ -62,7 +62,7 @@ def routes_custom_post():
 def routes_default():
     domain = config.get_panel_domain()
     utils.add_domain(domain)
-    utils.update_domain_cache(domain, try_count=2)
+    utils.update_domain_cache(domain, try_count=1)
 
     return redirect(url_for('welcome.routes2'))
     
