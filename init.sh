@@ -435,16 +435,22 @@ while true; do
             echo "ERROR: Your panel domain is redirecting to itself."
             echo "       Please make sure that Cloudflare SSL is set to Full."
             echo ""
-            echo "Will retry in 10 seconds..."
-            sleep 10
         else
             echo "*******************************************************"
             echo "ERROR: Your panel domain is not accessible."
             echo "       Please make sure that your domain is pointing to the server."
             echo ""
-            echo "Will retry in 10 seconds..."
-            sleep 10
         fi
+        echo " After you have fixed the issue, visit the following URLs to continue:"
+        echo "     Panel addresses:"
+        echo "       https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/"
+        echo "       https://$my_ip/$PANEL_ADMIN_UUID/"
+        echo "    "
+        echo "     Username: admin"
+        echo "     Password: $PANEL_ADMIN_PASSWORD"
+
+        echo "Will retry in 10 seconds..."
+        sleep 10
     else
         break
     fi
