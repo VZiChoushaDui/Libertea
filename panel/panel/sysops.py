@@ -27,7 +27,7 @@ def ___haproxy_reload_internal(sleep_secs):
     return False
 
 def haproxy_reload():
-    th = threading.Thread(target=___haproxy_reload_internal, args=(1,))
+    th = threading.Thread(target=___haproxy_reload_internal, args=(2,))
     th.start()
     return True
     

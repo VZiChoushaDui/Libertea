@@ -2,6 +2,7 @@ import re
 import json
 import urllib
 import requests
+import threading
 from . import utils
 from . import stats
 from . import config
@@ -415,7 +416,7 @@ def domain_save(domain):
                 return redirect(url_for('admin.dashboard'))
             
             utils.add_domain(domain)
-            utils.update_domain_cache(domain, try_count=2)
+            threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
         if request.form.get('next', None) == 'dashboard':
             return redirect(url_for('admin.dashboard'))

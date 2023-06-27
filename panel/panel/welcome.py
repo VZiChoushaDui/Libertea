@@ -2,6 +2,7 @@ import re
 import json
 import urllib
 import requests
+import threading
 from . import utils
 from . import stats
 from . import config
@@ -54,7 +55,7 @@ def routes_custom_post():
         return redirect(url_for('welcome.routes_custom'))
     
     utils.add_domain(domain)
-    utils.update_domain_cache(domain, try_count=2)
+    threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
     return redirect(url_for('welcome.routes2'))
 
@@ -62,7 +63,7 @@ def routes_custom_post():
 def routes_default():
     domain = config.get_panel_domain()
     utils.add_domain(domain)
-    utils.update_domain_cache(domain, try_count=1)
+    threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
     return redirect(url_for('welcome.routes2'))
     
