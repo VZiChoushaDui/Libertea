@@ -170,6 +170,23 @@ else
     done < sample.env
 fi
 
+set +e
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+if [ $? -ne 0 ]; then
+    BRANCH_NAME="master"
+fi
+if [ -z "$BRANCH_NAME" ]; then
+    BRANCH_NAME="master"
+fi
+cat .env | grep -v "LIBERTEA_BRANCH_NAME=" > .env.tmp
+mv .env.tmp .env
+echo "LIBERTEA_BRANCH_NAME=$BRANCH_NAME" >> .env
+set -e
+
+if [ "$BRANCH_NAME" != "master" ]; then
+    export ENVIRONMENT="dev"
+fi
+
 # if [ ! -f tools/flarectl ]; then
 #     echo " ** Installing flarectl..."
 #     mkdir tools
@@ -407,6 +424,31 @@ while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_
     fi
 done
 echo "    ✅ libertea-panel started"
+
+echo "Checking domain configuration..."
+while true; do
+    status=$(curl -k -s -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
+    if [ "$status" != "401" ]; then
+        # Check if it's a redirect loop (due to Cloudflare SSL not being set to Full)
+        if [ "$status" == "301" ] || [ "$status" == "302" ]; then
+            echo "*******************************************************"
+            echo "ERROR: Your panel domain is redirecting to itself."
+            echo "       Please make sure that Cloudflare SSL is set to Full."
+            echo ""
+            echo "Will retry in 10 seconds..."
+            sleep 10
+        else
+            echo "*******************************************************"
+            echo "ERROR: Your panel domain is not accessible."
+            echo "       Please make sure that your domain is pointing to the server."
+            echo ""
+            echo "Will retry in 10 seconds..."
+            sleep 10
+        fi
+    else
+        break
+    fi
+done
 
 panel_ip=$(dig +short "$PANEL_DOMAIN" | head -n 1)
 panel_ip=$(echo "$panel_ip" | tr -d '[:space:]')

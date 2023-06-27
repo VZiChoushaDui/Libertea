@@ -48,6 +48,10 @@ def health_domain(domain):
     hours = int(str(request.args.get('hours', '24')))
     return health_check.get_health_data(domain, hours=hours)
 
+def get_bootstrap_env():
+    if config.get_libertea_branch() == "master":
+        return ""
+    return "export LIBERTEA_BRANCH=" + config.get_libertea_branch() + " && "
 
 @blueprint.route(root_url + "stats/user", methods=['GET'])
 def user_stats():
@@ -329,6 +333,7 @@ def new_proxy():
         server_ip=config.SERVER_MAIN_IP,
         admin_uuid=config.get_admin_uuid(),
         bootstrap_script_url=config.get_bootstrap_script_url(),
+        bootstrap_env=get_bootstrap_env(),
         panel_secret_key=config.get_panel_secret_key(),
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
     )
@@ -364,6 +369,7 @@ def domain(domain):
             secondary_proxy=True,
             secondary_proxy_update_available=utils.online_route_update_available(domain),
             bootstrap_script_url=config.get_bootstrap_script_url(),
+            bootstrap_env=get_bootstrap_env(),
             panel_secret_key=config.get_panel_secret_key(),
             proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
             health_check=settings.get_periodic_health_check(),
@@ -442,6 +448,7 @@ def proxies():
         page='proxies',
         proxies=proxies,
         bootstrap_script_url=config.get_bootstrap_script_url(),
+        bootstrap_env=get_bootstrap_env(),
         server_ip=config.SERVER_MAIN_IP,
         panel_secret_key=config.get_panel_secret_key(),
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",

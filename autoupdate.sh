@@ -13,13 +13,20 @@ if [[ $BRANCH != "master" ]] && [[ $BRANCH != "beta" ]]; then
     exit
 fi
 
+if [[ `git log origin/$BRANCH..HEAD` ]]; then
+    echo "There are unpushed commits, aborting."
+    exit
+fi
+
 CUR_VERSION=`cat version.txt`
-LATEST_VERSION=`curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/version.txt`
+LATEST_VERSION=`curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/$BRANCH/version.txt`
 
 if [[ $LATEST_VERSION > $CUR_VERSION ]]; then
     echo "New version detected: $LATEST_VERSION"
     echo "Updating..."
-    git pull
+    git reset --hard
+    git clean -fd
+    git pull --rebase
     ./init.sh update
 else
     echo "No new version detected."

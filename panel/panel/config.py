@@ -17,9 +17,12 @@ def new_getaddrinfo(*args, **kwargs):
             if response[0] == socket.AF_INET]
 socket.getaddrinfo = new_getaddrinfo
 
+def get_libertea_branch():
+    return os.environ.get('LIBERTEA_BRANCH_NAME')
+
 LIBERTEA_VERSION = 1033
 LIBERTEA_PROXY_VERSION = 1004
-VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/version.txt"
+VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
 
 HAPROXY_CONTAINER_NAME = 'libertea-haproxy'
 
@@ -149,4 +152,4 @@ def get_hostcontroller_api_key():
     return os.environ.get('HOSTCONTROLLER_API_KEY')
 
 def get_bootstrap_script_url():
-    return "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh"
+    return "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/bootstrap.sh"
