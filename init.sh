@@ -53,10 +53,18 @@ apt-get install -q -y python3 python3-dev python3-pip | sed 's/^/        /'
 
 echo "    - Installing python dependencies..."
 export PIP_BREAK_SYSTEM_PACKAGES=1
+set +e
+if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ] && [ $? -ne 0 ]; then
+    echo "    - Applying pip openssl fix..."
+    wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+    python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+fi
+set -e
+
 pip3 install -r panel/requirements.txt | sed 's/^/        /'
 
 set +e
-if [ "$(pip --version 2>&1 | grep X509_V_FLAG)" ] && [ $? -ne 0 ]; then
+if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ] && [ $? -ne 0 ]; then
     echo "    - Applying pip openssl fix..."
     wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
     python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
