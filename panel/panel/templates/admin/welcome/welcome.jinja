@@ -1,0 +1,13 @@
+{% extends "admin/welcome/base.jinja" %}
+{% block content %}
+
+<div class="text-center mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo-big">
+    <h1 class="mt-5">Welcome to Libertea</h1>
+
+    <p class="mt-4 mb-0">Libertea is now installed on your server.</p>
+    <p class="mt-2">Now, configure Libertea in a few simple steps and enjoy the freedom of the internet.</p>
+
+    <a href="/{{ admin_uuid }}/welcome/routes/" class="btn btn-primary mt-5">Get Started</a>
+</div>
+{% endblock %}

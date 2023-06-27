@@ -21,14 +21,16 @@
         <small class="form-text text-muted">Links generated for each user will be served from this domain. If you want to change it, run the <a href="https://github.com/VZiChoushaDui/Libertea#installation" target="_blank">install script</a> again.</small>
     </div>
     <div class="form-group mb-4">
-        <label for="camouflage_domain" class="fw-bold">Camouflage Domain</label>
+        <label for="camouflage_domain" class="fw-bold">Camouflage Website</label>
         <input type="text" class="form-control" id="camouflage_domain" name="camouflage_domain" value="{{ camouflage_domain }}" style="max-width: 400px;" placeholder="https://">
 
         {% if camouflage_error != None %}
             {% if camouflage_error == "camouflage_domain_not_https" %}
-            <small class="form-text text-danger fw-bold">Camouflage domain must start with https://</small>
+            <small class="form-text text-danger fw-bold">Camouflage website must start with https://</small>
             {% elif camouflage_error == "camouflage_domain_not_reachable" %}
-            <small class="form-text text-danger fw-bold">Camouflage domain is not reachable. Please check the domain name, or use another one.</small>
+            <small class="form-text text-danger fw-bold">Camouflage website is not reachable. Please check the domain name, or use another one.</small>
+            {% elif camouflage_error == "camouflage_domain_not_supported" %}
+            <small class="form-text text-danger fw-bold">This website is not supported. Please choose another one.</small>
             {% else %}
             <small class="form-text text-danger fw-bold">{{ camouflage_error }}</small>
             {% endif %}

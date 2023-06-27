@@ -1,0 +1,24 @@
+{% extends "admin/welcome/base.jinja" %}
+{% block content %}
+
+<div class="text-start mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo" />
+    <p class="mt-4 mb-0">
+        Later on, you can add more domains to your Libertea, to make it harder to block.
+    </p>
+    <p class="mt-2">
+        Alternatively, you can add secondary servers so you can connect to Libertea through them. 
+    </p>
+    <p class="mt-4" style="opacity: 0.7">
+        You'll be able to manage all that in <strong>Routes</strong> tab of Libertea.
+    </p>
+    
+    <br />
+    <br />
+    <br />
+    <br />
+
+    <a href="/{{ admin_uuid }}/welcome/routes/" class="btn btn-outline-primary mt-3">Back</a>
+    <a href="/{{ admin_uuid }}/welcome/country/" class="btn btn-primary mt-3">Next</a>
+</div>
+{% endblock %}

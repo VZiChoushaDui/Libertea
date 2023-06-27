@@ -26,11 +26,17 @@ def dashboard():
     except:
         pass
 
+    domains_count = len(utils.get_domains())
+    users_count = len(utils.get_users())
+
+    if domains_count == 0 and users_count == 0:
+        return redirect(url_for('welcome.welcome'))
+
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
-        users_count=len(utils.get_users()),
         admin_uuid=config.get_admin_uuid(),
-        domains_count=len(utils.get_domains()),
+        users_count=users_count,
+        domains_count=domains_count,
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
@@ -454,32 +460,6 @@ def proxies():
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
         admin_uuid=config.get_admin_uuid())
 
-def check_camouflage_domain(camouflage_domain):
-    try:
-        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
-            })
-        if r.status_code == 200:
-            if not r.url.startswith('https://'):
-                # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_https&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
-                return "camouflage_domain_not_https", camouflage_domain
-
-            camouflage_domain = 'https://' + r.url.split('/')[2]
-        else:
-            settings.set_camouflage_domain("")
-            print("Error while checking camouflage domain: Got response " + str(r.status_code) + " from " + camouflage_domain)
-            # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
-            return "camouflage_domain_not_reachable", camouflage_domain
-    except Exception as e:
-        settings.set_camouflage_domain("")
-        print("Error while checking camouflage domain " + camouflage_domain + ": " + str(e))
-        # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
-        return "camouflage_domain_not_reachable", camouflage_domain
-
-    return "", camouflage_domain
-
-
 @blueprint.route(root_url + 'settings/', methods=['GET'])
 def app_settings():
     camouflage_error = request.args.get('camouflage_error', None)
@@ -491,7 +471,7 @@ def app_settings():
             camouflage_domain = "https://"
         else:
             camouflage_domain = saved_camouflage_domain
-            camouflage_domain_status, camouflage_domain = check_camouflage_domain(camouflage_domain)
+            camouflage_domain_status, camouflage_domain = utils.check_camouflage_domain(camouflage_domain)
             if camouflage_domain_status != "":
                 camouflage_error = camouflage_domain_status
         
@@ -570,7 +550,7 @@ def app_settings_save():
                 camouflage_domain = 'https://' + camouflage_domain
 
             # check if domain is reachable
-            camouflage_domain_status, camouflage_domain = check_camouflage_domain(camouflage_domain)
+            camouflage_domain_status, camouflage_domain = utils.check_camouflage_domain(camouflage_domain)
             if camouflage_domain_status == "":
                 settings.set_camouflage_domain(camouflage_domain)
             else:
