@@ -430,7 +430,7 @@ echo "    ✅ libertea-panel started"
 
 echo "Checking domain configuration..."
 while true; do
-    status=$(curl -k -s -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
+    status=$(curl -k -s --max-time 5 -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
     if [ "$status" != "401" ]; then
         # Check if it's a redirect loop (due to Cloudflare SSL not being set to Full)
         if [ "$status" == "301" ] || [ "$status" == "302" ]; then
