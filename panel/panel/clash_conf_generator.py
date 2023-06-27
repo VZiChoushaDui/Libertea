@@ -52,7 +52,7 @@ def get_providers(connect_url, db, is_for_subscription=False):
         for port in ports:
             servers.append((secondary_route, port))
     for server in utils.get_domains(db=db):
-        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) == 'active':
+        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) in ['active', 'cdn-disabled']:
             servers.append((server, 443))
     
     # # DEBUG ONLY
