@@ -482,7 +482,7 @@ while true; do
         echo "    "
         echo "     Username: admin"
         echo "     Password: $PANEL_ADMIN_PASSWORD"
-
+        echo ""
         echo "Will retry in 10 seconds..."
         sleep 10
     else
