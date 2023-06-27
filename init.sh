@@ -428,20 +428,23 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
 done
 echo "    ✅ libertea-panel started"
 
-echo "Checking domain configuration..."
+echo " ** Checking domain configuration..."
 while true; do
+    status=""
+    set +e
     status=$(curl -k -s --max-time 5 -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
+    set -e
     if [ "$status" != "401" ]; then
         # Check if it's a redirect loop (due to Cloudflare SSL not being set to Full)
         if [ "$status" == "301" ] || [ "$status" == "302" ]; then
             echo "*******************************************************"
-            echo "ERROR: Your panel domain is redirecting to itself."
+            echo "ERROR: Your panel domain $PANEL_DOMAIN is redirecting to itself."
             echo "       Please make sure that Cloudflare SSL is set to Full."
             echo ""
         else
             echo "*******************************************************"
-            echo "ERROR: Your panel domain is not accessible."
-            echo "       Please make sure that your domain is pointing to the server."
+            echo "ERROR: Your panel domain $PANEL_DOMAIN is not accessible."
+            echo "       Please make sure that your domain DNS is pointing to the server IP ($my_ip)."
             echo ""
         fi
         echo " After you have fixed the issue, visit the following URLs to continue:"
