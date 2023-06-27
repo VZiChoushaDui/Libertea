@@ -376,7 +376,10 @@ done
 # wait for the panel to start 
 echo -ne "    ⌛ libertea-panel\r"
 try_count=0
+response_code="0"
+set +e
 response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+set -e
 while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     sleep 1
     if [ $(($try_count)) -eq 0 ] && [ $(( $(date +%s) - start_time )) -gt 45 ]; then
@@ -424,7 +427,9 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
         exit 1
     fi
     
+    set +e
     response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+    set -e
 done
 echo "    ✅ libertea-panel started"
 
