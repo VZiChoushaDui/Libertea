@@ -1,0 +1,41 @@
+{% extends "admin/welcome/base.jinja" %}
+{% block content %}
+
+<div class="text-start mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo" />
+    <p class="mt-4 mb-0">
+        <strong>One more thing: choose a Camouflage website for your Libertea.</strong>
+    </p>
+    <p class="mt-4 mb-0">
+        The home page of your domains will show the contents of the website you choose here. This will make it harder to block your domains.
+    </p>
+    <form method="post" class="mt-3">
+        <label for="camouflage_domain" class="fw-bold">Camouflage Domain</label>
+        <input type="text" class="form-control" id="camouflage_domain" name="camouflage_domain" value="{{ camouflage_domain }}" style="max-width: 400px;" placeholder="https://">
+
+        {% if camouflage_error != None %}
+            {% if camouflage_error == "camouflage_domain_not_https" %}
+            <small class="form-text text-danger fw-bold">Camouflage website must start with https://</small>
+            {% elif camouflage_error == "camouflage_domain_not_reachable" %}
+            <small class="form-text text-danger fw-bold">Camouflage website is not reachable. Please check the domain name, or use another one.</small>
+            {% elif camouflage_error == "camouflage_domain_not_supported" %}
+            <small class="form-text text-danger fw-bold">This website is not supported. Please choose another one.</small>
+            {% else %}
+            <small class="form-text text-danger fw-bold">{{ camouflage_error }}</small>
+            {% endif %}
+        {% endif %}
+
+        
+        <p class="mt-3">
+            Choose a clever camouflage website, like a news website, or a blog.
+        </p>
+
+        <p class="mt-4" style="opacity: 0.7">
+            You'll be able to change this later in <strong>Settings</strong> tab of Libertea.
+        </p>
+        
+        <a href="/{{ admin_uuid }}/welcome/country/" class="btn btn-outline-primary mt-5">Back</a>
+        <input type="submit" class="btn btn-primary mt-5" value="Next" />
+    </form>
+</div>
+{% endblock %}

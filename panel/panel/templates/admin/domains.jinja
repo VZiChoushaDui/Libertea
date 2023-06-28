@@ -34,7 +34,9 @@
                     {% elif domain.status == 'inactive' %}
                     ❌ Inactive, click for details
                     {% elif domain.status == 'cdn-disabled' %}
-                    ⚠️ Active (CDN disabled), click for details
+                    ✅ Active (No CDN)
+                    {% elif domain.status == 'redirect-loop' %}
+                    ❌ CDN Misconfigured
                     {% else %}
                     ⚠️ Unknown status
                     {% endif %}

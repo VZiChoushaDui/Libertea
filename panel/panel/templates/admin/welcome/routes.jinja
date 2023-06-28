@@ -1,0 +1,15 @@
+{% extends "admin/welcome/base.jinja" %}
+{% block content %}
+
+<div class="text-start mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo" />
+    <p class="mt-4">
+        You have configured <span style="font-weight: 700;">{{ panel_domain }}</span> as your main domain.
+    </p>
+    <p class="mt-2">To keep things simple, you can use the same domain to connect to VPN as well.</p>
+    <p class="mt-2">You can also use a different domain for VPN connection, and keep this one for receiving updates for your VPN, in case this domain gets blocked.</p>
+
+    <a href="/{{ admin_uuid }}/welcome/routes/default/" class="btn btn-primary mt-5">Use {{ panel_domain }}</a>
+    <a href="/{{ admin_uuid }}/welcome/routes/custom/" class="btn btn-outline-primary mt-5">Set another domain</a>
+</div>
+{% endblock %}

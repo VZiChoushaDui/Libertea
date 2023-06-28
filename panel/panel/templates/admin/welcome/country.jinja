@@ -1,0 +1,36 @@
+{% extends "admin/welcome/base.jinja" %}
+{% block content %}
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+/>
+
+<div class="text-start mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo" />
+    <p class="mt-4" style="font-weight: 700">
+        Which country are you in?
+    </p>
+    <p class="mt-2">
+        Libertea will configure itself to work best in your country. 
+    </p>
+    <form method="post" class="mt-2">
+        <div class="mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+            {% for country in route_direct_countries %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="on" name="route_direct_{{ country.id }}" id="route_direct_{{ country.id }}" {% if route_direct_country_enabled[country.id] %}checked{% endif %}>
+                <label class="form-check-label" for="route_direct_{{ country.id }}">
+                    <span class="fi fi-{{ country.id }}"></span>  {{ country.name }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="mt-4" style="opacity: 0.7">
+            You can change this later in <strong>Settings</strong> tab of Libertea.
+        </p>
+        
+        <a href="/{{ admin_uuid }}/welcome/routes2/" class="btn btn-outline-primary mt-5">Back</a>
+        <input type="submit" class="btn btn-primary mt-5" value="Next" />
+    </form>
+</div>
+{% endblock %}

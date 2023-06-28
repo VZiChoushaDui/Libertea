@@ -1,0 +1,23 @@
+{% extends "admin/welcome/base.jinja" %}
+{% block content %}
+
+<div class="text-start mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo" />
+    <form method="post" class="mt-3">
+        <div class="form-group mb-4">
+            <label for="domainName">Domain address</label>
+            <input type="text" class="form-control" id="domainName" name="domain" value="" placeholder="example.com">
+        </div>
+        <div class="form-group mb-4">
+            Set the DNS records for this domain to a CDN (like CloudFlare), <br />
+            Set it to point to <strong>{{ server_ip }}</strong>, <br />
+            Make sure SSL/TLS encryption mode is full (<a href="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png" target="_blank">help</a>),<br />
+            and the CDN is enabled (orange cloud icon in CloudFlare).
+        </div>
+        <input type="hidden" name="next" value="" />
+
+        <a href="/{{ admin_uuid }}/welcome/routes/" class="btn btn-outline-primary">Back</a>
+        <button type="submit" class="btn btn-primary">Add</button>
+    </form>
+</div>
+{% endblock %}

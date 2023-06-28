@@ -6,9 +6,7 @@ from . import config
 from . import settings
 
 def get_root_dir():
-    # get current directory
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    return current_dir + '/../../'
+    return "/root/libertea/"
 
 def run_command(command):
     # go to root directory
@@ -27,7 +25,7 @@ def ___haproxy_reload_internal(sleep_secs):
     return False
 
 def haproxy_reload():
-    th = threading.Thread(target=___haproxy_reload_internal, args=(1,))
+    th = threading.Thread(target=___haproxy_reload_internal, args=(2,))
     th.start()
     return True
     
