@@ -365,6 +365,7 @@ touch ./data/haproxy-lists/valid-user-endpoints.lst
 echo " ** Adding auto-update cronjob..."
 # create a cronjob to run ./autoupdate.sh on bash and save the output to /tmp/libertea-autoupdate.log
 if ! crontab -l | grep -q "autoupdate.sh"; then
+    (crontab -l 2>/dev/null; echo "") | crontab -
     (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
 fi
 
