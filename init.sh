@@ -514,6 +514,6 @@ echo ""
 if [ "$panel_ip" == "$my_ip" ]; then
     echo ""
     echo "WARNING: Your panel domain name is not resolved through CDN."
-    echo "         Please make sure that CDN is enabled for your domain (orange cloud icon in Cloudflare)."
+    echo "         If you want to use CDN, make sure that it is enabled for your domain (orange cloud icon in Cloudflare)."
     echo ""
 fi
