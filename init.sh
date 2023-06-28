@@ -473,7 +473,7 @@ while true; do
         if [ "$status" == "301" ] || [ "$status" == "302" ]; then
             echo "*******************************************************"
             echo "ERROR: Your panel domain $PANEL_DOMAIN is redirecting to itself."
-            echo "       Please make sure that Cloudflare SSL is set to Full."
+            echo "       Please make sure that your CDN's SSL/TLS encryption mode is set to Full."
             echo ""
         else
             echo "*******************************************************"

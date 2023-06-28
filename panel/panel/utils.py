@@ -501,6 +501,11 @@ def update_domain_cache(domain, try_count=3, db=None):
 
             domain_cache_update_db(domain, status='active', db=db)
             return
+    except requests.exceptions.TooManyRedirects:
+        print("update_domain_cache error: TooManyRedirects")
+        domain_cache_update_db(domain, status='redirect-loop', db=db)
+        return
+
     except Exception as e:
         print("update_domain_cache error", e)
 
