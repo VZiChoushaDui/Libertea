@@ -6,9 +6,7 @@ from . import config
 from . import settings
 
 def get_root_dir():
-    # get current directory
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    return current_dir + '/../../'
+    return "/root/libertea/"
 
 def run_command(command):
     # go to root directory

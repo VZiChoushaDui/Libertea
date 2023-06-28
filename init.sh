@@ -60,6 +60,9 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
         echo "    - Applying pip openssl fix..."
         wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
         python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
     fi
 fi
 set -e
@@ -73,6 +76,9 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
         echo "    - Applying pip openssl fix..."
         wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
         python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
     fi
 fi
 set -e
