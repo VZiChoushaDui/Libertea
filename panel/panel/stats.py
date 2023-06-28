@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 def ___get_total_gigabytes(file_name, conn_url, return_as_string=True, domain=None):
     try:
-        with open(file_name, 'r') as f:
+        with open(config.get_root_dir() + file_name, 'r') as f:
             data = json.load(f)
 
         for user in data['users']:
@@ -31,14 +31,15 @@ def ___get_total_gigabytes(file_name, conn_url, return_as_string=True, domain=No
         if return_as_string:
             return '0 GB'
         return 0
-    except:
+    except Exception as e:
+        print(e)
         if return_as_string:
             return '-'
         return None
 
 def ___get_total_ips(file_name, conn_url):
     try:
-        with open(file_name, 'r') as f:
+        with open(config.get_root_dir() + file_name, 'r') as f:
             data = json.load(f)
 
         for user in data['users']:

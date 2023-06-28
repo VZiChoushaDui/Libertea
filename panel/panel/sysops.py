@@ -5,12 +5,9 @@ import threading
 from . import config
 from . import settings
 
-def get_root_dir():
-    return "/root/libertea/"
-
 def run_command(command):
     # go to root directory
-    os.chdir(get_root_dir())
+    os.chdir(config.get_root_dir())
     # run the command, and return the exit code
     result = os.system(command)
 
@@ -37,7 +34,7 @@ def haproxy_renew_certs():
     return False
 
 def haproxy_ensure_folder():
-    folder = get_root_dir() + 'data/haproxy-lists'
+    folder = config.get_root_dir() + 'data/haproxy-lists'
     if not os.path.exists(folder):
         try:
             os.makedirs(folder)
@@ -47,7 +44,7 @@ def haproxy_ensure_folder():
 def haproxy_update_users_list():
     count = 0
     haproxy_ensure_folder()
-    with open(get_root_dir() + 'data/haproxy-lists/valid-user-endpoints.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/valid-user-endpoints.lst', 'w') as f:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         users = db.users
@@ -60,7 +57,7 @@ def haproxy_update_users_list():
     print("Wrote " + str(count) + " users to haproxy-lists/valid-user-endpoints.lst")
 
     count = 0
-    with open(get_root_dir() + 'data/haproxy-lists/valid-panel-endpoints.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/valid-panel-endpoints.lst', 'w') as f:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         users = db.users
@@ -77,7 +74,7 @@ def haproxy_update_users_list():
 def haproxy_update_domains_list():
     count = 0
     haproxy_ensure_folder()
-    with open(get_root_dir() + 'data/haproxy-lists/domains.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/domains.lst', 'w') as f:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         domains = db.domains
@@ -92,7 +89,7 @@ def haproxy_update_domains_list():
 def haproxy_update_camouflage_list():
     count = 0
     haproxy_ensure_folder()
-    with open(get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
         camouflage_domain = settings.get_camouflage_domain()
         if camouflage_domain and camouflage_domain.startswith('https://'):
             camouflage_domain = camouflage_domain[8:]

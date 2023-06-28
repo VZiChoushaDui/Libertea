@@ -153,3 +153,12 @@ def get_hostcontroller_api_key():
 
 def get_bootstrap_script_url():
     return "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/bootstrap.sh"
+
+def get_root_dir():
+    env_root_dir = os.environ.get('LIBERTEA_ROOT_DIR')
+    if env_root_dir is not None and env_root_dir != "":
+        path = env_root_dir
+        if path[-1] != '/':
+            path += '/'
+        return path
+    return "/root/libertea/"
