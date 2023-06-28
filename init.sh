@@ -52,7 +52,36 @@ echo "    - Installing python..."
 apt-get install -q -y python3 python3-dev python3-pip | sed 's/^/        /'
 
 echo "    - Installing python dependencies..."
+export PIP_BREAK_SYSTEM_PACKAGES=1
+set +e
+if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
+    pip3 --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "    - Applying pip openssl fix..."
+        wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
+    fi
+fi
+set -e
+
 pip3 install -r panel/requirements.txt | sed 's/^/        /'
+
+set +e
+if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
+    pip3 --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "    - Applying pip openssl fix..."
+        wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
+    fi
+fi
+set -e
 
 echo "    - Installing docker..."
 if ! command -v docker &> /dev/null; then
@@ -376,7 +405,11 @@ done
 # wait for the panel to start 
 echo -ne "    ⌛ libertea-panel\r"
 try_count=0
-while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)" != "200" ]; do
+response_code="0"
+set +e
+response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+set -e
+while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     sleep 1
     if [ $(($try_count)) -eq 0 ] && [ $(( $(date +%s) - start_time )) -gt 45 ]; then
         echo "    ❌ libertea-panel failed to start. Retrying..."
@@ -422,23 +455,30 @@ while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_
         echo ""
         exit 1
     fi
+    
+    set +e
+    response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+    set -e
 done
 echo "    ✅ libertea-panel started"
 
-echo "Checking domain configuration..."
+echo " ** Checking domain configuration..."
 while true; do
-    status=$(curl -k -s -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
+    status=""
+    set +e
+    status=$(curl -k -s --max-time 5 -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
+    set -e
     if [ "$status" != "401" ]; then
         # Check if it's a redirect loop (due to Cloudflare SSL not being set to Full)
         if [ "$status" == "301" ] || [ "$status" == "302" ]; then
             echo "*******************************************************"
-            echo "ERROR: Your panel domain is redirecting to itself."
-            echo "       Please make sure that Cloudflare SSL is set to Full."
+            echo "ERROR: Your panel domain $PANEL_DOMAIN is redirecting to itself."
+            echo "       Please make sure that your CDN's SSL/TLS encryption mode is set to Full."
             echo ""
         else
             echo "*******************************************************"
-            echo "ERROR: Your panel domain is not accessible."
-            echo "       Please make sure that your domain is pointing to the server."
+            echo "ERROR: Your panel domain $PANEL_DOMAIN is not accessible."
+            echo "       Please make sure that your domain DNS is pointing to the server IP ($my_ip)."
             echo ""
         fi
         echo " After you have fixed the issue, visit the following URLs to continue:"
@@ -448,7 +488,7 @@ while true; do
         echo "    "
         echo "     Username: admin"
         echo "     Password: $PANEL_ADMIN_PASSWORD"
-
+        echo ""
         echo "Will retry in 10 seconds..."
         sleep 10
     else
@@ -474,6 +514,6 @@ echo ""
 if [ "$panel_ip" == "$my_ip" ]; then
     echo ""
     echo "WARNING: Your panel domain name is not resolved through CDN."
-    echo "         Please make sure that CDN is enabled for your domain (orange cloud icon in Cloudflare)."
+    echo "         If you want to use CDN, make sure that it is enabled for your domain (orange cloud icon in Cloudflare)."
     echo ""
 fi

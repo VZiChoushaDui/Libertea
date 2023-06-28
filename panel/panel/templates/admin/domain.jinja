@@ -14,7 +14,9 @@
                 {% elif status == 'inactive' %}
                 ❌ Inactive
                 {% elif status == 'cdn-disabled' %}
-                ⚠️ Active (CDN disabled)
+                ✅ Active (No CDN)
+                {% elif status == 'redirect-loop' %}
+                ❌ CDN Misconfigured
                 {% else %}
                 ⚠️ Unknown status
                 {% endif %}
@@ -122,6 +124,18 @@
 {% endif %}
 
 {% if not secondary_proxy %}
+    {% if status == 'redirect-loop' %}
+    <div class="row mt-5">
+        <div class="col-12">
+            ⚠️ Your domain is redirecting to itself. This is usually caused by misconfigured CloudFlare (or any CDN) settings.<br />
+            Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
+            And SSL/TLS encryption mode is set to <strong>Full</strong>.<br />
+            <br />
+            <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png" />
+        </div>
+    </div>
+    {% endif %}
+
     {% if status == 'cdn-disabled' %}
     <div class="row mt-5">
         <div class="col-12">
@@ -153,18 +167,18 @@
     </div>
     {% endif %}
 {% endif %}
-    <div class="row mt-5">
+    <div class="row mt-5 mx-2">
         <h6>Traffic usage over time</h6>
         <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
     </div>
 {% if health_check %}
-    <div class="row mt-5">
+    <div class="row mt-5 mx-2">
         <h6>Health over time</h6>
         <canvas id="healthChart" style="width: 100%; height: 250px;"></canvas>
     </div>
 {% endif %}
 
-<form method="post" class="mt-5">
+<form method="post" class="mt-5 mx-2">
     <h6 class="mb-2 bordered">Advanced options</h6>
     <div class="form-group mb-4">
         <label for="priority">Priority</label>

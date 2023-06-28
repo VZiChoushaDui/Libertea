@@ -501,6 +501,11 @@ def update_domain_cache(domain, try_count=3, db=None):
 
             domain_cache_update_db(domain, status='active', db=db)
             return
+    except requests.exceptions.TooManyRedirects:
+        print("update_domain_cache error: TooManyRedirects")
+        domain_cache_update_db(domain, status='redirect-loop', db=db)
+        return
+
     except Exception as e:
         print("update_domain_cache error", e)
 
@@ -581,3 +586,29 @@ def top_level_domain_equivalent(domain1, domain2):
     domain1 = '.'.join(domain1.split('.')[-2:])
     domain2 = '.'.join(domain2.split('.')[-2:])
     return domain1 == domain2
+
+
+def check_camouflage_domain(camouflage_domain):
+    try:
+        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
+            })
+        if r.status_code == 200:
+            if not r.url.startswith('https://'):
+                # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_https&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+                return "camouflage_domain_not_https", camouflage_domain
+
+            camouflage_domain = 'https://' + r.url.split('/')[2]
+        else:
+            settings.set_camouflage_domain("")
+            print("Error while checking camouflage domain: Got response " + str(r.status_code) + " from " + camouflage_domain)
+            # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+            return "camouflage_domain_not_reachable", camouflage_domain
+    except Exception as e:
+        settings.set_camouflage_domain("")
+        print("Error while checking camouflage domain " + camouflage_domain + ": " + str(e))
+        # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+        return "camouflage_domain_not_reachable", camouflage_domain
+
+    return "", camouflage_domain

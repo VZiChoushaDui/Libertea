@@ -5,6 +5,7 @@ from . import config
 from . import certbot
 from . import health_check
 from . import sysops
+from . import welcome
 from . import admin
 from . import user
 from . import api
@@ -68,5 +69,6 @@ def create_app():
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(user.blueprint)
     app.register_blueprint(api.blueprint)
+    app.register_blueprint(welcome.blueprint)
 
     return app

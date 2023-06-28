@@ -148,6 +148,7 @@ else
     apt-get install -q -y python3 python3-dev python3-pip haproxy autossh | sed 's/^/        /'
     
     echo "    - Installing python dependencies..."
+    export PIP_BREAK_SYSTEM_PACKAGES=1
     pip3 install -r proxy-register/requirements.txt | sed 's/^/        /'
 fi
 
