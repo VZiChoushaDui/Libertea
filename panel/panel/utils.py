@@ -328,7 +328,7 @@ def get_user_max_ips(panel_id=None, conn_url=None, db=None):
         return ___get_max_ips(conn_url, db=db)
 
 
-def online_route_ping(ip, version, db=None):
+def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, fake_traffic_enabled, fake_traffic_avg_gb_per_day, db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -336,6 +336,11 @@ def online_route_ping(ip, version, db=None):
     online_routes.update_one({"_id": ip}, {"$set": {
         "last_seen": datetime.now(),
         "version": version,
+        "proxy_type": proxy_type,
+        "latest_cpu_usage": cpu_usage,
+        "latest_ram_usage": ram_usage,
+        "fake_traffic_enabled": fake_traffic_enabled,
+        "fake_traffic_avg_gb_per_day": fake_traffic_avg_gb_per_day
     }}, upsert=True)
 
 
@@ -350,6 +355,17 @@ def online_route_get_last_seen(ip, db=None):
 
     return online_route["last_seen"]
 
+
+def online_route_get_metadata(ip, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    online_route = online_routes.find_one({"_id": ip})
+    if online_route is None:
+        return None
+
+    return online_route
 
 def online_route_get_version(ip, db=None):
     if db is None:
@@ -402,6 +418,51 @@ def online_route_get_all(max_age_secs=300, db=None):
 
     return ips
 
+def online_route_update_traffic(ip, traffic_data, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+
+    cur_date = datetime.now().strftime("%Y-%m-%d")
+
+    # NOTE: FAKE traffic is *probably* counted twice, both in FAKE key and also in 443 key (because it gets sent to port 443)
+    for traffic_port in traffic_data.keys():
+        traffic = traffic_data[traffic_port]
+        delta_received_bytes = traffic["received"] if "received" in traffic else 0
+        delta_sent_bytes = traffic["sent"] if "sent" in traffic else 0
+
+        online_routes.update_one({"_id": ip}, {"$inc": {
+            f"traffic.{cur_date}.{traffic_port}.received_bytes": delta_received_bytes,
+            f"traffic.{cur_date}.{traffic_port}.sent_bytes": delta_sent_bytes,
+        }}, upsert=True)
+
+def online_route_get_traffic(ip, year, month, day, db=None):
+    try:
+        
+        if db is None:
+            client = config.get_mongo_client()
+            db = client[config.MONGODB_DB_NAME]
+        online_routes = db.online_routes
+
+        cur_date = datetime(year, month, day).strftime("%Y-%m-%d")
+
+        online_route = online_routes.find_one({"_id": ip})
+        if online_route is None:
+            return None
+
+        if not 'traffic' in online_route:
+            return None
+
+        if not cur_date in online_route["traffic"]:
+            return None
+
+        return online_route["traffic"][cur_date]
+    except:
+        import traceback
+        traceback.print_exc()
+        return None
+
 check_domain_set_properly_cache_max_time = 60
 
 def domain_cache_update_db(domain, status=None, cdn=None, db=None):
@@ -423,6 +484,8 @@ def update_domain_cache(domain, try_count=3, db=None):
             header_server = r.headers.get('server', '').lower()
             if header_server == 'cloudflare':
                 domain_cache_update_db(domain, cdn='Cloudflare', db=db)                
+            elif header_server is not None and header_server != '':
+                domain_cache_update_db(domain, cdn=header_server, db=db)
             else:
                 domain_cache_update_db(domain, cdn='Unknown', db=db)
 
@@ -438,6 +501,11 @@ def update_domain_cache(domain, try_count=3, db=None):
 
             domain_cache_update_db(domain, status='active', db=db)
             return
+    except requests.exceptions.TooManyRedirects:
+        print("update_domain_cache error: TooManyRedirects")
+        domain_cache_update_db(domain, status='redirect-loop', db=db)
+        return
+
     except Exception as e:
         print("update_domain_cache error", e)
 
@@ -519,4 +587,28 @@ def top_level_domain_equivalent(domain1, domain2):
     domain2 = '.'.join(domain2.split('.')[-2:])
     return domain1 == domain2
 
-    
+
+def check_camouflage_domain(camouflage_domain):
+    try:
+        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
+            })
+        if r.status_code == 200:
+            if not r.url.startswith('https://'):
+                # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_https&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+                return "camouflage_domain_not_https", camouflage_domain
+
+            camouflage_domain = 'https://' + r.url.split('/')[2]
+        else:
+            settings.set_camouflage_domain("")
+            print("Error while checking camouflage domain: Got response " + str(r.status_code) + " from " + camouflage_domain)
+            # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+            return "camouflage_domain_not_reachable", camouflage_domain
+    except Exception as e:
+        settings.set_camouflage_domain("")
+        print("Error while checking camouflage domain " + camouflage_domain + ": " + str(e))
+        # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
+        return "camouflage_domain_not_reachable", camouflage_domain
+
+    return "", camouflage_domain

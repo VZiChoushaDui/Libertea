@@ -52,7 +52,7 @@ def get_providers(connect_url, db, is_for_subscription=False):
         for port in ports:
             servers.append((secondary_route, port))
     for server in utils.get_domains(db=db):
-        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) == 'active':
+        if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) in ['active', 'cdn-disabled']:
             servers.append((server, 443))
     
     # # DEBUG ONLY
@@ -203,6 +203,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
         udp_exists=udp_exists,
         health_check=settings.get_periodic_health_check(),
         tiers=tiers,
+        manual_tier_select_clash=settings.get_manual_tier_select_clash(),
     )
 
     return result
@@ -273,4 +274,5 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
         domains=list(domains),
         udp_exists=udp_exists,
         tiers=tiers,
+        manual_tier_select_clash=settings.get_manual_tier_select_clash(),
     )

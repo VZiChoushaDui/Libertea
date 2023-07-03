@@ -1,8 +1,9 @@
-{% extends "admin/base.jinja" %}
+{% extends "admin/welcome/base.jinja" %}
 {% block content %}
-<h1 class="mt-5">Add new domain</h1>
-<div class="section">
-    <form method="post" class="mt-5">
+
+<div class="text-start mt-3">
+    <img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo.png" class="libertea-top-logo" />
+    <form method="post" class="mt-3">
         <div class="form-group mb-4">
             <label for="domainName">Domain address</label>
             <input type="text" class="form-control" id="domainName" name="domain" value="" placeholder="example.com">
@@ -15,20 +16,8 @@
         </div>
         <input type="hidden" name="next" value="" />
 
+        <a href="/{{ admin_uuid }}/welcome/routes/" class="btn btn-outline-primary">Back</a>
         <button type="submit" class="btn btn-primary">Add</button>
     </form>
 </div>
-
-<script>
-    var domain = new URLSearchParams(window.location.search).get('domain');
-    if (domain) {
-        document.getElementById('domainName').value = domain;
-    }
-
-    var next = new URLSearchParams(window.location.search).get('next');
-    if (next) {
-        document.querySelector('input[name="next"]').value = next;
-    }
-</script>
-
 {% endblock %}

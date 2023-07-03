@@ -18,7 +18,7 @@
             </div>
             {% endif %}
             <div class="mt-3 mb-3">
-                After you've set up your domain, you can add users to your VPN.
+                Add a user to your Libertea VPN to get started.
             </div>
             <div class="mb-5">
                 <a class="btn btn-primary" href="/{{ admin_uuid }}/users/new/?next=dashboard">
@@ -59,7 +59,7 @@
 {% endif %}
 {% if proxies_count == 0 %}
 <div class="w-100 mt-4 px-3">
-    ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/domains/?newproxy=true">Add a secondary proxy</a>
+    ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/proxies/new/">Add a secondary proxy</a>
 </div>
 {% endif %}
 <div class="section stats">
@@ -165,12 +165,12 @@
                 return response.json()
             })
             .then(function(data) {
-                document.querySelector('.users-connected-right-now').innerHTML = parseStatsValue(data.users_now);
+                document.querySelector('.users-connected-right-now').innerHTML = parseStatsValue(data.users_now_long);
                 document.querySelector('.users-connected-today').innerHTML = parseStatsValue(data.users_today);
                 document.querySelector('.traffic-today').innerHTML = parseStatsValue(data.traffic_today);
                 document.querySelector('.traffic-this-month').innerHTML = parseStatsValue(data.traffic_this_month);
                 // document.querySelector('.ips-connected-today').innerHTML = parseStatsValue(data.ips_today);
-                document.querySelector('.ips-connected-right-now').innerHTML = parseStatsValue(data.ips_now);
+                document.querySelector('.ips-connected-right-now').innerHTML = parseStatsValue(data.ips_now_long);
             });
     }
 

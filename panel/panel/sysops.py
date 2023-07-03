@@ -5,14 +5,9 @@ import threading
 from . import config
 from . import settings
 
-def get_root_dir():
-    # get current directory
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    return current_dir + '/../../'
-
 def run_command(command):
     # go to root directory
-    os.chdir(get_root_dir())
+    os.chdir(config.get_root_dir())
     # run the command, and return the exit code
     result = os.system(command)
 
@@ -27,7 +22,7 @@ def ___haproxy_reload_internal(sleep_secs):
     return False
 
 def haproxy_reload():
-    th = threading.Thread(target=___haproxy_reload_internal, args=(1,))
+    th = threading.Thread(target=___haproxy_reload_internal, args=(2,))
     th.start()
     return True
     
@@ -39,7 +34,7 @@ def haproxy_renew_certs():
     return False
 
 def haproxy_ensure_folder():
-    folder = get_root_dir() + 'data/haproxy-lists'
+    folder = config.get_root_dir() + 'data/haproxy-lists'
     if not os.path.exists(folder):
         try:
             os.makedirs(folder)
@@ -49,7 +44,7 @@ def haproxy_ensure_folder():
 def haproxy_update_users_list():
     count = 0
     haproxy_ensure_folder()
-    with open(get_root_dir() + 'data/haproxy-lists/valid-user-endpoints.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/valid-user-endpoints.lst', 'w') as f:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         users = db.users
@@ -62,7 +57,7 @@ def haproxy_update_users_list():
     print("Wrote " + str(count) + " users to haproxy-lists/valid-user-endpoints.lst")
 
     count = 0
-    with open(get_root_dir() + 'data/haproxy-lists/valid-panel-endpoints.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/valid-panel-endpoints.lst', 'w') as f:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         users = db.users
@@ -79,7 +74,7 @@ def haproxy_update_users_list():
 def haproxy_update_domains_list():
     count = 0
     haproxy_ensure_folder()
-    with open(get_root_dir() + 'data/haproxy-lists/domains.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/domains.lst', 'w') as f:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
         domains = db.domains
@@ -94,7 +89,7 @@ def haproxy_update_domains_list():
 def haproxy_update_camouflage_list():
     count = 0
     haproxy_ensure_folder()
-    with open(get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
+    with open(config.get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
         camouflage_domain = settings.get_camouflage_domain()
         if camouflage_domain and camouflage_domain.startswith('https://'):
             camouflage_domain = camouflage_domain[8:]
@@ -103,3 +98,27 @@ def haproxy_update_camouflage_list():
 
     print("Wrote " + str(count) + " domains to haproxy-lists/camouflage-hosts.lst")
     return haproxy_reload()
+
+def add_ssh_key(ssh_key):
+    ssh_keys_dir = '/home/libertea/.ssh'
+    ssh_key_file = ssh_keys_dir + '/authorized_keys'
+
+    if not os.path.exists(ssh_keys_dir):
+        os.makedirs(ssh_keys_dir)
+
+    if not os.path.exists(ssh_key_file):
+        with open(ssh_key_file, 'w') as f:
+            f.write(ssh_key + '\n')
+        return True
+
+    # check if the key already exists
+    with open(ssh_key_file, 'r') as f:
+        for line in f.readlines():
+            if ssh_key in line:
+                return True
+            
+    # append the key to the file
+    with open(ssh_key_file, 'a') as f:
+        f.write(ssh_key + '\n')
+
+    return True

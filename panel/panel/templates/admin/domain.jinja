@@ -5,47 +5,86 @@
   href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
 />
 <h1 class="mt-5">{{ domain }}</h1>
-<div class="section">
+<div class="section text-center mt-1">
     <div class="row">
         <div class="col-12">
-            Status: <strong>
+            <strong>
                 {% if status == 'active' %}
                 ✅ Active
                 {% elif status == 'inactive' %}
                 ❌ Inactive
                 {% elif status == 'cdn-disabled' %}
-                ⚠️ Active (CDN disabled)
+                ✅ Active (No CDN)
+                {% elif status == 'redirect-loop' %}
+                ❌ CDN Misconfigured
                 {% else %}
                 ⚠️ Unknown status
                 {% endif %}
             </strong>
         </div>
     </div>
+</div>
+
+<div class="section stats">
     <div class="row">
-        <div class="col-12">
-            Traffic usage in <span class="traffic-month-name"></span>: <strong><span class="traffic-month-value">⌛</span></strong>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="traffic-month-value">⌛</span></div>
+            <div class="stats-item-desc">Traffic in <span class="traffic-month-name"></span></div>
         </div>
-    </div>
-{% if health_check %}
-    <div class="row">
-        <div class="col-12">
-            Health in the past 24 hours: <strong><span class="health-percent">⌛</span></strong>
+        {% if health_check %}
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="health-percent">⌛</span></div>
+            <div class="stats-item-desc">Health in the past 24 hours</div>
         </div>
+        {% endif %}
+        
+        {% if secondary_proxy %}       
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="server-country-flag-name"></span><span class="fi fis server-country-flag mx-1" style="font-size: 16px; padding-top: 5px;">⌛</span></div>
+            <div class="stats-item-desc">Location</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="server-tunnel-type">⌛</span></div>
+            <div class="stats-item-desc">Tunnel type</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="cpu-percent">⌛</span></div>
+            <div class="stats-item-desc">Current CPU usage</div>
+        </div>
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value"><span class="ram-percent">⌛</span></div>
+            <div class="stats-item-desc">Current RAM usage</div>
+        </div>
+        {% else %}
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">
+                {% if status == 'cdn-disabled' %}
+                    No CDN
+                {% else %}
+                    {{ cdn_provider }}
+                {% endif %}
+            </div>
+            <div class="stats-item-desc">CDN provider</div>
+        </div>
+        {% endif %}
     </div>
-{% endif %}
+</div>
+
 {% if secondary_proxy %}
-    <div class="row">
-        <div class="col-12">
-            Location: <strong><span class="fi server-country-flag">⌛</span><span class="server-country-flag-name mx-1"></span></strong>
-        </div>
+
+    <div class="row mt-5 fake-traffic px-2" style="display: none;">
+        <div class="mb-2"><strong>🛡️ Fake traffic protection is enabled</strong></div>
+        <div class="mb-1">Due to the physical location of this server, Libertea will create fake asymmetric traffic to reduce the chance of detection.</div>
+        <div style="opacity: 0.7">Libertea creates approximately <span class="fake-traffic-gb-per-day">⌛</span> GB of fake traffic every day.</div>
     </div>
+
     {% if secondary_proxy_update_available %}
     <div class="row mt-5">
         <div class="col-12">
             ⚠️ There's a new update available for this secondary proxy server.<br />
             <div style="font-size: 14px; margin-left: 26px; margin-top: 8px;">
                 To update, run this command in the SSH shell of this server:<br />
-                <code id="codeToCopy">curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
+                <code id="codeToCopy">{{ bootstrap_env }}curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy update</code>
                 <br />
                 <br />
                 <button class="btn btn-outline-primary btn-code-copy">
@@ -82,19 +121,21 @@
     
     
     {% endif %}
-    
 {% endif %}
+
 {% if not secondary_proxy %}
-    <div class="row">
+    {% if status == 'redirect-loop' %}
+    <div class="row mt-5">
         <div class="col-12">
-            CDN Provider: 
-            {% if status == 'cdn-disabled' %}
-            <strong>No CDN</strong>
-            {% else %}
-            <strong>{{ cdn_provider }}</strong>
-            {% endif %}
+            ⚠️ Your domain is redirecting to itself. This is usually caused by misconfigured CloudFlare (or any CDN) settings.<br />
+            Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
+            And SSL/TLS encryption mode is set to <strong>Full</strong>.<br />
+            <br />
+            <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png" />
         </div>
     </div>
+    {% endif %}
+
     {% if status == 'cdn-disabled' %}
     <div class="row mt-5">
         <div class="col-12">
@@ -126,18 +167,18 @@
     </div>
     {% endif %}
 {% endif %}
-    <div class="row mt-5">
+    <div class="row mt-5 mx-2">
         <h6>Traffic usage over time</h6>
         <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
     </div>
 {% if health_check %}
-    <div class="row mt-5">
+    <div class="row mt-5 mx-2">
         <h6>Health over time</h6>
         <canvas id="healthChart" style="width: 100%; height: 250px;"></canvas>
     </div>
 {% endif %}
 
-<form method="post" class="mt-5">
+<form method="post" class="mt-5 mx-2">
     <h6 class="mb-2 bordered">Advanced options</h6>
     <div class="form-group mb-4">
         <label for="priority">Priority</label>
@@ -210,6 +251,23 @@
                         localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
                     });
             }
+
+            function updateServerMetadata() {
+                fetch('/{{ admin_uuid }}/stats/system/{{ domain }}')
+                    .then(r => r.json())
+                    .then(data => {
+                        document.querySelector('.cpu-percent').innerText = data.cpu;
+                        document.querySelector('.ram-percent').innerText = data.ram;
+                        document.querySelector('.server-tunnel-type').innerText = data.proxy_type.toUpperCase();
+                        if (data.fake_traffic_enabled) {
+                            document.querySelector('.fake-traffic').style.display = 'block';
+                            document.querySelector('.fake-traffic-gb-per-day').innerText = data.fake_traffic_avg_gb_per_day;
+                        }
+                    });
+            }
+
+            setInterval(updateServerMetadata, 15000);
+            updateServerMetadata();
         </script>
 {% endif %}
 
@@ -360,7 +418,10 @@
                         }
                     });
                 });
+        </script>
+{% endif %}
 
+        <script>    
             fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
                 .then(function(response) {
                     return response.json()
@@ -433,7 +494,6 @@
                     document.querySelector('.traffic-month-value').innerText = Math.round(sum * 100) / 100 + ' GB';
                 }); 
         </script>
-{% endif %}
     </div>
 </div>
 

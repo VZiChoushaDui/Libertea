@@ -2,6 +2,7 @@ import re
 import json
 import urllib
 import requests
+import threading
 from . import utils
 from . import stats
 from . import config
@@ -26,11 +27,17 @@ def dashboard():
     except:
         pass
 
+    domains_count = len(utils.get_domains())
+    users_count = len(utils.get_users())
+
+    if domains_count == 0 and users_count == 0:
+        return redirect(url_for('welcome.welcome'))
+
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
-        users_count=len(utils.get_users()),
         admin_uuid=config.get_admin_uuid(),
-        domains_count=len(utils.get_domains()),
+        users_count=users_count,
+        domains_count=domains_count,
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
@@ -48,11 +55,17 @@ def health_domain(domain):
     hours = int(str(request.args.get('hours', '24')))
     return health_check.get_health_data(domain, hours=hours)
 
+def get_bootstrap_env():
+    if config.get_libertea_branch() == "master":
+        return ""
+    return "export LIBERTEA_BRANCH=" + config.get_libertea_branch() + " && "
 
 @blueprint.route(root_url + "stats/user", methods=['GET'])
 def user_stats():
     ips_now = stats.get_total_connected_ips_right_now()
+    ips_now_long = stats.get_total_connected_ips_right_now(long=True)
     users_now = stats.get_connected_users_now()
+    users_now_long = stats.get_connected_users_now(long=True)
     traffic_today = stats.get_gigabytes_today_all()
     traffic_this_month = stats.get_gigabytes_this_month_all()
     ips_today = stats.get_ips_today_all()
@@ -71,7 +84,9 @@ def user_stats():
 
     return {
         'ips_now': ips_now,
+        'ips_now_long': ips_now_long,
         'users_now': users_now,
+        'users_now_long': users_now_long,
         'traffic_today': traffic_today,
         'traffic_this_month': traffic_this_month,
         'ips_today': ips_today,
@@ -83,6 +98,18 @@ def system_stats():
     return {
         'cpu': stats.get_system_stats_cpu(),
         'ram': stats.get_system_stats_ram(),
+    }
+
+@blueprint.route(root_url + "stats/system/<ip>", methods=['GET'])
+def system_stats_ip(ip):
+    metadata = utils.online_route_get_metadata(ip)
+
+    return {
+        'cpu': metadata['latest_cpu_usage'] if 'latest_cpu_usage' in metadata else 'N/A',
+        'ram': metadata['latest_ram_usage'] if 'latest_ram_usage' in metadata else 'N/A',
+        'proxy_type': metadata['proxy_type'] if 'proxy_type' in metadata else 'HTTPS',
+        'fake_traffic_enabled': metadata['fake_traffic_enabled'] if 'fake_traffic_enabled' in metadata else False,
+        'fake_traffic_avg_gb_per_day': metadata['fake_traffic_avg_gb_per_day'] if 'fake_traffic_avg_gb_per_day' in metadata else 0,
     }
 
 @blueprint.route(root_url + "stats/connections", methods=['GET'])
@@ -302,13 +329,21 @@ def domains():
         admin_uuid=config.get_admin_uuid(),
         domains=all_domains,
         proxies=proxies,
-        bootstrap_script_url=config.get_bootstrap_script_url(),
         server_ip=config.SERVER_MAIN_IP,
-        panel_secret_key=config.get_panel_secret_key(),
-        proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
         health_check=settings.get_periodic_health_check(db=db),
     )
 
+@blueprint.route(root_url + 'proxies/new/', methods=['GET'])
+def new_proxy():
+    return render_template('admin/new_secondary_proxy.jinja',
+        back_to='domains',
+        server_ip=config.SERVER_MAIN_IP,
+        admin_uuid=config.get_admin_uuid(),
+        bootstrap_script_url=config.get_bootstrap_script_url(),
+        bootstrap_env=get_bootstrap_env(),
+        panel_secret_key=config.get_panel_secret_key(),
+        proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
+    )
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['GET'])
 def domain(domain):
@@ -341,6 +376,7 @@ def domain(domain):
             secondary_proxy=True,
             secondary_proxy_update_available=utils.online_route_update_available(domain),
             bootstrap_script_url=config.get_bootstrap_script_url(),
+            bootstrap_env=get_bootstrap_env(),
             panel_secret_key=config.get_panel_secret_key(),
             proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
             health_check=settings.get_periodic_health_check(),
@@ -380,7 +416,7 @@ def domain_save(domain):
                 return redirect(url_for('admin.dashboard'))
             
             utils.add_domain(domain)
-            utils.update_domain_cache(domain, try_count=2)
+            threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
         if request.form.get('next', None) == 'dashboard':
             return redirect(url_for('admin.dashboard'))
@@ -419,36 +455,11 @@ def proxies():
         page='proxies',
         proxies=proxies,
         bootstrap_script_url=config.get_bootstrap_script_url(),
+        bootstrap_env=get_bootstrap_env(),
         server_ip=config.SERVER_MAIN_IP,
         panel_secret_key=config.get_panel_secret_key(),
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
         admin_uuid=config.get_admin_uuid())
-
-def check_camouflage_domain(camouflage_domain):
-    try:
-        r = requests.get(camouflage_domain, timeout=5, allow_redirects=True,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
-            })
-        if r.status_code == 200:
-            if not r.url.startswith('https://'):
-                # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_https&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
-                return "camouflage_domain_not_https", camouflage_domain
-
-            camouflage_domain = 'https://' + r.url.split('/')[2]
-        else:
-            settings.set_camouflage_domain("")
-            print("Error while checking camouflage domain: Got response " + str(r.status_code) + " from " + camouflage_domain)
-            # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
-            return "camouflage_domain_not_reachable", camouflage_domain
-    except Exception as e:
-        settings.set_camouflage_domain("")
-        print("Error while checking camouflage domain " + camouflage_domain + ": " + str(e))
-        # return redirect(root_url + 'settings/?camouflage_error=camouflage_domain_not_reachable&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
-        return "camouflage_domain_not_reachable", camouflage_domain
-
-    return "", camouflage_domain
-
 
 @blueprint.route(root_url + 'settings/', methods=['GET'])
 def app_settings():
@@ -461,7 +472,7 @@ def app_settings():
             camouflage_domain = "https://"
         else:
             camouflage_domain = saved_camouflage_domain
-            camouflage_domain_status, camouflage_domain = check_camouflage_domain(camouflage_domain)
+            camouflage_domain_status, camouflage_domain = utils.check_camouflage_domain(camouflage_domain)
             if camouflage_domain_status != "":
                 camouflage_error = camouflage_domain_status
         
@@ -483,6 +494,7 @@ def app_settings():
         providers_from_all_endpoints=settings.get_providers_from_all_endpoints(),
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
         health_check=settings.get_periodic_health_check(),
+        manual_tier_select_clash=settings.get_manual_tier_select_clash(),
         camouflage_domain=camouflage_domain,
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
@@ -503,6 +515,7 @@ def app_settings_save():
     add_domains_even_if_inactive = request.form.get('add_domains_even_if_inactive', None)
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
+    manual_tier_select_clash = request.form.get('manual_tier_select_clash', None)
 
     tier_enabled_for_subscription = {i: request.form.get(f'tier_enabled_for_subscription_{i}', None) for i in [1,2,3,4]}
     tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
@@ -520,6 +533,7 @@ def app_settings_save():
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')
+    settings.set_manual_tier_select_clash(manual_tier_select_clash == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
     for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssgrpc']:
@@ -537,7 +551,7 @@ def app_settings_save():
                 camouflage_domain = 'https://' + camouflage_domain
 
             # check if domain is reachable
-            camouflage_domain_status, camouflage_domain = check_camouflage_domain(camouflage_domain)
+            camouflage_domain_status, camouflage_domain = utils.check_camouflage_domain(camouflage_domain)
             if camouflage_domain_status == "":
                 settings.set_camouflage_domain(camouflage_domain)
             else:

@@ -53,7 +53,17 @@ rule-providers:
 
 
 proxy-groups:
-  - name: "main-group"
+  - name: "main"
+    type: select
+    proxies:
+      - auto-group
+{% if manual_tier_select_clash %}
+{% for tier in tiers %}{% if tier.exists %}
+      - tier{{tier.index}}-group
+{% endif %}{% endfor %}
+{% endif %}
+
+  - name: "auto-group"
     type: fallback
     proxies:
 {% for tier in tiers %}{% if tier.exists %}
@@ -65,7 +75,7 @@ proxy-groups:
     lazy: false
 
 {% if udp_exists %}
-  - name: "main-group-udp"
+  - name: "main-udp"
     type: fallback
     proxies:
 {% for tier in tiers %}{% if tier.exists %}
@@ -148,11 +158,11 @@ rules:
 {% endfor %}
 {% if udp_exists %}
 {% if meta %}
-  - AND,((NETWORK,UDP)),main-group-udp
+  - AND,((NETWORK,UDP)),main-udp
 {% else %}
 {% if premium %}
-  - SCRIPT,udpnetwork,main-group-udp
+  - SCRIPT,udpnetwork,main-udp
 {% endif %}
 {% endif %}
 {% endif %}
-  - MATCH,main-group
+  - MATCH,main

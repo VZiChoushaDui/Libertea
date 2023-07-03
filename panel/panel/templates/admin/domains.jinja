@@ -9,60 +9,11 @@
     <a class="btn btn-primary float-start float-sm-end mx-1 mb-1" href="/{{ admin_uuid }}/domains/new/">
         Add new domain
     </a>
-    <a class="btn btn-primary add-proxy-button float-start float-sm-end mx-1 mb-1" href="#">
+    <a class="btn btn-primary add-proxy-button float-start float-sm-end mx-1 mb-1" href="/{{ admin_uuid }}/proxies/new/">
         Add new secondary proxy
     </a>
 </div>
 <div style="clear: both"></div>
-<div class="add-proxy-instructions my-4 mx-3 px-3 py-4" style="border: 1px solid #aaa; border-radius: 16px; display: none;">
-    To add a secondary proxy to your VPN, buy a new server, and copy and paste the following command into the SSH shell:<br /><br />
-    <code id="codeToCopy">curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }}</code>
-    <br />
-    <br />
-    <button class="btn btn-outline-primary btn-copy">
-        Copy code to clipboard
-    </button>
-</div>
-
-
-<script>
-    function copyCode() {
-        var codeToCopy = document.querySelector("#codeToCopy").innerText;
-        navigator.clipboard.writeText(codeToCopy);
-
-        document.querySelector(".btn-copy").innerText = "Copied!";
-        setTimeout(function() {
-            document.querySelector(".btn-copy").innerText = "Copy code to clipboard";
-        }, 2000);
-    }
-
-    document.querySelector("#codeToCopy").addEventListener("click", function() {
-        copyCode();
-
-        // select the whole code
-        var range = document.createRange();
-        range.selectNode(document.querySelector("#codeToCopy"));
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-    });
-
-    document.querySelector(".add-proxy-button").addEventListener("click", function() {
-        document.querySelector(".add-proxy-instructions").style.display = "block";
-        document.querySelector(".add-proxy-button").style.display = "none";
-    });
-
-    document.querySelector(".btn-copy").addEventListener("click", function() {
-        copyCode();
-    });
-
-    var goToNew = new URLSearchParams(window.location.search).get('newproxy');
-    if (goToNew) {
-        document.querySelector(".add-proxy-instructions").style.display = "block";
-        document.querySelector(".add-proxy-button").style.display = "none";
-    }
-</script>
-
-
 
 <div style="clear: both"></div>
 <div class="mx-3">
@@ -83,7 +34,9 @@
                     {% elif domain.status == 'inactive' %}
                     ❌ Inactive, click for details
                     {% elif domain.status == 'cdn-disabled' %}
-                    ⚠️ Active (CDN disabled), click for details
+                    ✅ Active (No CDN)
+                    {% elif domain.status == 'redirect-loop' %}
+                    ❌ CDN Misconfigured
                     {% else %}
                     ⚠️ Unknown status
                     {% endif %}
@@ -113,16 +66,16 @@
         <a href="/{{ admin_uuid }}/domains/{{ proxy.ip }}/" class="list-group-item list-group-item-action">
             <div class="row">
                 <div class="col-12 list-item-title">
-                    <span class="secondary-proxy-flag fi" data-ip="{{ proxy.ip }}"></span>
                     {{ proxy.ip }}
+                    <span class="secondary-proxy-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
                     {% if proxy.tier != None %}<div class="list-item-badge">{{ proxy.tier }}</div>{% endif %}
                     {% if proxy.update_available %}⚠️{% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle">
                     {% if proxy.update_available %}
-                    🟢 Online, update available
+                    ✅ Active, update available
                     {% else %}
-                    🟢 Online
+                    ✅ Active
                     {% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
@@ -188,7 +141,10 @@
                 elem.innerText = avg_percent + '%';
             });
     });
+</script>
+{% endif %}
 
+<script>
     document.querySelectorAll('.secondary-proxy-flag').forEach(elem => {
         var country = localStorage.getItem('ip-country-' + elem.dataset.ip);
         if (country) {
@@ -205,6 +161,5 @@
             });
     });
 </script>
-{% endif %}
 
 {% endblock %}

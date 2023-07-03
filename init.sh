@@ -23,7 +23,17 @@ touch .libertea.main
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
-apt-get update >/dev/null
+if ! command -v sed &> /dev/null; then
+    apt-get update -q
+else
+    apt-get update -q | sed 's/^/        /'
+fi
+
+
+if ! command -v sed &> /dev/null; then
+    echo "    - Installing sed..."
+    apt-get install -q -y sed
+fi
 
 # if ! command -v certbot &> /dev/null; then
 #     echo "    - Installing certbot..."
@@ -35,55 +45,43 @@ apt-get update >/dev/null
 #     apt-get install -qq -y certbot > /dev/null
 # fi
 
-if ! command -v ufw &> /dev/null; then
-    echo "    - Installing ufw..."
-    apt-get install -qq -y ufw >/dev/null
-fi
-
-if ! command -v sed &> /dev/null; then
-    echo "    - Installing sed..."
-    apt-get install -qq -y sed >/dev/null
-fi
-
-if ! command -v dig &> /dev/null; then
-    echo "    - Installing dnsutils..."
-    apt-get install -qq -y dnsutils >/dev/null
-fi
-
-if ! command -v uuidgen &> /dev/null; then
-    echo "    - Installing uuidgen..."
-    apt-get install -qq -y uuid-runtime >/dev/null
-fi
-
-if ! command -v openssl &> /dev/null; then
-    echo "    - Installing openssl..."
-    apt-get install -qq -y openssl >/dev/null
-fi
-
-if ! command -v jq &> /dev/null; then
-    echo "    - Installing jq..."
-    apt-get install -qq -y jq >/dev/null
-fi
-
-if ! command -v cut &> /dev/null; then
-    echo "    - Installing coreutils..."
-    apt-get install -qq -y coreutils >/dev/null
-fi
-
-echo "    - Installing build tools..."
-apt-get install -qq -y build-essential >/dev/null
+echo "    - Installing core dependencies..."
+apt-get install -q -y ufw dnsutils uuid-runtime openssl jq coreutils build-essential | sed 's/^/        /'
 
 echo "    - Installing python..."
-if ! command -v python3 &> /dev/null; then
-    apt-get install -qq -y python3 >/dev/null
-fi
-apt-get install -qq -y python3-dev >/dev/null
-if ! command -v pip3 &> /dev/null; then
-    apt-get install -qq -y python3-pip >/dev/null
-fi
+apt-get install -q -y python3 python3-dev python3-pip | sed 's/^/        /'
 
 echo "    - Installing python dependencies..."
+export PIP_BREAK_SYSTEM_PACKAGES=1
+set +e
+if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
+    pip3 --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "    - Applying pip openssl fix..."
+        wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
+    fi
+fi
+set -e
+
 pip3 install -r panel/requirements.txt | sed 's/^/        /'
+
+set +e
+if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
+    pip3 --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "    - Applying pip openssl fix..."
+        wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
+    fi
+fi
+set -e
 
 echo "    - Installing docker..."
 if ! command -v docker &> /dev/null; then
@@ -91,43 +89,54 @@ if ! command -v docker &> /dev/null; then
     sh /tmp/get-docker.sh | sed 's/^/        /' >/dev/null
 fi
 echo "    - Installing docker compose..."
-apt-get install -qq docker-compose-plugin | sed 's/^/        /'
+apt-get install -q docker-compose-plugin | sed 's/^/        /'
 
 # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
 if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
     echo "    - Applying apparmor fix..."
-    apt-get install -qq -y apparmor apparmor-utils >/dev/null
+    apt-get install -q -y apparmor apparmor-utils | sed 's/^/        /'
     service docker restart
 fi
 
-echo " ** Initializing firewall..."
-ufw allow ssh >/dev/null
-ufw allow http >/dev/null
-ufw allow https >/dev/null
-yes | ufw enable >/dev/null
+echo "    - Initializing firewall..."
+set +e
+yes | /usr/share/ufw/check-requirements >/dev/null
+if [ $? -ne 0 ]; then
+    echo "       WARNING: UFW requirements not met. Disabling UFW."
+    yes | ufw disable >/dev/null
+else
+    ufw allow ssh >/dev/null
+    ufw allow http >/dev/null
+    ufw allow https >/dev/null
+    ufw allow 8443 >/dev/null
+    yes | ufw enable >/dev/null
+fi
+set -e
 
-# check if cpu supports avx2, or true
-if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
-    echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
-    echo "    Please consider upgrading your CPU to support AVX2."
-    # change docker-compose.yml to use compatibility image
-    sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
+# check if cpu supports avx2 (on x86/x64 based systems)
+if [[ $(uname -m) == *"x86"* ]]; then
+    if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
+        echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
+        echo "    Please consider upgrading your CPU to support AVX2."
+        # change docker-compose.yml to use compatibility image
+        sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
+    fi
 fi
 
 echo " ** Getting public IP..."
 set +e
-my_ip=$(curl -s --max-time 3 https://ifconfig.io/ip)
+my_ip=$(curl -s --ipv4 --fail --max-time 3 https://ifconfig.io/ip)
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --max-time 3 https://api.ipify.org)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://api.ipify.org)
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --max-time 3 https://icanhazip.com)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://icanhazip.com)
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --max-time 3 https://ident.me)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://ident.me)
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --max-time 3 https://checkip.amazonaws.com)
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://checkip.amazonaws.com)
 fi
 if [[ ! $my_ip ]]; then
     echo " ** Failed to get public IP. Please check your internet connection."
@@ -188,6 +197,23 @@ else
             fi
         fi
     done < sample.env
+fi
+
+set +e
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+if [ $? -ne 0 ]; then
+    BRANCH_NAME="master"
+fi
+if [ -z "$BRANCH_NAME" ]; then
+    BRANCH_NAME="master"
+fi
+cat .env | grep -v "LIBERTEA_BRANCH_NAME=" > .env.tmp
+mv .env.tmp .env
+echo "LIBERTEA_BRANCH_NAME=$BRANCH_NAME" >> .env
+set -e
+
+if [ "$BRANCH_NAME" != "master" ]; then
+    export ENVIRONMENT="dev"
 fi
 
 # if [ ! -f tools/flarectl ]; then
@@ -263,6 +289,23 @@ cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/cert
 mkdir -p /etc/ssl/ha-certs
 cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 
+echo " ** Initializing ssh tunnel..."
+# create a user for ssh tunnel named "libertea" if not exists
+if ! id -u libertea >/dev/null 2>&1; then
+    useradd -m -s /bin/bash libertea
+    echo "libertea:$(openssl rand -hex 32)" | chpasswd
+fi
+# Add ssh restrictions to sshd_config if not exists
+if ! grep -q "Match User libertea" /etc/ssh/sshd_config; then
+    echo "Match User libertea" >> /etc/ssh/sshd_config
+    echo "    AllowTcpForwarding yes" >> /etc/ssh/sshd_config
+    echo "    X11Forwarding no" >> /etc/ssh/sshd_config
+    echo "    PermitTunnel yes" >> /etc/ssh/sshd_config
+    echo "    AllowAgentForwarding no" >> /etc/ssh/sshd_config
+    echo "    ForceCommand /bin/false" >> /etc/ssh/sshd_config
+    systemctl reload sshd
+fi
+
 echo " ** Initializing providers..."
 echo "    - trojan-ws..."
 ./providers/trojan-ws/init.sh 2001 12001 "$CONN_TROJAN_WS_URL" "$CONN_TROJAN_WS_AUTH_PASSWORD"
@@ -319,6 +362,13 @@ touch ./data/haproxy-lists/domains.lst
 touch ./data/haproxy-lists/valid-panel-endpoints.lst
 touch ./data/haproxy-lists/valid-user-endpoints.lst
 
+echo " ** Adding auto-update cronjob..."
+# create a cronjob to run ./autoupdate.sh on bash and save the output to /tmp/libertea-autoupdate.log
+if ! crontab -l | grep -q "autoupdate.sh"; then
+    (crontab -l 2>/dev/null; echo "") | crontab -
+    (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
+fi
+
 echo " ** Waiting for services to start..."
 
 # check status of the docker containers with name starting with "libertea" (max 30 seconds) and log each one that has been up for at least 5 seconds
@@ -356,7 +406,11 @@ done
 # wait for the panel to start 
 echo -ne "    ⌛ libertea-panel\r"
 try_count=0
-while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)" != "200" ]; do
+response_code="0"
+set +e
+response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+set -e
+while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     sleep 1
     if [ $(($try_count)) -eq 0 ] && [ $(( $(date +%s) - start_time )) -gt 45 ]; then
         echo "    ❌ libertea-panel failed to start. Retrying..."
@@ -402,8 +456,46 @@ while [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_
         echo ""
         exit 1
     fi
+    
+    set +e
+    response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+    set -e
 done
 echo "    ✅ libertea-panel started"
+
+echo " ** Checking domain configuration..."
+while true; do
+    status=""
+    set +e
+    status=$(curl -k -s --max-time 5 -o /dev/null -w "%{http_code}" "https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/" 2>/dev/null)
+    set -e
+    if [ "$status" != "401" ]; then
+        # Check if it's a redirect loop (due to Cloudflare SSL not being set to Full)
+        if [ "$status" == "301" ] || [ "$status" == "302" ]; then
+            echo "*******************************************************"
+            echo "ERROR: Your panel domain $PANEL_DOMAIN is redirecting to itself."
+            echo "       Please make sure that your CDN's SSL/TLS encryption mode is set to Full."
+            echo ""
+        else
+            echo "*******************************************************"
+            echo "ERROR: Your panel domain $PANEL_DOMAIN is not accessible."
+            echo "       Please make sure that your domain DNS is pointing to the server IP ($my_ip)."
+            echo ""
+        fi
+        echo " After you have fixed the issue, visit the following URLs to continue:"
+        echo "     Panel addresses:"
+        echo "       https://$PANEL_DOMAIN/$PANEL_ADMIN_UUID/"
+        echo "       https://$my_ip/$PANEL_ADMIN_UUID/"
+        echo "    "
+        echo "     Username: admin"
+        echo "     Password: $PANEL_ADMIN_PASSWORD"
+        echo ""
+        echo "Will retry in 10 seconds..."
+        sleep 10
+    else
+        break
+    fi
+done
 
 panel_ip=$(dig +short "$PANEL_DOMAIN" | head -n 1)
 panel_ip=$(echo "$panel_ip" | tr -d '[:space:]')
@@ -423,7 +515,6 @@ echo ""
 if [ "$panel_ip" == "$my_ip" ]; then
     echo ""
     echo "WARNING: Your panel domain name is not resolved through CDN."
-    echo "         Please make sure that CDN is enabled for your domain (orange cloud icon in Cloudflare)."
+    echo "         If you want to use CDN, make sure that it is enabled for your domain (orange cloud icon in Cloudflare)."
     echo ""
 fi
-

@@ -4,7 +4,7 @@ set -e
 
 # if not elevated, elevate
 if [ "$EUID" -ne 0 ]; then
-    sudo /bin/bash "$0" "$@"
+    sudo -E /bin/bash "$0" "$@"
     exit
 fi
 
@@ -49,6 +49,20 @@ if [ "$COMMAND" != "uninstall" ]; then
         git clone "$REPO_URL" "/root/$PROJECT_NAME" >/dev/null
         cd "/root/$PROJECT_NAME"
     fi
+
+    if [ -z "$LIBERTEA_BRANCH" ]; then
+        if [ -f "/root/$PROJECT_NAME/.env" ]; then
+            . /root/$PROJECT_NAME/.env
+            export LIBERTEA_BRANCH="$LIBERTEA_BRANCH_NAME"
+            echo "Will use branch $LIBERTEA_BRANCH based on existing Libertea installation."
+        fi
+    fi  
+
+    if [ -n "$LIBERTEA_BRANCH" ]; then
+        echo " ** Checking out branch $LIBERTEA_BRANCH..."
+        git checkout "$LIBERTEA_BRANCH" >/dev/null
+        git pull --rebase >/dev/null
+    fi
 fi
 
 if [ "$COMMAND" = "install" ]; then
@@ -62,11 +76,11 @@ elif [ "$COMMAND" = "update" ]; then
 elif [ "$COMMAND" = "install-proxy" ]; then
     # Install the proxy
     echo "Installing $PROJECT_NAME-proxy..."
-    ./init-proxy.sh "$2" "$3" "$4"
+    ./init-proxy.sh "$2" "$3" "$4" "$5"
 elif [ "$COMMAND" = "uninstall" ]; then
     set +e
 
-    echo "Are you sure you want to uninstall $PROJECT_NAME? This action is irreversible. [y/N]"
+    echo "Are you sure you want to uninstall Libertea? This action is irreversible. [y/N]"
     read -r CONFIRM
     if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
         echo "Uninstall cancelled."
@@ -79,7 +93,6 @@ elif [ "$COMMAND" = "uninstall" ]; then
         echo "   - $container_name"
         docker rm -f "$container_name" >/dev/null
     done
-    
 
     echo " ** Stopping systemd service..."
     pkill -9 -f uwsgi
@@ -90,6 +103,24 @@ elif [ "$COMMAND" = "uninstall" ]; then
     echo " ** Removing systemd service..."
     systemctl disable libertea-panel.service
     rm -f /etc/systemd/system/libertea-panel.service
+
+    echo " ** Removing proxy systemd services..."
+    systemctl stop libertea-proxy-ssh-tunnel-0.service >/dev/null 2>&1
+    systemctl stop libertea-proxy-ssh-tunnel-1.service >/dev/null 2>&1
+    systemctl stop libertea-proxy-ssh-tunnel-2.service >/dev/null 2>&1
+    systemctl stop libertea-proxy-ssh-tunnel-3.service >/dev/null 2>&1
+    systemctl stop libertea-proxy-ssh-tunnel-4.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-ssh-tunnel-0.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-ssh-tunnel-1.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-ssh-tunnel-2.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-ssh-tunnel-3.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-ssh-tunnel-4.service >/dev/null 2>&1
+    systemctl stop libertea-proxy-fake-traffic.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-fake-traffic.service >/dev/null 2>&1
+    systemctl stop libertea-proxy-register.service >/dev/null 2>&1
+    systemctl disable libertea-proxy-register.service >/dev/null 2>&1
+    systemctl stop haproxy >/dev/null 2>&1
+    systemctl disable haproxy >/dev/null 2>&1
 
     echo " ** Deleting Libertea files..."
     cd /root

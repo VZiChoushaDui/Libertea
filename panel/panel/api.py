@@ -1,6 +1,8 @@
 import re
+import json
 from . import utils
 from . import config
+from . import sysops
 from pymongo import MongoClient
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
@@ -160,6 +162,34 @@ def add_route():
         version = "1000"
     version = int(version)
 
-    utils.online_route_ping(ip, version)
+    proxy_type = request.form.get('proxyType', 'https')
+    cpu_usage = request.form.get('cpuUsage', 'Unknown')
+    ram_usage = request.form.get('ramUsage', 'Unknown')
+    fake_traffic_enabled = request.form.get('fakeTrafficEnabled', 'False')
+    fake_traffic_avg_gb_per_day = request.form.get('fakeTrafficAvgGbPerDay', '0')
+
+    try:
+        fake_traffic_enabled = fake_traffic_enabled.lower() == 'true'
+        fake_traffic_avg_gb_per_day = float(fake_traffic_avg_gb_per_day)
+    except:
+        fake_traffic_enabled = False
+        fake_traffic_avg_gb_per_day = 0
+
+    utils.online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, fake_traffic_enabled, fake_traffic_avg_gb_per_day)
+    
+    ssh_key = request.form.get('sshKey')
+    # add the public key to authorized_keys file of user "libertea"
+    if ssh_key != None and ssh_key != "":
+        sysops.add_ssh_key(ssh_key)
+
+    traffic_data = request.form.get('trafficData')
+    try:
+        traffic_data = json.loads(traffic_data)
+        if traffic_data != None:
+            utils.online_route_update_traffic(ip, traffic_data)
+    except:
+        print("Error parsing bytes data:", traffic_data)
+        pass
+    
     return "", 200
     
