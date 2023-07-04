@@ -19,8 +19,13 @@ root_url = '/' + config.get_admin_uuid() + '/'
 
 @blueprint.route(root_url + 'welcome/')
 def welcome():
+    first_user = utils.get_users()[0]
+    setup_finished = settings.get_camouflage_domain() != ""
+
     return render_template('admin/welcome/welcome.jinja',
         admin_uuid=config.get_admin_uuid(),
+        first_user_url = first_user['panel_id'],
+        setup_finished = setup_finished,
     )
 
 @blueprint.route(root_url + 'welcome/routes/')

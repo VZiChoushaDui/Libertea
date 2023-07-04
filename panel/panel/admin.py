@@ -17,6 +17,15 @@ blueprint = Blueprint('admin', __name__)
 root_url = '/' + config.get_admin_uuid() + '/'
 
 @blueprint.route(root_url)
+def rootpage():
+    users_count = len(utils.get_users())
+    if users_count <= 1:
+        return redirect(url_for('welcome.welcome'))
+
+    return redirect(url_for('admin.dashboard'))
+
+
+@blueprint.route(root_url + "dashboard/")
 def dashboard():
     update_available = False
     try:
@@ -27,17 +36,11 @@ def dashboard():
     except:
         pass
 
-    domains_count = len(utils.get_domains())
-    users_count = len(utils.get_users())
-
-    if domains_count == 0 and users_count == 0:
-        return redirect(url_for('welcome.welcome'))
-
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
         admin_uuid=config.get_admin_uuid(),
-        users_count=users_count,
-        domains_count=domains_count,
+        users_count=len(utils.get_users()),
+        domains_count=len(utils.get_domains()),
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),

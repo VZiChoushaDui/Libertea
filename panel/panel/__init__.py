@@ -1,4 +1,5 @@
 import requests
+import threading
 from . import stats
 from . import utils
 from . import config
@@ -60,6 +61,19 @@ def create_app():
     sysops.haproxy_update_users_list()
     sysops.haproxy_update_domains_list()
     sysops.haproxy_update_camouflage_list()
+
+    domains_count = len(utils.get_domains())
+    users_count = len(utils.get_users())
+    if users_count == 0:
+        print("No users, will create the first one")
+        # No users, create the first one
+        utils.create_user('Libertea user')
+
+    if domains_count == 0:
+        print("No domains, will create the first one")
+        domain = config.get_panel_domain()
+        utils.add_domain(domain)
+        threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
     try:
         update_certificates(None)
