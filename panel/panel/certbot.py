@@ -1,3 +1,4 @@
+import os
 import random
 from . import sysops
 from . import config
@@ -47,6 +48,22 @@ def generate_certificate(domain):
         return True
     else:
         print('  - Certificate generation for ' + domain + ' failed: ' + str(result))
+
+        fullchain_file = '/etc/letsencrypt/live/' + domain + '/fullchain.pem'
+        privkey_file = '/etc/letsencrypt/live/' + domain + '/privkey.pem'
+
+        try:
+            if os.path.isfile(fullchain_file) and os.path.isfile(privkey_file):
+                cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
+                with open(cert_file, 'w') as f:
+                    f.write(open(fullchain_file).read())
+                    f.write(open(privkey_file).read())
+
+                print('  - Reloading HAProxy')
+                sysops.haproxy_reload()
+        except Exception as e:
+            print(e)
+
         domain_certificates.update_one({'_id': domain}, {'$set': {
             '_id': domain,
             'failure_count': domain_entry['failure_count'] + 1 if domain_entry is not None else 1,
