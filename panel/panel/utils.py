@@ -55,6 +55,9 @@ def create_user(note, referrer=None, max_ips=None):
     db = client[config.MONGODB_DB_NAME]
     users = db.users
 
+    if note is None or len(note) == 0:
+        return None, None
+
     # check if note is already in use
     if users.find_one({"note": note}) is not None:
         return None, None
