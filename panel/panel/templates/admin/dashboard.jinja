@@ -1,6 +1,16 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
-<!-- <h1 class="mt-5">Welcome, Admin!</h1> -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.1.0/progressbar.min.js" integrity="sha512-EZhmSl/hiKyEHklogkakFnSYa5mWsLmTC4ZfvVzhqYNLPbXKAXsjUYRf2O9OlzQN33H0xBVfGSEIUeqt9astHQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+    #securityRing {
+        width: 120px;
+        transition: opacity 0.6s ease-in-out;
+        opacity: 0;
+    }
+</style>
+
 {% if domains_count == 0 or users_count == 0 %}
 <div class="section tutorial">
     <div class="row">
@@ -31,37 +41,97 @@
 <hr />
 {% endif %}
 
-{% if update_available %}
-<div class="w-100 mt-4 px-3">
-    ⚠️ There's a new version of Libertea available. <a href="https://github.com/VZiChoushaDui/Libertea#update" target="_blank">Update now</a>
-</div>
-{% endif %}
-{% if proxy_update_available %}
-<div class="w-100 mt-4 px-3">
-    ⚠️ One or more of your Secondary Proxies needs to be updated. <a href="/{{ admin_uuid }}/domains/">more info</a>
-</div>
-{% endif %}
-
 {% if no_domain_warning %}
 <div class="w-100 mt-4 px-3">
     🚨 Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.<br /><a href="/{{ admin_uuid }}/domains/new/?next=dashboard">Add a domain</a>
 </div>
 {% endif %}
-{% if no_camouflage_warning %}
-<div class="w-100 mt-4 px-3">
-    🚨 Warning: You don't have a camouflage domain set up, this increases the chance of your VPN being blocked.<br /><a href="/{{ admin_uuid }}/settings/">Set up a camouflage domain</a>
-</div>
-{% endif %}
-{% if active_domains_count == 1 %}
+<!-- {% if active_domains_count == 1 %}
 <div class="w-100 mt-4 px-3">
     ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
 </div>
-{% endif %}
+{% endif %} -->
 {% if proxies_count == 0 %}
 <div class="w-100 mt-4 px-3">
     ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/proxies/new/">Add a secondary proxy</a>
 </div>
 {% endif %}
+<div class="section stats row">
+    <div class="col-12 col-sm-4 col-md-3 col-xxl-2 mt-3 mb-3 mt-sm-5 mb-sm-5 d-flex align-items-center justify-content-center">
+        <div id="securityRing"></div>
+    </div>
+    <div class="col-12 col-sm-8 col-md-9 col-xxl-10 d-flex align-items-center justify-content-center">
+        <div class="w-100 text-center text-sm-start">
+            {% if warning_level == 0 %}
+                <div style="font-weight: 700">Libertea is active and secure!</div>
+                <div class="mt-2">
+                    Your Libertea VPN is active and ready to use.
+                </div>
+            {% elif warning_level == 1 %}
+                <div style="font-weight: 700">Libertea is active and secure!</div>
+                <div class="mt-2">
+                    Your Libertea VPN is active and ready to use, but there are some tips you can follow to improve its security and availability.
+                </div>
+                <div class="mt-2">
+                    <a href="/{{ admin_uuid }}/security/">View tips</a>
+                </div>
+            {% else %}
+                <div style="font-weight: 700">Libertea is active</div>
+                <div class="mt-2">
+                    There are some warnings you can fix to improve your Libertea VPN's security and availability.
+                </div>
+                <div class="mt-2">
+                    <a href="/{{ admin_uuid }}/security/">View warnings</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    var myProgress = new ProgressBar.Circle('#securityRing', {
+        color: '#007bff',
+        trailColor: '#eee',
+        trailWidth: 1,
+        duration: 2000,
+        easing: 'easeOut',
+        strokeWidth: 6,
+        from: { color: '#ff0000' },
+        to: { color: '#28a745' },
+        step: function(state, circle) {
+            circle.path.setAttribute('stroke', state.color);
+            if (circle.value() == 0) {
+                circle.setText('');
+            } else {
+                // circle.setText(Math.round(circle.value() * 10) + '/10');
+                // set html content
+                circle.setText('<div class="d-flex flex-column justify-content-center align-items-center text-center" style="margin-left: -20px; margin-right: -20px; margin-top: 6px;"><div style="font-size: 0.6em; font-weight: 700">Security score</div><div>' + Math.round(circle.value() * 10) + '/10</div></div>');
+                circle.text.style.color = state.color;
+            }
+        },
+        text: {
+            style: {
+                color: '#28a745',
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                padding: 0,
+                margin: 0,
+                transform: {
+                    prefix: true,
+                    value: 'translate(-50%, -50%)'
+                },
+                fontWeight: '700',      
+            }
+        }
+    });
+
+    setTimeout(function() {
+        document.getElementById('securityRing').style.opacity = 1;
+        myProgress.animate({{ security_score }});
+    }, 500);
+</script>
+
 <div class="section stats">
     <div class="row">
         <div class="col-12">

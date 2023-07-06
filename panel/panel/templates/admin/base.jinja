@@ -230,6 +230,10 @@
                 <div class="tabs float-start">
                     <a href="/{{ admin_uuid }}/users/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Users</a>
                 </div>
+                {% elif back_to == 'dashboard' %}
+                <div class="tabs float-start">
+                    <a href="/{{ admin_uuid }}/dashboard/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Dashboard</a>
+                </div>
                 {% else %}
 
                 <a href="/{{ admin_uuid }}/">

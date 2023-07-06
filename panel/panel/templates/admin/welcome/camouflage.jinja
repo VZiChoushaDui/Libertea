@@ -34,8 +34,12 @@
             You'll be able to change this later in <strong>Settings</strong> tab of Libertea.
         </p>
         
-        <a href="/{{ admin_uuid }}/welcome/country/" class="btn btn-outline-primary mt-5">Back</a>
-        <input type="submit" class="btn btn-primary mt-5" value="Next" />
+        {% if next_page == "security" %}
+            <input type="submit" class="btn btn-primary mt-5" value="Save" />
+        {% else %}
+            <a href="/{{ admin_uuid }}/welcome/country/" class="btn btn-outline-primary mt-5">Back</a>
+            <input type="submit" class="btn btn-primary mt-5" value="Next" />
+        {% endif %}
     </form>
 </div>
 {% endblock %}

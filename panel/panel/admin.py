@@ -24,9 +24,7 @@ def rootpage():
 
     return redirect(url_for('admin.dashboard'))
 
-
-@blueprint.route(root_url + "dashboard/")
-def dashboard():
+def get_health_warnings():
     update_available = False
     try:
         latest_version = requests.get(config.VERSION_ENDPOINT, timeout=1).text
@@ -36,6 +34,71 @@ def dashboard():
     except:
         pass
 
+    route_direct_country_enabled = {x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS}
+    
+    return {
+        'no_camouflage': {
+            'status': settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
+            'score_penalty': 0.4,
+            'severity': 2,
+        },
+        'update_available': {
+            'status': update_available,
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'proxy_update_available': {
+            'status': utils.online_route_any_update_available(),
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'no_direct_country': {
+            'status': not any(route_direct_country_enabled.values()),
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'same_domain_for_panel_and_vpn': {
+            'status': config.get_panel_domain() in utils.get_domains(),
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'no_secondary_route': {
+            'status': len(utils.online_route_get_all()) == 0,
+            'score_penalty': 0.1,
+            'severity': 1,
+        }
+    }
+
+@blueprint.route(root_url + "security/")
+def security():
+    health_warnings = get_health_warnings()
+
+    no_warnings = True
+    for warning in health_warnings:
+        if health_warnings[warning]['status']:
+            no_warnings = False
+            break
+
+    return render_template('admin/security.jinja',
+        page='security',
+        back_to='dashboard',
+        admin_uuid=config.get_admin_uuid(),
+        health_warnings=health_warnings,
+        no_warnings=no_warnings,
+        panel_domain=config.get_panel_domain(),
+    )
+
+@blueprint.route(root_url + "dashboard/")
+def dashboard():
+    health_warnings = get_health_warnings()
+    warning_level = 0
+    security_score = 1
+    for warning in health_warnings:
+        if health_warnings[warning]['status']:
+            warning_level = max(warning_level, health_warnings[warning]['severity'])
+            security_score -= health_warnings[warning]['score_penalty']
+            
+
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
         admin_uuid=config.get_admin_uuid(),
@@ -44,12 +107,13 @@ def dashboard():
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
-        no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
+        # no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
-        update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
         proxy_update_available=utils.online_route_any_update_available(),
+        warning_level=warning_level,
+        security_score=security_score,
     )
 
 

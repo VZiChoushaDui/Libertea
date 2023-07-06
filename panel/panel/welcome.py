@@ -80,22 +80,32 @@ def routes2():
 
 @blueprint.route(root_url + 'welcome/country/', methods=['GET'])
 def country():
+    next_page = request.args.get('next_page', None)
+
     return render_template('admin/welcome/country.jinja',
         admin_uuid=config.get_admin_uuid(),
         route_direct_countries=config.ROUTE_IP_LISTS,
         route_direct_country_enabled={x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS},
+        next_page=next_page,
     )
 
 @blueprint.route(root_url + 'welcome/country/', methods=['POST'])
 def country_post():
+    next_page = request.args.get('next_page', None)
+
     route_direct = {x['id']: request.form.get('route_direct_' + x['id'], None) for x in config.ROUTE_IP_LISTS}
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
+
+    if next_page == "security":
+        return redirect(url_for('admin.security'))
 
     return redirect(url_for('welcome.camouflage'))
 
 @blueprint.route(root_url + 'welcome/camouflage/', methods=['GET'])
 def camouflage():
+    next_page = request.args.get('next_page', None)
+
     camouflage_error = request.args.get('camouflage_error', None)
     camouflage_domain = request.args.get('camouflage_domain', None)
 
@@ -113,10 +123,13 @@ def camouflage():
         admin_uuid=config.get_admin_uuid(),
         camouflage_domain=camouflage_domain,
         camouflage_error=camouflage_error,
+        next_page=next_page,
     )
 
 @blueprint.route(root_url + 'welcome/camouflage/', methods=['POST'])
 def camouflage_post():
+    next_page = request.form.get('next_page', None)
+
     camouflage_domain = request.form.get('camouflage_domain', None)
     if camouflage_domain == '' or camouflage_domain == 'https://':
         settings.set_camouflage_domain("")
@@ -131,6 +144,8 @@ def camouflage_post():
         else:
             return redirect(root_url + 'welcome/camouflage/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 
+    if next_page == "security":
+        return redirect(url_for('admin.security'))
     return redirect(url_for('welcome.finished'))
 
 @blueprint.route(root_url + 'welcome/finished/')
