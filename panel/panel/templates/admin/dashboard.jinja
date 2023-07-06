@@ -45,17 +45,7 @@
 <div class="w-100 mt-4 px-3">
     🚨 Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.<br /><a href="/{{ admin_uuid }}/domains/new/?next=dashboard">Add a domain</a>
 </div>
-{% endif %}
-<!-- {% if active_domains_count == 1 %}
-<div class="w-100 mt-4 px-3">
-    ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
-</div>
-{% endif %} -->
-{% if proxies_count == 0 %}
-<div class="w-100 mt-4 px-3">
-    ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/proxies/new/">Add a secondary proxy</a>
-</div>
-{% endif %}
+{% else %}
 <div class="section stats row">
     <div class="col-12 col-sm-4 col-md-3 col-xxl-2 mt-3 mb-3 mt-sm-5 mb-sm-5 d-flex align-items-center justify-content-center">
         <div id="securityRing"></div>
@@ -87,6 +77,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <script>
     var myProgress = new ProgressBar.Circle('#securityRing', {

@@ -9,16 +9,22 @@
 
     <p class="mt-5 mb-0" style="font-weight: 700">New user?</p>
     <p class="mt-2 mb-2">You can try your Libertea right away and enjoy the Internet without censorship.</p>
-    <a href="/{{ first_user_url }}/" class="btn btn-outline-primary mt-1">Connect to Libertea</a>
+    <div class="text-end">
+        <a href="/{{ first_user_url }}/" target="_blank" class="btn btn-primary mt-1">Connect to Libertea</a>
+    </div>
 
     <p class="mt-5 mb-0" style="font-weight: 700">Ready for more?</p>
     {% if setup_finished and False %}
     <p class="mt-2 mb-2">✅ You have finished setting up your Libertea. You can view and manage your Libertea in the dashboard.</p>
-    <a href="/{{ admin_uuid }}/dashboard/" class="btn btn-outline-primary mt-1">Go to dashboard</a>
+    <div class="text-end">
+        <a href="/{{ admin_uuid }}/dashboard/" class="btn btn-primary mt-1">Go to dashboard</a>
+    </div>
     {% else %}
     <p class="mt-2 mb-2">Finish setting up your Libertea and configure it to work best for you.</p>
-    <a href="/{{ admin_uuid }}/welcome/country/" class="btn btn-outline-primary mt-1">Continue setup</a>
-    <a href="/{{ admin_uuid }}/dashboard/" class="btn btn-link mt-1">Skip to dashboard</a>
+    <div class="text-end">
+        <a href="/{{ admin_uuid }}/dashboard/" class="btn btn-link mt-1">Skip to dashboard</a>
+        <a href="/{{ admin_uuid }}/welcome/country/" class="btn btn-primary mt-1">Continue setup</a>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

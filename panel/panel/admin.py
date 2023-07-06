@@ -20,7 +20,8 @@ root_url = '/' + config.get_admin_uuid() + '/'
 def rootpage():
     users_count = len(utils.get_users())
     if users_count <= 1:
-        return redirect(url_for('welcome.welcome'))
+        if not settings.get_has_dashboard_opened():
+            return redirect(url_for('welcome.welcome'))
 
     return redirect(url_for('admin.dashboard'))
 
@@ -90,6 +91,8 @@ def security():
 
 @blueprint.route(root_url + "dashboard/")
 def dashboard():
+    settings.set_has_dashboard_opened(True)
+
     health_warnings = get_health_warnings()
     warning_level = 0
     security_score = 1
@@ -107,7 +110,6 @@ def dashboard():
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
-        # no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
         cur_version=config.LIBERTEA_VERSION,
