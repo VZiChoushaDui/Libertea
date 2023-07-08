@@ -20,8 +20,9 @@ root_url = '/' + config.get_admin_uuid() + '/'
 def rootpage():
     users_count = len(utils.get_users())
     if users_count <= 1:
-        if not settings.get_has_dashboard_opened():
-            return redirect(url_for('welcome.welcome'))
+        # if not settings.get_has_dashboard_opened():
+        #     return redirect(url_for('welcome.welcome'))
+        return redirect(url_for('welcome.welcome'))
 
     return redirect(url_for('admin.dashboard'))
 
