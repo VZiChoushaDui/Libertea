@@ -1,4 +1,5 @@
 import os
+import time
 import random
 from . import sysops
 from . import config
@@ -23,8 +24,16 @@ def generate_certificate(domain):
     # generate certificate
     email_address = 'info@' + domain 
     print('*** Generating certificate for ' + domain)
+
     result = sysops.run_command('certbot certonly --standalone -d ' + domain + ' --agree-tos --email ' +
                                 email_address + ' --non-interactive' + ' --http-01-port 9999')
+    if result == 256:
+        # try again after 10 seconds
+        print('  - Certificate generation failed (256). Retrying in 10 seconds.')
+        time.sleep(10)
+        result = sysops.run_command('certbot certonly --standalone -d ' + domain + ' --agree-tos --email ' +
+                                    email_address + ' --non-interactive' + ' --http-01-port 9999')
+
     if result == 0:
         print('  - Certificate generated successfully')
         fullchain_file = '/etc/letsencrypt/live/' + domain + '/fullchain.pem'
@@ -68,7 +77,7 @@ def generate_certificate(domain):
             '_id': domain,
             'failure_count': domain_entry['failure_count'] + 1 if domain_entry is not None else 1,
             'updated_at': datetime.now() - timedelta(days=100),
-            'skip_until': datetime.now() + timedelta(hours=3) if domain_entry is not None and domain_entry['failure_count'] > 3 else datetime.now() + timedelta(minutes=5),
+            'skip_until': datetime.now() + timedelta(hours=3) if domain_entry is not None and domain_entry['failure_count'] > 5 else datetime.now() + timedelta(minutes=5),
         }}, upsert=True)
         return False
     
