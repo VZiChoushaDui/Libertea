@@ -226,7 +226,7 @@ def get_has_dashboard_opened(db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
-    setting = db.users.find_one({"_id": "has_dashboard_opened"})
+    setting = db.settings.find_one({"_id": "has_dashboard_opened"})
     if setting is None:
         return False
     return setting["value"]
@@ -236,6 +236,6 @@ def set_has_dashboard_opened(val, db=None):
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
     
-    db.users.update_one({"_id": "has_dashboard_opened"}, {"$set": {"value": val}}, upsert=True)
+    db.settings.update_one({"_id": "has_dashboard_opened"}, {"$set": {"value": val}}, upsert=True)
     return True
 
