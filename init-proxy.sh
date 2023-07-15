@@ -237,7 +237,9 @@ else
     fi
 
     echo "     - haproxy"
+    set +e
     systemctl stop haproxy
+    set -e
     rm -f /etc/haproxy/haproxy.cfg
     if [ "$PROXY_TYPE" == "ssh" ]; then
         cp proxy-haproxy/haproxy.ssh.cfg /etc/haproxy/haproxy.cfg
