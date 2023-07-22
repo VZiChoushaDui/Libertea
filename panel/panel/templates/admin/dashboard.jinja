@@ -8,6 +8,7 @@
         width: 120px;
         transition: opacity 0.6s ease-in-out;
         opacity: 0;
+        cursor: pointer;
     }
 </style>
 
@@ -96,7 +97,7 @@
             } else {
                 // circle.setText(Math.round(circle.value() * 10) + '/10');
                 // set html content
-                circle.setText('<div class="d-flex flex-column justify-content-center align-items-center text-center" style="margin-left: -20px; margin-right: -20px; margin-top: 6px;"><div style="font-size: 0.6em; font-weight: 700">Security score</div><div>' + Math.round(circle.value() * 10) + '/10</div></div>');
+                circle.setText('<div class="d-flex flex-column justify-content-center align-items-center text-center" style="margin-left: -20px; margin-right: -20px; margin-top: 6px;"><div style="font-size: 0.6em; font-weight: 700"><i class="fa-solid fa-circle-info px-1"></i>Availability score</div><div>' + Math.round(circle.value() * 10) + '/10</div><div style="font-size: 0.6em;"></div></div>');
                 circle.text.style.color = state.color;
             }
         },
@@ -118,10 +119,37 @@
     });
 
     setTimeout(function() {
-        document.getElementById('securityRing').style.opacity = 1;
+        const secRing = document.getElementById('securityRing');
+        secRing.style.opacity = 1;
         myProgress.animate({{ security_score }});
+        let availabilityInfoModal = new bootstrap.Modal(document.getElementById('availabilityInfoModal'), {});
+        secRing.addEventListener('click', function() {
+            availabilityInfoModal.show();
+        });
     }, 500);
 </script>
+
+<div class="modal fade" id="availabilityInfoModal" tabindex="-1" aria-labelledby="availabilityInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="availabilityInfoModalLabel">What is availability score?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>
+                Libertea VPN's availability score is a measure of how secure and available your Libertea VPN is. The higher the score, the more secure and available your Libertea VPN is, and it's more reliable for your users to use.
+            </p>
+            <p>
+                You can improve your Libertea VPN's availability by following the tips on <a href="/{{ admin_uuid }}/security/">this page</a>.
+            </p> 
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <div class="section stats">
     <div class="row">
