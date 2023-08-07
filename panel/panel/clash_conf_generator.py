@@ -21,9 +21,6 @@ def init_provider_info(type, name, group_name, host, port, password, path, meta_
         host = 'google.com'
         skip_cert_verify = "true"
 
-    if tier is None:
-        tier = utils.get_default_tier(entry_type)
-
     return {
         'type': type,
         'name': name,
@@ -63,17 +60,21 @@ def get_providers(connect_url, db, is_for_subscription=False):
     idx = 0
     for server, port in servers:      
         server_entry_type = utils.get_route_entry_type(server, db=db)
+        tier = utils.get_domain_or_online_route_tier(server, db=db)
+        if tier is None:
+            tier = utils.get_default_tier(server_entry_type)
+
         server_ips_str = utils.get_domain_dns_domain(server, db=db)
         server_ips = [server_ips_str]
         if server_ips_str is not None and ',' in server_ips_str:
             server_ips = server_ips_str.split(',')
         for s in server_ips:
-            tier = utils.get_domain_or_online_route_tier(server, db=db)
             providers.append({
                 'type': 'servergroup',
+                'tier': tier,
                 'name': str(idx) + "-" + server,
                 'group_name': str(idx) + "-" + server,
-                'tier': tier,
+                'meta_only': False,
             })
             if settings.get_provider_enabled('trojanws', db=db):
                 providers.append(init_provider_info(
