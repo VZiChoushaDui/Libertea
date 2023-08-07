@@ -6,5 +6,5 @@
       - {{ provider.name }}
 {% endif %}{% endif %}{% endif %}{% endfor %}
     url: 'http://www.google.com/generate_204'
-    interval: 60
+    interval: {{ 60 + (tier.index | int - 1) * 11 }}
     lazy: false
