@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from flask import render_template
 from datetime import datetime, timedelta
 
-def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
+def init_provider_info(type, name, group_name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
     if server is None:
         server = host
     if sni is None:
@@ -27,6 +27,7 @@ def init_provider_info(type, name, host, port, password, path, meta_only, entry_
     return {
         'type': type,
         'name': name,
+        'group_name': group_name,
         'server': server,
         'port': port,
         'password': password,
@@ -67,26 +68,18 @@ def get_providers(connect_url, db, is_for_subscription=False):
         if server_ips_str is not None and ',' in server_ips_str:
             server_ips = server_ips_str.split(',')
         for s in server_ips:
-            if settings.get_provider_enabled('ssv2ray', db=db):
-                if not is_for_subscription or server_entry_type != 'SecondaryProxy':
-                    # subscription does not support secondary proxy (invalid cert)
-                    providers.append(init_provider_info(
-                        type='ss-v2ray',
-                        name='ssW-' + str(idx) + "-" + server,
-                        port=port,
-                        password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
-                        path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
-                        meta_only=False,
-                        entry_type=server_entry_type,
-                        sni=utils.get_domain_sni(server, db=db),
-                        host=server,
-                        server=s,
-                        tier=utils.get_domain_or_online_route_tier(server, db=db),
-                    ))
+            tier = utils.get_domain_or_online_route_tier(server, db=db)
+            providers.append({
+                'type': 'servergroup',
+                'name': str(idx) + "-" + server,
+                'group_name': str(idx) + "-" + server,
+                'tier': tier,
+            })
             if settings.get_provider_enabled('trojanws', db=db):
                 providers.append(init_provider_info(
                     type='trojan-ws',
                     name='TrW-' + str(idx) + "-" + server,
+                    group_name=str(idx) + "-" + server,
                     port=port,
                     password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
@@ -95,12 +88,13 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
-                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                    tier=tier,
                 ))
             if settings.get_provider_enabled('vlessws', db=db):
                 providers.append(init_provider_info(
                     type='vless-ws',
                     name='VlW-' + str(idx) + "-" + server,
+                    group_name=str(idx) + "-" + server,
                     port=port,
                     password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
@@ -109,12 +103,13 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
-                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                    tier=tier,
                 ))
             if settings.get_provider_enabled('trojangrpc', db=db):
                 providers.append(init_provider_info(
                     type='trojan-grpc',
                     name='TrG-' + str(idx) + "-" + server,
+                    group_name=str(idx) + "-" + server,
                     port=port,
                     password=os.environ.get('CONN_TROJAN_GRPC_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_GRPC_URL'),
@@ -123,7 +118,7 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
-                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                    tier=tier,
                 ))
             if settings.get_provider_enabled('vlessgrpc', db=db):
                 if server_entry_type != 'SecondaryProxy' or is_for_subscription:
@@ -131,6 +126,7 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     providers.append(init_provider_info(
                         type='vless-grpc',
                         name='VlG-' + str(idx) + "-" + server,
+                        group_name=str(idx) + "-" + server,
                         port=port,
                         password=os.environ.get('CONN_VLESS_GRPC_AUTH_UUID'),
                         path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_GRPC_URL'),
@@ -139,12 +135,13 @@ def get_providers(connect_url, db, is_for_subscription=False):
                         sni=utils.get_domain_sni(server, db=db),
                         host=server,
                         server=s,
-                        tier=utils.get_domain_or_online_route_tier(server, db=db),
+                        tier=tier,
                     ))
             if settings.get_provider_enabled('vmessgrpc', db=db):
                 providers.append(init_provider_info(
                     type='vmess-grpc',
                     name='VmG-' + str(idx) + "-" + server,
+                    group_name=str(idx) + "-" + server,
                     port=port,
                     password=os.environ.get('CONN_VMESS_GRPC_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_GRPC_URL'),
@@ -153,8 +150,26 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     sni=utils.get_domain_sni(server, db=db),
                     host=server,
                     server=s,
-                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                    tier=tier,
                 ))
+            if settings.get_provider_enabled('ssv2ray', db=db):
+                if not is_for_subscription or server_entry_type != 'SecondaryProxy':
+                    # subscription does not support secondary proxy (invalid cert)
+                    providers.append(init_provider_info(
+                        type='ss-v2ray',
+                        name='ssW-' + str(idx) + "-" + server,
+                        group_name=str(idx) + "-" + server,
+                        port=port,
+                        password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
+                        path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
+                        meta_only=False,
+                        entry_type=server_entry_type,
+                        sni=utils.get_domain_sni(server, db=db),
+                        host=server,
+                        server=s,
+                        tier=tier,
+                    ))
+            
             idx += 1
 
     return providers
@@ -184,6 +199,11 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
             'type': settings.get_tier_proxygroup_type(i+1, db=db),
         })
 
+    group_names = set()
+    for p in providers:
+        group_names.add(p['group_name'])
+    group_names = list(group_names)
+
     health_check_group = ''
     try:
         for p in sorted(providers, key=lambda x: x['host'] + x['server']):
@@ -203,6 +223,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
         udp_exists=udp_exists,
         health_check=settings.get_periodic_health_check(),
         tiers=tiers,
+        group_names=group_names,
         manual_tier_select_clash=settings.get_manual_tier_select_clash(),
     )
 
