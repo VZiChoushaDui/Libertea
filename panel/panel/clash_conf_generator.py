@@ -204,6 +204,17 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
     for p in providers:
         group_names.add(p['group_name'])
     group_names = list(group_names)
+    groups = []
+    for g in group_names:
+        first_provider = [x for x in providers if x['group_name'] == g and x['type'] != 'servergroup'][0]
+        groups.append({
+            'index': len(groups),
+            'name': g,
+            'server': first_provider['server'],
+            'host': first_provider['host'],
+            'sni': first_provider['sni'],
+            'entry_type': first_provider['entry_type'],
+        })
 
     health_check_group = ''
     try:
@@ -224,7 +235,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
         udp_exists=udp_exists,
         health_check=settings.get_periodic_health_check(),
         tiers=tiers,
-        group_names=group_names,
+        groups=groups,
         manual_tier_select_clash=settings.get_manual_tier_select_clash(),
     )
 
