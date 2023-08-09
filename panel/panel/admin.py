@@ -595,11 +595,10 @@ def app_settings_save():
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
-    if add_domains_even_if_inactive is not None:
-        settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
     if proxy_port is not None:
         settings.set_secondary_proxy_ports(proxy_port)
 
+    settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')
