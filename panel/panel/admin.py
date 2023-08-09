@@ -365,7 +365,7 @@ def user_save(user):
     if note.strip() == '':
         note = user
     utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription)        
-    return redirect(url_for('admin.users', user=user))
+    return redirect(url_for('admin.user', user=uid))
 
 @blueprint.route(root_url + 'users/<user>/', methods=['DELETE'])
 def user_delete(user):
@@ -506,7 +506,7 @@ def domain_save(domain):
         priority = int(priority)
         utils.set_domain_or_online_route_tier(domain, priority)
     
-    return redirect(url_for('admin.domains'))
+    return redirect(url_for('admin.domain', domain=domain))
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
 def domain_delete(domain):
