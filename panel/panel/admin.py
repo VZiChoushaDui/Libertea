@@ -365,7 +365,7 @@ def user_save(user):
     if note.strip() == '':
         note = user
     utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription)        
-    return redirect(url_for('admin.user', user=uid))
+    return redirect(url_for('admin.user', user=user))
 
 @blueprint.route(root_url + 'users/<user>/', methods=['DELETE'])
 def user_delete(user):
