@@ -142,7 +142,7 @@ services:
     volumes:
       - './providers/vmess-ws/config.json:/etc/xray/config.json'
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
-      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'<<<<<<< HEAD
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vless-grpc:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
