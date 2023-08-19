@@ -133,7 +133,7 @@ services:
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     build: ./providers/vmess-ws
     ports:
-      - "127.0.0.1:2004:2004"
+      - "127.0.0.1:2008:2008"
       - "127.0.0.1:12003:12003"
     cap_add:
       - NET_ADMIN
