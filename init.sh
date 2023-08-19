@@ -121,7 +121,7 @@ if [[ $(uname -m) == *"x86"* ]]; then
         # change docker-compose.yml to use compatibility image
         sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
     fi
-fi
+
 
 echo " ** Getting public IP..."
 set +e
@@ -256,7 +256,7 @@ if [ "$COMMAND" != "update" ]; then
         read -r panel_domain
     done
     sed -i "s|PANEL_DOMAIN=.*|PANEL_DOMAIN=$panel_domain|g" .env
-    
+
     echo "Please enter a password for admin user:"
     read -r admin_password
     # check it is not empty and is at least 8 characters long
@@ -265,7 +265,7 @@ if [ "$COMMAND" != "update" ]; then
         read -r admin_password
     done
     sed -i "s|PANEL_ADMIN_PASSWORD=.*|PANEL_ADMIN_PASSWORD=$admin_password|g" .env
-    
+
     echo ""
 fi
 
@@ -321,7 +321,8 @@ echo "    - vless-grpc..."
 ./providers/vless-grpc/init.sh 2005 "$CONN_VLESS_GRPC_URL" "$CONN_VLESS_GRPC_AUTH_UUID"
 echo "    - vmess-grpc..."
 ./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
-
+echo "    - vmess-v2ray..."
+./providers/vmess-ws/init.sh 2008 12003 "$CONN_VMESS_WS_URL" "$CONN_VMESS_WS_AUTH_UUID"
 
 echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/
@@ -404,6 +405,7 @@ for container in $containers; do
 done
 
 # wait for the panel to start 
+
 echo -ne "    ⌛ libertea-panel\r"
 try_count=0
 response_code="0"

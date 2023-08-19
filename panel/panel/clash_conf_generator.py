@@ -9,6 +9,7 @@ from flask import render_template
 from datetime import datetime, timedelta
 
 def init_provider_info(type, name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
+
     if server is None:
         server = host
     if sni is None:
@@ -60,6 +61,7 @@ def get_providers(connect_url, db, is_for_subscription=False):
 
     providers = []
     idx = 0
+
     for server, port in servers:      
         server_entry_type = utils.get_route_entry_type(server, db=db)
         server_ips_str = utils.get_domain_dns_domain(server, db=db)
@@ -104,6 +106,20 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     port=port,
                     password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
+                    meta_only=True,
+                    entry_type=server_entry_type,
+                    sni=utils.get_domain_sni(server, db=db),
+                    host=server,
+                    server=s,
+                    tier=utils.get_domain_or_online_route_tier(server, db=db),
+                ))
+            if settings.get_provider_enabled('vmessws', db=db):
+                providers.append(init_provider_info(
+                    type='vmess-ws',
+                    name='VmW-' + str(idx) + "-" + server,
+                    port=port,
+                    password=os.environ.get('CONN_VMESS_WS_AUTH_UUID'),
+                    path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_WS_URL'),
                     meta_only=True,
                     entry_type=server_entry_type,
                     sni=utils.get_domain_sni(server, db=db),
@@ -167,7 +183,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
     db = client[config.MONGODB_DB_NAME]
 
     providers = get_providers(connect_url, db)
-    
+
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
         country_id = country['id']
@@ -221,7 +237,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
 
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
-    
+
     providers = get_providers(connect_url, db=db)
 
     ips_direct_countries = []
@@ -234,7 +250,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
     if settings.get_providers_from_all_endpoints(db=db):
         domains = set(utils.get_active_domains(db=db))
         domains.add(config.get_panel_domain())
-    
+
     udp_exists = settings.get_provider_enabled('trojanws', db=db)
     
     if file_name.startswith('tier') and file_name.endswith('.yaml'):
