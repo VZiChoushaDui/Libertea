@@ -121,7 +121,7 @@ if [[ $(uname -m) == *"x86"* ]]; then
         # change docker-compose.yml to use compatibility image
         sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
     fi
-
+fi
 
 echo " ** Getting public IP..."
 set +e
