@@ -134,7 +134,7 @@ services:
     build: ./providers/vmess-ws
     ports:
       - "127.0.0.1:2008:2008"
-      - "127.0.0.1:12003:12003"
+      - "127.0.0.1:12008:12008"
     cap_add:
       - NET_ADMIN
     container_name: libertea-provider-vmess-ws
