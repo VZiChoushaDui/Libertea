@@ -4,7 +4,7 @@
     port: {{port}}
     uuid: {{password}}
     alterId: 0
-    cipher: none
+    cipher: auto
     udp: true
     tls: true
     skip-cert-verify: {{skip_cert_verify}}
