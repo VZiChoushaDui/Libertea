@@ -12,6 +12,7 @@
                         "id": "{uuid}",
                         "level": 0,
                         "email": "me@example.com"
+                        "flow": "xtls-rprx-direct"
                     }
                 ],
                 "decryption": "none",
@@ -25,8 +26,8 @@
             },
             "streamSettings": {
                 "network": "tcp",
-                "security": "tls",
-                "tlsSettings": {
+                "security": "xtls",
+                "xtlsSettings": {
                     "alpn": [
                         "http/1.1"
                     ],
