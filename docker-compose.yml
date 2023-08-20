@@ -64,7 +64,7 @@ services:
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
-    build: ./providers/haproxy
+    build: ./haproxy
     container_name: libertea-haproxy
     volumes:
       - ./haproxy:/usr/local/etc/haproxy/
