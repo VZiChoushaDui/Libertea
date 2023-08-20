@@ -15,7 +15,7 @@ services:
       options:
         max-size: 10m
   rsyslog:
-    build: ./syslog
+    image: libertea/syslog
     hostname: libertea-rsyslog
     container_name: libertea-rsyslog
     restart: always
@@ -31,7 +31,7 @@ services:
       options:
         max-size: 10m
   log-parser:
-    build: ./log-parser
+    image: libertea/log-parser
     container_name: libertea-log-parser
     volumes:
       - "./data/logs:/data/logs"
@@ -64,7 +64,7 @@ services:
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
-    build: ./haproxy
+    build: ./providers/haproxy
     container_name: libertea-haproxy
     volumes:
       - ./haproxy:/usr/local/etc/haproxy/
@@ -84,7 +84,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/trojan-ws
+    image: libertea/provider-trojan-ws
     ports:
       - "127.0.0.1:2001:2001"
       - "127.0.0.1:12001:12001"
@@ -100,7 +100,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/trojan-grpc
+    image: libertea/provider-trojan-grpc
     ports:
       - "127.0.0.1:2004:2004"
     cap_add:
@@ -115,7 +115,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/vless-ws
+    image: libertea/provider-vless-ws
     ports:
       - "127.0.0.1:2002:2002"
       - "127.0.0.1:12002:12002"
@@ -147,7 +147,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/vless-grpc
+    image: libertea/provider-vless-grpc
     ports:
       - "127.0.0.1:2005:2005"
     cap_add:
@@ -162,7 +162,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/vmess-grpc
+    image: libertea/provider-vmess-grpc
     ports:
       - "127.0.0.1:2007:2007"
     cap_add:
@@ -177,7 +177,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/shadowsocks-v2ray
+    image: libertea/provider-shadowsocks-v2ray
     ports:
       - "127.0.0.1:2003:2003"
     cap_add:
