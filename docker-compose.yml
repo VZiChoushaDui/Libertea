@@ -115,7 +115,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    image: libertea/provider-vless-ws
+    build: ./providers/vless-ws
     ports:
       - "127.0.0.1:2002:2002"
       - "127.0.0.1:12002:12002"
