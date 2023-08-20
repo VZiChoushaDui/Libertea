@@ -321,8 +321,8 @@ echo "    - vless-grpc..."
 ./providers/vless-grpc/init.sh 2005 "$CONN_VLESS_GRPC_URL" "$CONN_VLESS_GRPC_AUTH_UUID"
 echo "    - vmess-grpc..."
 ./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
-echo "    - vmess-v2ray..."
-./providers/vmess-ws/init.sh 2008 12003 "$CONN_VMESS_WS_URL" "$CONN_VMESS_WS_AUTH_UUID"
+echo "    - vmess-ws..."
+./providers/vmess-ws/init.sh 2008 12008 "$CONN_VMESS_WS_URL" "$CONN_VMESS_WS_AUTH_UUID"
 
 echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/
