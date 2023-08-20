@@ -15,7 +15,7 @@ services:
       options:
         max-size: 10m
   rsyslog:
-    image: ./syslog
+    image: libertea/syslog
     hostname: libertea-rsyslog
     container_name: libertea-rsyslog
     restart: always
@@ -31,7 +31,7 @@ services:
       options:
         max-size: 10m
   log-parser:
-    image: ./log-parser
+    image: libertea/log-parser
     container_name: libertea-log-parser
     volumes:
       - "./data/logs:/data/logs"
