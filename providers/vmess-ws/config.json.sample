@@ -10,7 +10,7 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "alterId": 0,
+                        "level": 0,
                         "email": "me@example.com"
                     }
                 ],
@@ -46,7 +46,7 @@
                 "clients": [
                     {
                         "id": "{uuid}",
-                        "alterId": 0,
+                        "level": 0,
                         "email": "me@example.com"
                     }
                 ]
