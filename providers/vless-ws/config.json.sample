@@ -27,7 +27,7 @@
             "streamSettings": {
                 "network": "tcp",
                 "security": "xtls",
-                "tlsSettings": {
+                "xtlsSettings": {
                     "alpn": [
                         "http/1.1"
                     ],
