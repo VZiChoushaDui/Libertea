@@ -1,6 +1,6 @@
 {
     "log": {
-        "loglevel": "warning"
+        "loglevel": "warning"  
     },
     "inbounds": [
         {
@@ -11,20 +11,18 @@
                     {
                         "id": "{uuid}",
                         "level": 0,
+                        "alterId": 0,
                         "email": "me@example.com"
                     }
                 ],
-                "fallbacks": [
-                    {
-                        "path": "/{url}",
-                        "dest": {port-internal},
-                        "xver": 1
-                    }
-                ]
+                "decryption": "none"
             },
             "streamSettings": {
-                "network": "tcp",
+                "network": "ws",
                 "security": "tls",
+                "wsSettings": {
+                    "path": "/{url}"
+                },
                 "tlsSettings": {
                     "alpn": [
                         "http/1.1"
@@ -37,28 +35,6 @@
                     ]
                 }
             }
-        },
-        {
-            "port": {port-internal},
-            "listen": "127.0.0.1",
-            "protocol": "vmess",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "{uuid}",
-                        "level": 0,
-                        "email": "me@example.com"
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "security": "none",
-                "wsSettings": {
-                    "acceptProxyProtocol": true,
-                    "path": "/{url}"
-                }
-            }
         }
     ],
     "outbounds": [
@@ -67,3 +43,4 @@
         }
     ]
 }
+

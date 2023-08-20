@@ -114,29 +114,12 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
             if settings.get_provider_enabled('vmessws', db=db):
-                if server_entry_type != 'SecondaryProxy':
                 providers.append(init_provider_info(
                     type='vmess-ws',
                     name='VmW-' + str(idx) + "-" + server,
                     port=port,
                     password=os.environ.get('CONN_VMESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_WS_URL'),
-                    meta_only=True,
-                    entry_type=server_entry_type,
-                    sni=utils.get_domain_sni(server, db=db),
-                    host=server,
-                    server=s,
-                    tier=utils.get_domain_or_online_route_tier(server, db=db),
-                ))
-            if settings.get_provider_enabled('vmessws', db=db):
-                if server_entry_type == 'SecondaryProxy':
-                providers.append(init_provider_info(
-                    type='vmess-ws',
-                    name='VmW-' + str(idx) + "-" + server,
-                    port=port,
-                    password=os.environ.get('CONN_VMESS_WS_AUTH_UUID'),
-                    path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_WS_URL'),
-                    flow='xtls-rprx-direct',
                     meta_only=True,
                     entry_type=server_entry_type,
                     sni=utils.get_domain_sni(server, db=db),

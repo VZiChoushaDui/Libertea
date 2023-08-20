@@ -1,12 +1,12 @@
-<img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo-complete.png" style="width: 300px" />
+<img src="https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/logo-complete.png" style="width: 300px" />
 
 # Libertea
 
 سرور V2ray VPN چند مسیری را به راحتی نصب و مدیریت کنید. با مدیریت کاربر، استتار دامنه، و به روز رسانی خودکار مسیرها برای کاربران.
 
-[中文 چینی](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
+[中文 چینی](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README-zh.md)
 
-[English](https://github.com/VZiChoushaDui/Libertea/blob/master/README.md)
+[English](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README.md)
 
 ## امکانات
 
@@ -35,7 +35,7 @@
 
 3. دستور زیر را روی سرور خود اجرا کنید و دستورالعمل ها را دنبال کنید.
 
-       curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+       curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
     *نصب ممکن است چند دقیقه طول بکشد.*
 
@@ -43,13 +43,13 @@
 
 برای به روز رسانی کافیست دستور زیر را روی سرور خود اجرا کنید:
 
-    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
 
 ## حذف
 
 اگر به هر دلیلی می خواهید Libertea یا Libertea-secondary-proxy را از سرور خود حذف کنید، دستور زیر را روی سرور خود اجرا کنید:
 
-    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
 
 ## مشارکت
 

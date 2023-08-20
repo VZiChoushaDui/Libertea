@@ -19,7 +19,7 @@ if [[ `git log origin/$BRANCH..HEAD` ]]; then
 fi
 
 CUR_VERSION=`cat version.txt`
-LATEST_VERSION=`curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/$BRANCH/version.txt`
+LATEST_VERSION=`curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/$BRANCH/version.txt`
 
 if [[ $LATEST_VERSION > $CUR_VERSION ]]; then
     echo "New version detected: $LATEST_VERSION"

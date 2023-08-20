@@ -33,5 +33,5 @@ done
 
 
 # run xray
-echo " ** Starting Xray..."
+echo " ** Starting V2ray ..."
 /usr/bin/xray -config /etc/xray/config.json

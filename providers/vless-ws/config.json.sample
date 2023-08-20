@@ -1,6 +1,6 @@
 {
     "log": {
-        "loglevel": "warning"
+        "loglevel": "info"
     },
     "inbounds": [
         {
@@ -12,7 +12,6 @@
                         "id": "{uuid}",
                         "level": 0,
                         "email": "me@example.com"
-                        "flow": "xtls-rprx-direct"
                     }
                 ],
                 "decryption": "none",
@@ -26,8 +25,8 @@
             },
             "streamSettings": {
                 "network": "tcp",
-                "security": "xtls",
-                "xtlsSettings": {
+                "security": "tls",
+                "tlsSettings": {
                     "alpn": [
                         "http/1.1"
                     ],

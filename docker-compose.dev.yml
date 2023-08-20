@@ -49,6 +49,8 @@ services:
       - CONN_VLESS_WS_IP=${CONN_VLESS_WS_IP}
       - CONN_VLESS_GRPC_URL=${CONN_VLESS_GRPC_URL}
       - CONN_VLESS_GRPC_IP=${CONN_VLESS_GRPC_IP}
+      - CONN_VMESS_WS_URL=${CONN_VMESS_WS_URL}
+      - CONN_VMESS_WS_IP=${CONN_VMESS_WS_IP}
       - CONN_VMESS_GRPC_URL=${CONN_VMESS_GRPC_URL}
       - CONN_VMESS_GRPC_IP=${CONN_VMESS_GRPC_IP}
       - CONN_TROJAN_WS_URL=${CONN_TROJAN_WS_URL}
@@ -138,6 +140,22 @@ services:
     restart: always
     volumes:
       - './providers/vless-grpc/config.json:/etc/xray/config.json'
+      - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
+  provider-vmess-ws:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+    build: ./providers/vmess-ws
+    ports:
+      - "127.0.0.1:2008:2008"
+      - "127.0.0.1:12008:12008"
+    cap_add:
+      - NET_ADMIN
+    container_name: libertea-provider-vmess-ws
+    restart: always
+    volumes:
+      - './providers/vmess-ws/config.json:/etc/xray/config.json'
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vmess-grpc:

@@ -167,11 +167,6 @@ if [ ! -f .env ]; then
 else
     echo " ** Updating .env..."
 
-    if grep -q "FIREWALL_OUTBOUND_TCP_PORTS=\"22 53 80 8080 443 8443 3389\"" .env; then
-        echo "    - Removing old default FIREWALL_OUTBOUND_TCP_PORTS from .env..."
-        sed -i '/FIREWALL_OUTBOUND_TCP_PORTS="22 53 80 8080 443 8443 3389"/d' .env
-    fi
-
     # If a variable is missing from .env, add it and fill it with value
     while IFS= read -r line; do
         if [[ $line != *"=" ]]; then
@@ -319,10 +314,10 @@ echo "    - vless-ws..."
 ./providers/vless-ws/init.sh 2002 12002 "$CONN_VLESS_WS_URL" "$CONN_VLESS_WS_AUTH_UUID"
 echo "    - vless-grpc..."
 ./providers/vless-grpc/init.sh 2005 "$CONN_VLESS_GRPC_URL" "$CONN_VLESS_GRPC_AUTH_UUID"
-echo "    - vmess-grpc..."
-./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
 echo "    - vmess-ws..."
 ./providers/vmess-ws/init.sh 2008 12008 "$CONN_VMESS_WS_URL" "$CONN_VMESS_WS_AUTH_UUID"
+echo "    - vmess-grpc..."
+./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
 
 echo " ** Installing web panel..."
 cp panel/libertea-panel.service /etc/systemd/system/

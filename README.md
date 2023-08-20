@@ -1,12 +1,12 @@
-<img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo-complete.png" style="width: 300px" />
+<img src="https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/logo-complete.png" style="width: 300px" />
 
 # Libertea
 
 Easily install and manage a multi-protocol, multi-route V2ray VPN server; with user management, domain camouflage (fallback), and route auto update for users.
 
-[Chinese 中文](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
+[Chinese 中文](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README-zh.md)
 
-[Farsi فارسی](https://github.com/VZiChoushaDui/Libertea/blob/master/README-fa.md)
+[Farsi فارسی](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README-fa.md)
 
 ## Features
 

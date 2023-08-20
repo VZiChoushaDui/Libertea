@@ -1,12 +1,12 @@
-<img src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/logo-complete.png" style="width: 300px" />
+<img src="https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/logo-complete.png" style="width: 300px" />
 
 # Libertea
 
 轻松安装和管理多协议、多路由的 V2ray VPN 服务器；具有用户管理、域伪装和自动更新功能。
 
-[English](https://github.com/VZiChoushaDui/Libertea/blob/master/README.md)
+[English](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README.md)
 
-[波斯语 فارسی](https://github.com/VZiChoushaDui/Libertea/blob/master/README-fa.md)
+[波斯语 فارسی](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README-fa.md)
 
 ## 特征
 
@@ -29,13 +29,13 @@
 
 ## 安装
 
-1. 购买一个域并将其 DNS 指向 CDN（例如 Cloudflare），并将 CDN 设置为 `Full` SSL 模式。 [帮助](https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png)
+1. 购买一个域并将其 DNS 指向 CDN（例如 Cloudflare），并将 CDN 设置为 `Full` SSL 模式。 [帮助](https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/cloudflare-full-ssl.png)
 
 2. 将服务器的IP地址设置为CDN的DNS记录，并确保CDN已启用。 （Cloudflare 中的橙色云图标）
 
 3. 在您的服务器上运行以下命令并按照说明进行操作。
 
-       curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+       curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
     *安装可能需要几分钟。*
 
@@ -43,13 +43,13 @@
 
 要更新，只需在您的服务器上运行以下命令：
 
-    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
 
 ## 卸载
 
 如果您出于任何原因想要从您的服务器卸载 Liberta 或 Liberta-secondary-proxy，请在您的服务器上运行以下命令：
 
-    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
 
 ## 贡献
 

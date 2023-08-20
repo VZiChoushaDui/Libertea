@@ -41,6 +41,11 @@ echo " *** Building and pushing libertea/provider-vless-grpc:$version *** "
 docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-vless-grpc:$version ./providers/vless-grpc --push
 docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-vless-grpc:latest ./providers/vless-grpc --push
 
+# providers/vmess-ws
+echo " *** Building and pushing libertea/provider-vmess-ws:$version *** "
+docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-vmess-ws:$version ./providers/vmess-ws --push
+docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-vmess-ws:latest ./providers/vmess-ws --push
+
 # providers/vmess-grpc
 echo " *** Building and pushing libertea/provider-vmess-grpc:$version *** "
 docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-vmess-grpc:$version ./providers/vmess-grpc --push
