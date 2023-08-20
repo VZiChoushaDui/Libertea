@@ -15,7 +15,7 @@ services:
       options:
         max-size: 10m
   rsyslog:
-    image: ./syslog
+    image: libertea/syslog
     hostname: libertea-rsyslog
     container_name: libertea-rsyslog
     restart: always
@@ -31,7 +31,7 @@ services:
       options:
         max-size: 10m
   log-parser:
-    image: ./log-parser
+    image: libertea/log-parser
     container_name: libertea-log-parser
     volumes:
       - "./data/logs:/data/logs"
@@ -64,7 +64,7 @@ services:
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
-    image: ./haproxy
+    image: libertea/haproxy
     container_name: libertea-haproxy
     volumes:
       - ./haproxy:/usr/local/etc/haproxy/
@@ -84,7 +84,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    image: ./providers/trojan-ws
+    image: libertea/provider-trojan-ws
     ports:
       - "127.0.0.1:2001:2001"
       - "127.0.0.1:12001:12001"
@@ -100,7 +100,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    image: ./providers/trojan-grpc
+    image: libertea/provider-trojan-grpc
     ports:
       - "127.0.0.1:2004:2004"
     cap_add:
@@ -115,7 +115,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    image: ./providers/vless-ws
+    image: libertea/provider-vless-ws
     ports:
       - "127.0.0.1:2002:2002"
       - "127.0.0.1:12002:12002"
@@ -147,12 +147,12 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    image: ./providers/vless-grpc
+    image: libertea/provider-vless-grpc
     ports:
       - "127.0.0.1:2005:2005"
     cap_add:
       - NET_ADMIN
-    container_name: ./providers/vless-grpc
+    container_name: libertea-provider-vless-grpc
     restart: always
     volumes:
       - './providers/vless-grpc/config.json:/etc/xray/config.json'
@@ -167,7 +167,7 @@ services:
       - "127.0.0.1:2007:2007"
     cap_add:
       - NET_ADMIN
-    container_name: ./providers/vmess-grpc
+    container_name: libertea-provider-vmess-grpc
     restart: always
     volumes:
       - './providers/vmess-grpc/config.json:/etc/xray/config.json'
