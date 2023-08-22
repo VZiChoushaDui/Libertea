@@ -11,8 +11,8 @@ PORT="$1"
 URL="$2"
 UUID="$3"
 
-if [ -z "$PORT" ] || [ -z "$PORT_INTERNAL" ] || [ -z "$URL" ] || [ -z "$UUID" ]; then
-    echo "Usage: $0 <port> <port_internal> <url> <uuid>"
+if [ -z "$PORT" ] || [ -z "$URL" ] || [ -z "$UUID" ]; then
+    echo "Usage: $0 <port> <url> <uuid>"
     exit 1
 fi
 
