@@ -115,7 +115,7 @@ services:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
       - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-    build: ./providers/vless-ws
+    image: libertea/provider-vless-ws
     ports:
       - "127.0.0.1:2002:2002"
       - "127.0.0.1:12002:12002"
@@ -134,7 +134,6 @@ services:
     build: ./providers/vmess-ws
     ports:
       - "127.0.0.1:2008:2008"
-      - "127.0.0.1:12008:12008"
     cap_add:
       - NET_ADMIN
     container_name: libertea-provider-vmess-ws

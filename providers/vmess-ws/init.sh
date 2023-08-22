@@ -8,9 +8,8 @@ if [ -f config.json ]; then
 fi
 
 PORT="$1"
-PORT_INTERNAL="$2"
-URL="$3"
-UUID="$4"
+URL="$2"
+UUID="$3"
 
 if [ -z "$PORT" ] || [ -z "$PORT_INTERNAL" ] || [ -z "$URL" ] || [ -z "$UUID" ]; then
     echo "Usage: $0 <port> <port_internal> <url> <uuid>"
