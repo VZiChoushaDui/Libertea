@@ -21,7 +21,7 @@ jobs:
 
       - name: "Getting Version Number"
         id: get-version
-          run: |
+        run: |
           VER=`cat version.txt`
           echo "VERSION=$VER" >> $GITHUB_ENV
 
