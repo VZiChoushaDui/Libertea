@@ -37,7 +37,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Haproxy Version
+      - name: Building and pushing haproxy version
         uses: docker/build-push-action@v4
         with:
           context: ./haproxy
@@ -46,7 +46,7 @@ jobs:
           tags: liberteamarron/haproxy:${{ env.VERSION }}
 
 
-      - name: Build and Push Haproxy Latest
+      - name: Building and pushing haproxy latest
         uses: docker/build-push-action@v4
         with:
           context: ./haproxy
@@ -54,5 +54,211 @@ jobs:
           push: true
           tags: liberteamarron/haproxy:latest
 
+      - name: Building and pushing syslog version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./syslog
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/syslog:${{ env.VERSION }}
 
+
+      - name: Building and pushing syslog latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./syslog
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/syslog:latest
+
+      - name: Building and pushing log-parser version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./log-parser
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/log-parser:${{ env.VERSION }}
+
+
+      - name: Building and pushing log-parser latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./log-parser
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/log-parser:latest
+
+      - name: Building and pushing provider-trojan-ws version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/trojan-ws
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-trojan-ws:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-trojan-ws latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/trojan-ws
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-trojan-ws:latest
+
+      - name: Building and pushing provider-trojan-grpc version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/trojan-grpc
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-trojan-grpc:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-trojan-grpc latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/trojan-grpc
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-trojan-grpc:latest
+
+      - name: Building and pushing provider-vless-ws version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vless-ws
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vless-ws:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-vless-ws latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vless-ws
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vless-ws:latest
+
+      - name: Building and pushing provider-vless-grpc version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vless-grpc
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vless-grpc:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-vless-grpc latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vless-grpc
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vless-grpc:latest
+
+      - name: Building and pushing provider-vmess-ws version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vmess-ws
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vmess-ws:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-vmess-ws latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vmess-ws
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vmess-ws:latest
+
+      - name: Building and pushing provider-vmess-grpc version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vmess-grpc
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vmess-grpc:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-vmess-grpc latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/vmess-grpc
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vmess-grpc:latest
+
+
+      - name: Building and pushing provider-shadowsocks-v2ray version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/shadowsocks-v2ray
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-shadowsocks-v2ray:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-shadowsocks-v2ray latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./provider/shadowsocks-v2ray
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-shadowsocks-v2ray:latest
+
+
+      - name: Building and pushing proxy-register version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy-register
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/proxy-register:${{ env.VERSION }}
+
+
+      - name: Building and pushing proxy-register latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy-register
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/proxy-register:latest
+
+
+      - name: Building and pushing proxy-haproxy version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy-haproxy
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/proxy-haproxy:${{ env.VERSION }}
+
+
+      - name: Building and pushing proxy-haproxy latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy-haproxy
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/proxy-haproxy:latest
+
+
+      - name: Building and pushing proxy-fake-traffic version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy-fake-traffic
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/proxy-fake-traffic:${{ env.VERSION }}
+
+
+      - name: Building and pushing proxy-fake-traffic latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./proxy-fake-traffic
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/proxy-fake-traffic:latest
 
