@@ -152,7 +152,7 @@ def get_hostcontroller_api_key():
     return os.environ.get('HOSTCONTROLLER_API_KEY')
 
 def get_bootstrap_script_url():
-    return "https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/" + get_libertea_branch() + "/bootstrap.sh"
+    return "https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/" + get_libertea_branch() + "/bootstrap.sh"
 
 def get_root_dir():
     env_root_dir = os.environ.get('LIBERTEA_ROOT_DIR')
