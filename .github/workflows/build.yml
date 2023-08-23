@@ -30,8 +30,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      - name: Build and push
+
+      - name: "Getting Version Number"
+        id: version
+        run: id=$(cat version.txt)
+        env:
+          number: $id
+
+      - name: Build and Push Haproxy Latest
         uses: docker/build-push-action@v4
         with:
           context: ./haproxy
