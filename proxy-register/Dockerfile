@@ -1,9 +1,9 @@
-from python:3.8-alpine
+from python:3.8
 
 WORKDIR /app
 COPY . .
 
-RUN apk add --no-cache --virtual .build-deps gcc musl-dev && pip install --no-cache-dir -r requirements.txt && apk del .build-deps
+RUN pip install -r requirements.txt
 
 ENV PYTHONUNBUFFERED=0
 

@@ -4,6 +4,8 @@ set -e
 
 version=`cat version.txt`
 
+echo "note: with libertea marron you can use github workflow to build and push images to docker instead of this script"
+
 # build {image} and push it to libertea:{image}:version on docker hub
 
 # ./haproxy
