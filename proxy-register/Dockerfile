@@ -3,7 +3,7 @@ from python:3.8-alpine
 WORKDIR /app
 COPY . .
 
-RUN pip install -r requirements.txt --ignore-engines
+RUN pip install -r requirements.txt 
 
 ENV PYTHONUNBUFFERED=0
 
