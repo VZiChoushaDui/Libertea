@@ -11,8 +11,8 @@ fi
 # This file is downloaded via curl and executed by user in a single command
 # It's intended to be used as a bootstrap script for the whole Libertea project.
 
-REPO_URL="https://github.com/quiniapiezoelectricity/Libertea.git"
-PROJECT_NAME="libertea"
+REPO_URL="https://github.com/quiniapiezoelectricity/Libertea-Marron.git"
+PROJECT_NAME="libertea-marron"
 COMMAND="$1"
 
 if [ "$COMMAND" != "install" ] && [ "$COMMAND" != "update" ] && [ "$COMMAND" != "install-proxy" ] && [ "$COMMAND" != "uninstall" ]; then
