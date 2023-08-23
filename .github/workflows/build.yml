@@ -7,11 +7,14 @@ on:
       - master
     paths:
       - "providers/**"
+      - "!providers/**.json.sample"
+      - "!providers/**/init.sh"
       - "haproxy/**"
       - "log-parser/**"
       - "proxy-fake-traffic/**"
       - "proxy-haproxy/**"
       - "proxy-register/**"
+
 
 
 jobs:
