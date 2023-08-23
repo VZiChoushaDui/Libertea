@@ -4,10 +4,14 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
-    paths-ignore:
-      - "**/README.md"
-
+      - master
+    paths:
+      - "providers/**"
+      - "haproxy/**"
+      - "log-parser/**"
+      - "proxy-fake-traffic/**"
+      - "proxy-haproxy/**"
+      - "proxy-register/**"
 
 
 jobs:
