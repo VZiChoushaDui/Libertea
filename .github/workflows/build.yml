@@ -91,7 +91,7 @@ jobs:
       - name: Building and pushing provider-trojan-ws version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/trojan-ws
+          context: ./providers/trojan-ws
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-trojan-ws:${{ env.VERSION }}
@@ -100,7 +100,7 @@ jobs:
       - name: Building and pushing provider-trojan-ws latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/trojan-ws
+          context: ./providers/trojan-ws
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-trojan-ws:latest
@@ -108,7 +108,7 @@ jobs:
       - name: Building and pushing provider-trojan-grpc version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/trojan-grpc
+          context: ./providers/trojan-grpc
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-trojan-grpc:${{ env.VERSION }}
@@ -117,7 +117,7 @@ jobs:
       - name: Building and pushing provider-trojan-grpc latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/trojan-grpc
+          context: ./providers/trojan-grpc
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-trojan-grpc:latest
@@ -125,7 +125,7 @@ jobs:
       - name: Building and pushing provider-vless-ws version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vless-ws
+          context: ./providers/vless-ws
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vless-ws:${{ env.VERSION }}
@@ -134,7 +134,7 @@ jobs:
       - name: Building and pushing provider-vless-ws latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vless-ws
+          context: ./providers/vless-ws
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vless-ws:latest
@@ -142,7 +142,7 @@ jobs:
       - name: Building and pushing provider-vless-grpc version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vless-grpc
+          context: ./providers/vless-grpc
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vless-grpc:${{ env.VERSION }}
@@ -151,7 +151,7 @@ jobs:
       - name: Building and pushing provider-vless-grpc latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vless-grpc
+          context: ./providers/vless-grpc
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vless-grpc:latest
@@ -159,7 +159,7 @@ jobs:
       - name: Building and pushing provider-vmess-ws version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vmess-ws
+          context: ./providers/vmess-ws
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vmess-ws:${{ env.VERSION }}
@@ -168,7 +168,7 @@ jobs:
       - name: Building and pushing provider-vmess-ws latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vmess-ws
+          context: ./providers/vmess-ws
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vmess-ws:latest
@@ -176,7 +176,7 @@ jobs:
       - name: Building and pushing provider-vmess-grpc version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vmess-grpc
+          context: ./providers/vmess-grpc
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vmess-grpc:${{ env.VERSION }}
@@ -185,7 +185,7 @@ jobs:
       - name: Building and pushing provider-vmess-grpc latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/vmess-grpc
+          context: ./providers/vmess-grpc
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-vmess-grpc:latest
@@ -194,7 +194,7 @@ jobs:
       - name: Building and pushing provider-shadowsocks-v2ray version
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/shadowsocks-v2ray
+          context: ./providers/shadowsocks-v2ray
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-shadowsocks-v2ray:${{ env.VERSION }}
@@ -203,7 +203,7 @@ jobs:
       - name: Building and pushing provider-shadowsocks-v2ray latest
         uses: docker/build-push-action@v4
         with:
-          context: ./provider/shadowsocks-v2ray
+          context: ./providers/shadowsocks-v2ray
           platforms: linux/amd64,linux/arm64
           push: true
           tags: liberteamarron/provider-shadowsocks-v2ray:latest
