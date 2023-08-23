@@ -1,4 +1,3 @@
-<img src="https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/logo-complete.png" style="width: 300px" />
 
 # Libertea
 
@@ -29,13 +28,13 @@
 
 ## نصب و راه اندازی
 
-1. یک دامنه بخرید و DNS آن را روی یک CDN (مانند Cloudflare) قرار دهید و CDN را روی حالت «Full» SSL قرار دهید. [راهنما](https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png)
+1. یک دامنه بخرید و DNS آن را روی یک CDN (مانند Cloudflare) قرار دهید و CDN را روی حالت «Full» SSL قرار دهید. [راهنما](https://raw.githubusercontent.com/VZiChoushaDui/Libertea-Marron/master/docs/cloudflare-full-ssl.png)
 
 2. آدرس IP سرور خود را روی رکورد DNS CDN تنظیم کنید و مطمئن شوید که CDN فعال است. (نماد ابر نارنجی در Cloudflare)
 
 3. دستور زیر را روی سرور خود اجرا کنید و دستورالعمل ها را دنبال کنید.
 
-       curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+       curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
     *نصب ممکن است چند دقیقه طول بکشد.*
 
@@ -43,7 +42,7 @@
 
 برای به روز رسانی کافیست دستور زیر را روی سرور خود اجرا کنید:
 
-    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
 
 ## حذف
 

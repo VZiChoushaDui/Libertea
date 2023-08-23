@@ -1,12 +1,11 @@
-<img src="https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/logo-complete.png" style="width: 300px" />
 
-# Libertea
+# Libertea Marron
 
 Easily install and manage a multi-protocol, multi-route V2ray VPN server; with user management, domain camouflage (fallback), and route auto update for users.
 
-[Chinese 中文](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README-zh.md)
+[Chinese 中文](https://github.com/quiniapiezoelectricity/Libertea-Marron/blob/master/README-zh.md)
 
-[Farsi فارسی](https://github.com/quiniapiezoelectricity/Libertea/blob/master/README-fa.md)
+[Farsi فارسی](https://github.com/quiniapiezoelectricity/Libertea-Marron/blob/master/README-fa.md)
 
 ## Features
 
@@ -29,13 +28,13 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with u
 
 ## Installation
 
-1. Buy a domain and point its DNS to a CDN (such as Cloudflare), and set the CDN to `Full` SSL mode. [help](https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/docs/cloudflare-full-ssl.png)
+1. Buy a domain and point its DNS to a CDN (such as Cloudflare), and set the CDN to `Full` SSL mode. [help](https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/master/docs/cloudflare-full-ssl.png)
 
 2. Set your server's IP address to the CDN's DNS record, and make sure CDN is enabled. (Orange cloud icon in Cloudflare)
 
 3. run the following command on your server and follow the instructions.
 
-       curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+       curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
 
     *The installation may take a few minutes.*
 
@@ -43,13 +42,13 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with u
 
 To update, just run the following command on your server:
 
-    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
 
 ## Uninstall
 
 If you want to uninstall Liberta or Liberta-secondary-proxy from your server for any reason, run the following command on your server:
 
-    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
+    curl -s https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall
 
 ## Contribution
 
