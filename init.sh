@@ -37,12 +37,12 @@ fi
 cd "$DIR"
 
 # if .libertea.proxy file exists, then this is a proxy server. don't install main
-if [ -f .libertea.proxy || -f .libertea-marron.proxy ]; then
+if [[ -f .libertea.proxy || -f .libertea-marron.proxy ]]; then
     echo "This is a Libertea proxy server. You can't install both main and proxy on the same server."
     exit 1
 fi
 
-if [ -f .libertea.main && ! -f .libertea-marron.main ]; then
+if [[ -f .libertea.main && ! -f .libertea-marron.main ]]; then
     echo "A vanilla version of Libertea main exists on this server. You can't install both vanulla and marron on the same server."
     exit 1
 fi
