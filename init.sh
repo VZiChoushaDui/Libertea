@@ -16,8 +16,8 @@ fi
 
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-VDIR=$( sed 's/libertea-marron/libertea/' "$DIR")
 echo $DIR
+VDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
 echo $VDIR
 
 if [[ -d "$VDIR" ]]; then
