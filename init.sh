@@ -16,32 +16,36 @@ fi
 
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-echo $DIR
 VDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
-echo $VDIR
+if [[ ! -d "$VDIR" ]]; then
+    mkdir "$VDIR"
+fi
 
-if [[ -d "$VDIR" ]]; then
-    cd "$VDIR"
+cd "$VDIR"
+
+if [[ ! -f .libertea-marron.exist ]]; then
     # if .libertea.proxy file exists, then this is a proxy server. don't install main
     if [ -f .libertea.proxy ]; then
         echo "This is a Libertea proxy server. You can't install both main and proxy on the same server."
         exit 1
     fi
-
     if [ -f .libertea.main ]; then
         echo "A vanilla version of Libertea main exists on this server. You can't install both vanilla and marron on the same server."
         exit 1
     fi
 fi
-
+touch .libertea-marron.exist
+touch .libertea.main
+touch .libertea.proxy
 cd "$DIR"
 
 # if .libertea.proxy file exists, then this is a proxy server. don't install main
-if [ -f .libertea.proxy ]; then
+if [ -f .libertea-marron.proxy ]; then
     echo "This is a Libertea proxy server. You can't install both main and proxy on the same server."
     exit 1
 fi
 
+touch .libertea-marron.main
 touch .libertea.main
 export DEBIAN_FRONTEND=noninteractive
 

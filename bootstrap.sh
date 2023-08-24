@@ -125,6 +125,7 @@ elif [ "$COMMAND" = "uninstall" ]; then
     echo " ** Deleting Libertea files..."
     cd /root
     rm -rf "/root/$PROJECT_NAME"
+    rm -rf "/root/libertea"
 
     echo ""
     echo "Uninstall complete."
