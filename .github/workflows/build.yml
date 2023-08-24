@@ -15,8 +15,6 @@ on:
       - "proxy-haproxy/**"
       - "proxy-register/**"
 
-
-
 jobs:
   build-push-image:
     name: Push Docker image to Docker Hub
