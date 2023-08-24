@@ -52,7 +52,7 @@ fi
 
 touch .libertea-marron.main
 touch .libertea.main
-read '' -p
+read -r
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
