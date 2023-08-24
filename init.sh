@@ -260,7 +260,7 @@ if [ "$COMMAND" != "update" ]; then
         echo "Invalid domain name. Please enter a valid domain name:"
         read -r panel_domain
     done
-    
+
     sed -i "s|PANEL_DOMAIN=.*|PANEL_DOMAIN=$panel_domain|g" .env
 
     if [[ $ARG_ADMIN_PASSWORD != "" ]]; then
@@ -443,7 +443,7 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     if [ $(($try_count)) -gt 0 ] && [ $(( $(date +%s) - start_time )) -gt 100 ]; then
         echo "*******************************************************"
         echo "ERROR: Timeout while waiting for panel to start."
-        echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
+        echo "       Please open an issue on https://github.com/quiniapiezoelectricity/Libertea-Marron/issues/new"
         echo "       and include the following information:"
         echo ""
         
@@ -465,7 +465,7 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
         echo "       - Panel root status code: $PANEL_ROOT_STATUS_CODE"
         echo "       - Panel admin status code: $PANEL_ADMIN_STATUS_CODE"
         echo "       Also include the output of the following command:"
-        echo "           tail -n 100 /tmp/libertea-panel.log"
+        echo "           tail -n 100 /tmp/libertea-marron-panel.log"
         echo ""
         exit 1
     fi
