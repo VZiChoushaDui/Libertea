@@ -68,7 +68,7 @@ fi
 if [ "$COMMAND" = "install" ]; then
     # Install the project
     echo " ** Installing $PROJECT_NAME..."
-    ./init.sh
+    ./init.sh install "$2" "$3"
 elif [ "$COMMAND" = "update" ]; then
     # Update the project
     echo "Updating $PROJECT_NAME..."

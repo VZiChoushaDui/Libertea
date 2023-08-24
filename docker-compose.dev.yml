@@ -2,8 +2,8 @@ version: '3'
 services:
   mongodb:
     image: mongo:latest
-    container_name: libertea-mongodb
-    hostname: libertea-mongodb
+    container_name: libertea-marron-mongodb
+    hostname: libertea-marron-mongodb
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=${PANEL_MONGODB_PASSWORD}
@@ -16,8 +16,8 @@ services:
         max-size: 10m
   rsyslog:
     build: ./syslog
-    hostname: libertea-rsyslog
-    container_name: libertea-rsyslog
+    hostname: libertea-marron-rsyslog
+    container_name: libertea-marron-rsyslog
     restart: always
     ports:
       - "127.0.0.1:514:514/udp"
@@ -32,7 +32,7 @@ services:
         max-size: 10m
   log-parser:
     build: ./log-parser
-    container_name: libertea-log-parser
+    container_name: libertea-marron-log-parser
     volumes:
       - "./data/logs:/data/logs"
       - "./data/usages:/data/usages"
@@ -65,7 +65,7 @@ services:
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
     build: ./haproxy
-    container_name: libertea-haproxy
+    container_name: libertea-marron-haproxy
     volumes:
       - ./haproxy:/usr/local/etc/haproxy/
       - ./haproxy/script.lua:/haproxy-files/script.lua
@@ -90,7 +90,7 @@ services:
       - "127.0.0.1:12001:12001"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-trojan-ws
+    container_name: libertea-marron-provider-trojan-ws
     restart: always
     volumes:
       - './providers/trojan-ws/config.json:/etc/xray/config.json'
@@ -105,7 +105,7 @@ services:
       - "127.0.0.1:2004:2004"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-trojan-grpc
+    container_name: libertea-marron-provider-trojan-grpc
     restart: always
     volumes:
       - './providers/trojan-grpc/config.json:/etc/xray/config.json'
@@ -121,7 +121,7 @@ services:
       - "127.0.0.1:12002:12002"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-vless-ws
+    container_name: libertea-marron-provider-vless-ws
     restart: always
     volumes:
       - './providers/vless-ws/config.json:/etc/xray/config.json'
@@ -136,7 +136,7 @@ services:
       - "127.0.0.1:2005:2005"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-vless-grpc
+    container_name: libertea-marron-provider-vless-grpc
     restart: always
     volumes:
       - './providers/vless-grpc/config.json:/etc/xray/config.json'
@@ -152,7 +152,7 @@ services:
       - "127.0.0.1:12008:12008"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-vmess-ws
+    container_name: libertea-marron-provider-vmess-ws
     restart: always
     volumes:
       - './providers/vmess-ws/config.json:/etc/xray/config.json'
@@ -167,7 +167,7 @@ services:
       - "127.0.0.1:2007:2007"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-vmess-grpc
+    container_name: libertea-marron-provider-vmess-grpc
     restart: always
     volumes:
       - './providers/vmess-grpc/config.json:/etc/xray/config.json'
@@ -183,7 +183,7 @@ services:
       - "127.0.0.1:2003:2003"
     cap_add:
       - NET_ADMIN
-    container_name: libertea-provider-shadowsocks-v2ray
+    container_name: libertea-marron-provider-shadowsocks-v2ray
     restart: always
     volumes:
       - './providers/shadowsocks-v2ray/config.env:/etc/xray/config.env'
@@ -196,7 +196,7 @@ services:
   #     - "127.0.0.1:2006:2006"
   #   cap_add:
   #     - NET_ADMIN
-  #   container_name: libertea-provider-shadowsocks-grpc
+  #   container_name: libertea-marron-provider-shadowsocks-grpc
   #   restart: always
   #   volumes:
   #     - './providers/shadowsocks-grpc/config.json:/etc/xray/config.json'

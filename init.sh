@@ -9,6 +9,11 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 COMMAND="$1"
+if [[ $COMMAND == "install" ]]; then
+    ARG_PANEL_DOMAIN="$2"
+    ARG_ADMIN_PASSWORD="$3"
+fi
+
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
@@ -244,16 +249,27 @@ if [ "$COMMAND" != "update" ]; then
     echo "To get started, you need a domain name configured on a CDN (e.g. Cloudflare) and configured to point to $my_ip"
     echo "Also, make sure that SSL/TLS encryption mode is set to *Full*."
     echo ""
-    echo "Please enter your panel domain name (e.g. mydomain.com):"
-    read -r panel_domain
+    if [[ $ARG_PANEL_DOMAIN != "" ]]; then
+        panel_domain="$ARG_PANEL_DOMAIN"
+        echo "Panel domain imported from command line arguments"
+    else
+        echo "Please enter your panel domain name (e.g. mydomain.com):"
+        read -r panel_domain
+    fi
     while ! [[ "$panel_domain" =~ ^[a-zA-Z0-9.-]+$ ]]; do
         echo "Invalid domain name. Please enter a valid domain name:"
         read -r panel_domain
     done
+    
     sed -i "s|PANEL_DOMAIN=.*|PANEL_DOMAIN=$panel_domain|g" .env
 
-    echo "Please enter a password for admin user:"
-    read -r admin_password
+    if [[ $ARG_ADMIN_PASSWORD != "" ]]; then
+        admin_password="$ARG_ADMIN_PASSWORD"
+        echo "Panel domain imported from command line arguments"
+    else
+        echo "Please enter a password for admin user:"
+        read -r admin_password
+    fi
     # check it is not empty and is at least 8 characters long
     while ! [[ "$admin_password" =~ ^.{8,}$ ]]; do
         echo "Invalid password. Please enter a password at least 8 characters long:"
@@ -320,17 +336,17 @@ echo "    - vmess-grpc..."
 ./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
 
 echo " ** Installing web panel..."
-cp panel/libertea-panel.service /etc/systemd/system/
+cp panel/libertea-marron-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project
-sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-panel.service
+sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-marron-panel.service
 systemctl daemon-reload
 set +e
-systemctl enable libertea-panel.service
+systemctl enable libertea-marron-panel.service
 pkill -9 -f uwsgi
-systemctl kill libertea-panel.service
+systemctl kill libertea-marron-panel.service
 pkill -9 -f uwsgi
 set -e
-systemctl restart libertea-panel.service
+systemctl restart libertea-marron-panel.service
 
 if [ "$ENVIRONMENT" == "dev" ]; then
     echo " ** Building docker containers..."
@@ -368,11 +384,11 @@ fi
 echo " ** Waiting for services to start..."
 
 # check status of the docker containers with name starting with "libertea" (max 30 seconds) and log each one that has been up for at least 5 seconds
-containers=$(docker ps --format "{{.Names}}" | grep -E "^libertea")
+containers=$(docker ps --format "{{.Names}}" | grep -E "^libertea-marron")
 
 # move libertea-haproxy to the end of the list
-containers=$(echo "$containers" | grep -v "libertea-haproxy")
-containers="$containers libertea-haproxy"
+containers=$(echo "$containers" | grep -v "libertea-marron-haproxy")
+containers="$containers libertea-marron-haproxy"
 
 start_time=$(date +%s)
 for container in $containers; do
@@ -384,7 +400,7 @@ for container in $containers; do
         if [ $(( $(date +%s) - start_time )) -gt 45 ]; then
             echo "*******************************************************"
             echo "ERROR: Timeout while waiting for $container to start."
-            echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
+            echo "       Please open an issue on https://github.com/quiniapiezoelectricity/Libertea-Marron/issues/new"
             echo "       and include the following information:"
             echo "       - component name: $container"
             echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
@@ -401,7 +417,7 @@ done
 
 # wait for the panel to start 
 
-echo -ne "    ⌛ libertea-panel\r"
+echo -ne "    ⌛ libertea-marron-panel\r"
 try_count=0
 response_code="0"
 set +e
@@ -410,16 +426,16 @@ set -e
 while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     sleep 1
     if [ $(($try_count)) -eq 0 ] && [ $(( $(date +%s) - start_time )) -gt 45 ]; then
-        echo "    ❌ libertea-panel failed to start. Retrying..."
+        echo "    ❌ libertea-marron-panel failed to start. Retrying..."
         try_count=1
 
         # restart the panel
         set +e
         pkill -9 -f uwsgi
-        systemctl kill libertea-panel.service
+        systemctl kill libertea-marron-panel.service
         pkill -9 -f uwsgi
         set -e
-        systemctl restart libertea-panel.service
+        systemctl restart libertea-marron-panel.service
 
         echo -ne "    ⌛ libertea-panel\r"
     fi
@@ -441,7 +457,7 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
         PANEL_ROOT_STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)"
         PANEL_ADMIN_STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
 
-        echo "       - component name: libertea-panel"
+        echo "       - component name: libertea-marron-panel"
         echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
         echo "       - OS version: $(cat /etc/os-release | grep -E "^VERSION_ID=" | cut -d "=" -f 2)"
         echo "       - Docker version: $(docker --version)"
@@ -458,7 +474,7 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
     set -e
 done
-echo "    ✅ libertea-panel started"
+echo "    ✅ libertea-marron-panel started"
 
 echo " ** Checking domain configuration..."
 while true; do
