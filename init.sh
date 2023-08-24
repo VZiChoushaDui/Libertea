@@ -20,27 +20,26 @@ ROOTDIR=$( echo "$DIR" | sed 's/libertea-marron//' )
 VDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
 
 
-if [[ ! -d "$VDIR" ]]; then
+if [[ -d "$VDIR" ]]; then
+    cd "$VDIR"
+    if [[ ! -f .libertea-marron.exists ]]; then
+        if [[ -f .libertea.main || -f .libertea.proxy ]]; then
+            echo "A vanilla version of Libertea exists on this server. You can't install both vanilla and marron on the same server."
+            echo "Please uninstall vanilla version of libertea by running the following command before running this script again:"
+            echo "curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall"
+            exit 1
+        fi
+    fi
+else 
     cd $ROOTDIR
     ln -s $DIR libertea
-fi
-
-cd "$VDIR"
-
-if [[ ! -f .libertea-marron.exists ]]; then
-    if [[ -f .libertea.main || -f .libertea.proxy ]]; then
-        echo "A vanilla version of Libertea exists on this server. You can't install both vanilla and marron on the same server."
-        echo "Please uninstall vanilla version of libertea by running the following command before running this script again:"
-        echo "curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall"
-        exit 1
-    fi
 fi
 
 cd "$DIR"
 
 # if .libertea.proxy file exists, then this is a proxy server. don't install main
 if [ -f .libertea-marron.proxy ]; then
-    echo "This is a Libertea proxy server. You can't install both main and proxy on the same server."
+    echo "This is a Libertea Marron proxy server. You can't install both main and proxy on the same server."
     exit 1
 fi
 
@@ -48,7 +47,6 @@ touch .libertea-marron.exists
 touch .libertea-marron.main
 touch .libertea.main
 touch .libertea.proxy
-read -r
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
