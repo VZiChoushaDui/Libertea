@@ -273,7 +273,7 @@ if [ "$COMMAND" != "update" ]; then
     echo ""
     if [[ $ARG_PANEL_DOMAIN != "" ]]; then
         panel_domain="$ARG_PANEL_DOMAIN"
-        echo "Panel domain imported from command line arguments"
+        echo "Panel domain $panel_domain imported from command line arguments"
     else
         echo "Please enter your panel domain name (e.g. mydomain.com):"
         read -r panel_domain
@@ -287,7 +287,7 @@ if [ "$COMMAND" != "update" ]; then
 
     if [[ $ARG_ADMIN_PASSWORD != "" ]]; then
         admin_password="$ARG_ADMIN_PASSWORD"
-        echo "Panel domain imported from command line arguments"
+        echo "Admin Password $admin_password imported from command line arguments"
     else
         echo "Please enter a password for admin user:"
         read -r admin_password
