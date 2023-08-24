@@ -16,9 +16,13 @@ fi
 
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-VDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
+ROOTDIR=$( echo "$DIR" | sed 's/libertea-marron//' )
+VDIR=$( echo "$DIR" | sed 's/libertea-marron//' )
+
+
 if [[ ! -d "$VDIR" ]]; then
-    mkdir "$VDIR"
+    cd $ROOTDIR
+    ln -s libertea-marron libertea
 fi
 
 cd "$VDIR"
@@ -34,7 +38,8 @@ if [[ ! -f .libertea-marron.exist ]]; then
         exit 1
     fi
 fi
-touch .libertea-marron.exist
+
+touch .libertea-marron.main
 touch .libertea.main
 touch .libertea.proxy
 cd "$DIR"
@@ -47,6 +52,7 @@ fi
 
 touch .libertea-marron.main
 touch .libertea.main
+read '' -p
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
