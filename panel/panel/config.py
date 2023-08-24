@@ -20,11 +20,11 @@ socket.getaddrinfo = new_getaddrinfo
 def get_libertea_branch():
     return os.environ.get('LIBERTEA_BRANCH_NAME')
 
-LIBERTEA_VERSION = 1034
+LIBERTEA_VERSION = 1034.1
 LIBERTEA_PROXY_VERSION = 1004
-VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
+VERSION_ENDPOINT = "https://raw.githubusercontent.com/quiniapiezoelectricity/Libertea-Marron/" + get_libertea_branch() + "/version.txt"
 
-HAPROXY_CONTAINER_NAME = 'libertea-haproxy'
+HAPROXY_CONTAINER_NAME = 'libertea-marron-haproxy'
 
 # MONGODB_HOST = "libertea-mongodb:27017"
 MONGODB_HOST = "localhost:27017"
