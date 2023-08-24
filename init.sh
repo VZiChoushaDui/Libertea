@@ -29,7 +29,7 @@ if [[ -d "$VDIR" ]]; then
     fi
 
     if [ -f .libertea.main ]; then
-        echo "A vanilla version of Libertea main exists on this server. You can't install both vanulla and marron on the same server."
+        echo "A vanilla version of Libertea main exists on this server. You can't install both vanilla and marron on the same server."
         exit 1
     fi
 fi
@@ -42,8 +42,8 @@ if [[ -f .libertea.proxy || -f .libertea-marron.proxy ]]; then
     exit 1
 fi
 
-if [[ -f .libertea.main && ! -f .libertea-marron.main ]]; then
-    echo "A vanilla version of Libertea main exists on this server. You can't install both vanulla and marron on the same server."
+if [[ -f .libertea.main && ( ! -f .libertea-marron.main ) ]]; then
+    echo "A vanilla version of Libertea main exists on this server. You can't install both vanilla and marron on the same server."
     exit 1
 fi
 
