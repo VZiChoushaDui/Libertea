@@ -53,6 +53,7 @@ if [ -f .libertea-marron.main ]; then
 fi
 
 touch .libertea-marron.proxy
+# libertea main and proxy tags added to prevent duplicate installations
 touch .libertea.main
 touch .libertea.proxy
 
@@ -123,7 +124,6 @@ else
     echo "Invalid proxy type. Valid proxy types: auto, tcp, ssh, https"
     exit 1
 fi
-
 
 export DEBIAN_FRONTEND=noninteractive
 

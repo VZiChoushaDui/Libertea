@@ -53,6 +53,7 @@ if [ -f .libertea-marron.proxy ]; then
 fi
 
 touch .libertea-marron.main
+# libertea main and proxy tags added to prevent duplicate installations
 touch .libertea.main
 touch .libertea.proxy
 export DEBIAN_FRONTEND=noninteractive
