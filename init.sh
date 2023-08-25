@@ -17,17 +17,26 @@ fi
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 ROOTDIR=$( echo "$DIR" | sed 's/libertea-marron//' )
-VDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
+LIBDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
 
 
-if [[ -d "$VDIR" ]]; then
-    cd "$VDIR"
-    if [[ ! -f .libertea-marron.exists ]]; then
-        if [[ -f .libertea.main || -f .libertea.proxy ]]; then
+if [[ -d "$LIBDIR" ]]; then
+    if [[ ! -h "$LIBDIR" ]]; then
+        cd "$LIBDIR"
+        if [[ ! (  -f .libertea-marron.main ||  -f .libertea-marron.main ) && ( -f .libertea.main || -f .libertea.proxy ) ]]; then
             echo "A vanilla version of Libertea exists on this server. You can't install both vanilla and marron on the same server."
             echo "Please uninstall vanilla version of libertea by running the following command before running this script again:"
             echo "curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall"
             exit 1
+        else 
+            echo "[Warning]: Non-symbolic-link libertea directory exists"
+            echo "This might be due to remnants of previous installations"
+            echo "The directory will be deleted and replaced with a symbolic link to the libertea-marron directory"
+            echo "Please press enter the confirm the deletion"
+            read -r
+            cd $ROOTDIR
+            rm libertea
+            ln -s $DIR libertea
         fi
     fi
 else 
@@ -43,7 +52,6 @@ if [ -f .libertea-marron.proxy ]; then
     exit 1
 fi
 
-touch .libertea-marron.exists
 touch .libertea-marron.main
 touch .libertea.main
 touch .libertea.proxy

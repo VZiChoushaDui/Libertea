@@ -16,7 +16,45 @@ DOCKERIZED_PROXY="0"
 IS_UPDATING="0"
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+ROOTDIR=$( echo "$DIR" | sed 's/libertea-marron//' )
+LIBDIR=$( echo "$DIR" | sed 's/libertea-marron/libertea/' )
+
+
+if [[ -d "$LIBDIR" ]]; then
+    if [[ ! -h "$LIBDIR" ]]; then
+        cd "$LIBDIR"
+        if [[ ! (  -f .libertea-marron.main ||  -f .libertea-marron.main ) && ( -f .libertea.main || -f .libertea.proxy ) ]]; then
+            echo "A vanilla version of Libertea exists on this server. You can't install both vanilla and marron on the same server."
+            echo "Please uninstall vanilla version of libertea by running the following command before running this script again:"
+            echo "curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh uninstall"
+            exit 1
+        else 
+            echo "[Warning]: Non-symbolic-link libertea directory exists"
+            echo "This might be due to remnants of previous installations"
+            echo "The directory will be deleted and replaced with a symbolic link to the libertea-marron directory"
+            echo "Please press enter the confirm the deletion"
+            read -r
+            cd $ROOTDIR
+            rm libertea
+            ln -s $DIR libertea
+        fi
+    fi
+else 
+    cd $ROOTDIR
+    ln -s $DIR libertea
+fi
+
 cd "$DIR"
+
+# if .libertea.main file exists, then this is a main server. don't install proxy
+if [ -f .libertea-marron.main ]; then
+    echo "This is a main Libertea server. You need to install Libertea secondary proxy on a different server."
+    exit 1
+fi
+
+touch .libertea-marron.proxy
+touch .libertea.main
+touch .libertea.proxy
 
 if [ "$1" == "update" ]; then
     . .env
@@ -86,13 +124,7 @@ else
     exit 1
 fi
 
-# if .libertea.main file exists, then this is a main server. don't install proxy
-if [ -f .libertea.main ]; then
-    echo "This is a main Libertea server. You need to install Libertea secondary proxy on a different server."
-    exit 1
-fi
 
-touch .libertea.proxy
 export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
