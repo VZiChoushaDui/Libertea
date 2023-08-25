@@ -182,7 +182,19 @@ else
     echo "    - Installing python dependencies..."
     export PIP_BREAK_SYSTEM_PACKAGES=1
     pip3 install -r proxy-register/requirements.txt | sed 's/^/        /'
+    if [[ $PROXY_TYPE != "ssh" ]]; then
+        dataplaneapirelease=$( curl -s -X GET 'https://api.github.com/repos/haproxytech/dataplaneapi/releases/latest' | jq ".assets | select ( .name endswith (_linux_amd64.deb) ) | .browser_download_url")
+        curl -L https://github.com/haproxytech/dataplaneapi/releases/download/v2.8.1/dataplaneapi_2.8.1_linux_amd64.deb --output dataplaneapi.deb
+        dpkg -i  dataplaneapi.deb
+        rm dataplaneapi.deb
+    fi
 fi
+
+curl -s https://api.github.com/repos/jgm/pandoc/releases/latest \
+| grep "browser_download_url.*deb" \
+| cut -d : -f 2,3 \
+| tr -d \" \
+| wget -qi -
 
 echo " ** Creating .env file..."
 if [ -f .env ]; then
