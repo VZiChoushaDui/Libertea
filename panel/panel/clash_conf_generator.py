@@ -171,7 +171,20 @@ def get_providers(connect_url, db, is_for_subscription=False):
                     server=s,
                     tier=utils.get_domain_or_online_route_tier(server, db=db),
                 ))
-            idx += 1
+            if settings.get_provider_enabled('vlessxtls', db=db):
+                if server_entry_type == 'SecondaryProxy':
+                    providers.append(init_provider_info(
+                        type='vless-xtls',
+                        name='VlX-' + str(idx) + "-" + server,
+                        port=port,
+                        password=os.environ.get('CONN_VLESS_XTLS_AUTH_UUID'),
+                        meta_only=True,
+                        entry_type=server_entry_type,
+                        sni=utils.get_domain_sni(server, db=db),
+                        host=server,
+                        server=s,
+                        tier=utils.get_domain_or_online_route_tier(server, db=db),
+                    ))            idx += 1
 
     return providers
 

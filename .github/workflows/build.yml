@@ -215,6 +215,22 @@ jobs:
           push: true
           tags: liberteamarron/provider-shadowsocks-v2ray:latest
 
+      - name: Building and pushing provider-vless-xtls version
+        uses: docker/build-push-action@v4
+        with:
+          context: ./providers/vless-xtls
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vless-xtls:${{ env.VERSION }}
+
+
+      - name: Building and pushing provider-vless-xtls latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ./providers/vless-xtls
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: liberteamarron/provider-vless-xtls:latest
 
       - name: Building and pushing proxy-register version
         uses: docker/build-push-action@v4

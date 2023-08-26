@@ -1,0 +1,14 @@
+  - name: "{{name}}"
+    type: vless
+    server: {{server}}
+    port: {{port}}
+    uuid: {{password}}
+    flow: xtls-rprx-direct
+    cipher: none
+    udp: true
+    tls: true
+    skip-cert-verify: {{skip_cert_verify}}
+    #servername: test.com # priority over wss host
+    network: none
+    sni: {{sni}}
+

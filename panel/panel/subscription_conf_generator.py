@@ -96,7 +96,6 @@ def generate_conf(user_id, connect_url, vless=True, trojan=True, shadowsocks=Tru
             }
             provider_urls.append('vmess://' + base64.b64encode(json.dumps(vmess_json).encode('utf-8')).decode('utf-8'))
 
-
     return provider_urls
 
 

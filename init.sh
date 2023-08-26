@@ -145,6 +145,7 @@ else
     ufw allow http >/dev/null
     ufw allow https >/dev/null
     ufw allow 8443 >/dev/null
+    ufw allow 2052 >/dev/null
     yes | ufw enable >/dev/null
 fi
 set -e
@@ -365,6 +366,8 @@ echo "    - vmess-ws..."
 ./providers/vmess-ws/init.sh 2008 "$CONN_VMESS_WS_URL" "$CONN_VMESS_WS_AUTH_UUID"
 echo "    - vmess-grpc..."
 ./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
+echo "    - vmess-xtls..."
+./providers/vmess-xtls/init.sh 2052 "$CONN_VLESS_XTLS_AUTH_UUID"
 
 echo " ** Installing web panel..."
 cp panel/libertea-marron-panel.service /etc/systemd/system/

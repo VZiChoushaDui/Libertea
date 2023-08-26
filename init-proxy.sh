@@ -74,7 +74,7 @@ fi
 
 if [ "$PROXY_TYPE" == "tcp-docker" ]; then
     DOCKERIZED_PROXY="1"
-elif [ "$PROXY_TYPE" == "tcp" ] || [ "$PROXY_TYPE" == "ssh" ] || [ "$PROXY_TYPE" == "https" ]; then
+elif [ "$PROXY_TYPE" == "tcp" ] || [ "$PROXY_TYPE" == "ssh" ] || [ "$PROXY_TYPE" == "https" ] || [ "$PROXY_TYPE" == "xtls" ]; then
     DOCKERIZED_PROXY="0"
 elif [ "$PROXY_TYPE" == "auto" ]; then
     echo "Determining proxy type..."
@@ -277,6 +277,8 @@ else
         cp proxy-haproxy/haproxy.tcp.cfg /etc/haproxy/haproxy.cfg
     elif [ "$PROXY_TYPE" == "https" ]; then
         cp proxy-haproxy/haproxy.https.cfg /etc/haproxy/haproxy.cfg
+    elif [ "$PROXY_TYPE" == "xtls" ]; then
+        cp proxy-haproxy/haproxy.xtls.cfg /etc/haproxy/haproxy.cfg
     else
         echo "ERROR: Invalid proxy type: $PROXY_TYPE"
         exit 1

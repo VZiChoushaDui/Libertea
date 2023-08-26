@@ -185,6 +185,21 @@ services:
     restart: always
     volumes:
       - './providers/shadowsocks-v2ray/config.env:/etc/xray/config.env'
+  provider-vless-ws:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+    image: liberteamarron/provider-vless-xtls
+    ports:
+      - "127.0.0.1:2052:2052"
+    cap_add:
+      - NET_ADMIN
+    container_name: libertea-marron-provider-vless-xtls
+    restart: always
+    volumes:
+      - './providers/vless-xtls/config.json:/etc/xray/config.json'
+      - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
+      - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   # provider-shadowsocks-grpc:
   #   environment:
   #     - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
