@@ -34,7 +34,7 @@
         {% if health_check %}
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value"><span class="health-percent">⌛</span></div>
-            <div class="stats-item-desc">Health in the past 24 hours</div>
+            <div class="stats-item-desc">Availability in the past 3 days</div>
         </div>
         {% endif %}
         
@@ -292,7 +292,7 @@
 
 {% if health_check %}
         <script>
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=24')
+            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=72')
                 .then(r => r.json())
                 .then(data => {
                     var elem = document.querySelector('.health-percent');
@@ -336,7 +336,7 @@
                     var avg_percent = Math.round(sum / count * 100);
                     elem.innerText = avg_percent + '%';
                 });
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=168')
+            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=336')
                 .then(r => r.json())
                 .then(data => {
                     var times = [];
@@ -378,7 +378,7 @@
                         data: {
                             labels: chart_data_x,
                             datasets: [{
-                                label: 'Health (%)',
+                                label: 'Availability (%)',
                                 data: chart_data_y,
                                 borderWidth: 1,
                                 backgroundColor: 'rgba(229, 89, 119, 0.75)',
@@ -390,7 +390,7 @@
                                 y: {
                                     title: {
                                         display: true,
-                                        text: "Health (%)",
+                                        text: "Availability (%)",
                                     },
                                     beginAtZero: true,
                                 }
