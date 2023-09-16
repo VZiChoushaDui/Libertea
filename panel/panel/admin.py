@@ -295,6 +295,7 @@ def users():
         "created_at_timestamp": user["created_at"].timestamp(),
         "traffic_today": user["__cache_traffic_today"].replace(' GB', '') if "__cache_traffic_today" in user else "0",
         "traffic_this_month": user["__cache_traffic_this_month"].replace(' GB', '') if "__cache_traffic_this_month" in user else "0",
+        "traffic_past_30_days": user["__cache_traffic_past_30_days"].replace(' GB', '') if "__cache_traffic_past_30_days" in user else "0",
         "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
     } for user in users.find()]
 
@@ -334,9 +335,9 @@ def user(user):
     return render_template('admin/user.jinja',
         back_to='users',
         no_domain_warning=not utils.has_active_endpoints(),
-        traffic_today=user['__cache_traffic_today'] if '__cache_traffic_today' in user else '-',
+        traffic_today=stats.get_gigabytes_today(user['_id'], db=db),
         traffic_this_month=user['__cache_traffic_this_month'] if '__cache_traffic_this_month' in user else '-',
-        traffic_past_30_days=stats.get_gigabytes_past_30_days(user['_id']),
+        traffic_past_30_days=stats.get_gigabytes_past_30_days(user['_id'], db=db),
         ips_today=user['__cache_ips_today'] if '__cache_ips_today' in user else '-',
         month_name=datetime.now().strftime("%B"),
         admin_uuid=config.get_admin_uuid(),

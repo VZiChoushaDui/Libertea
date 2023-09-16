@@ -554,10 +554,12 @@ def update_user_stats_cache(user_id, db=None):
     traffic_today = stats.get_gigabytes_today(user['_id'], db=db)
     traffic_this_month = stats.get_gigabytes_this_month(user['_id'], db=db)
     ips_today = stats.get_ips_today(user['_id'], db=db)
+    traffic_past_30_days = stats.get_gigabytes_past_30_days(user['_id'], db=db)
 
     users.update_one({"_id": user_id}, {"$set": {
         "__cache_traffic_today": traffic_today, 
         "__cache_traffic_this_month": traffic_this_month, 
+        "__cache_traffic_past_30_days": traffic_past_30_days,
         "__cache_ips_today": ips_today}}, 
     upsert=False)
 
