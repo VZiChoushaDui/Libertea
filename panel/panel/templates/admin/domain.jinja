@@ -484,7 +484,7 @@
                     const chart = Chart.getChart(ctx);
                     chart.resetZoom();
                     if (window.innerWidth < 768) {
-                        chart.options.scales.x.min = data.x[data.x.length - 7];
+                        chart.options.scales.x.min = data.x[data.x.length - 14];
                     } else {
                         chart.options.scales.x.min = data.x[data.x.length - 30];
                     }
