@@ -245,7 +245,9 @@ def get_gigabytes_past_30_days(user_id, db=None):
     end_date = datetime.now()
     sum_gigabytes = 0
     while start_date <= end_date:
-        sum_gigabytes += ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
+        if cur_gigabytes is not None:
+            sum_gigabytes += cur_gigabytes
         start_date += timedelta(days=1)
 
     return str(round(sum_gigabytes * 100) / 100) + ' GB'
@@ -259,7 +261,9 @@ def get_gigabytes_past_30_days_all(db=None):
     end_date = datetime.now()
     sum_gigabytes = 0
     while start_date <= end_date:
-        sum_gigabytes += ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
+        if cur_gigabytes is not None:
+            sum_gigabytes += cur_gigabytes
         start_date += timedelta(days=1)
 
     return str(round(sum_gigabytes * 100) / 100) + ' GB'
