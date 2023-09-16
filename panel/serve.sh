@@ -40,6 +40,6 @@ else
 fi
 
 log "Starting Libertea panel via uwsgi on port $PORT with $UWSGI_THREADS threads, and listen queue size of $SOMAXCONN"
-uwsgi --disable-logging --master -p $UWSGI_THREADS --need-app --http 127.0.0.1:$PORT --listen $SOMAXCONN -w serve:app >> /tmp/libertea-panel.log 2>&1
+uwsgi --disable-logging --master -p $UWSGI_THREADS --need-app --http 127.0.0.1:$PORT --listen $SOMAXCONN -w serve:app --post-buffering 1 >> /tmp/libertea-panel.log 2>&1
 
 log "Libertea panel serve script exited with code $?"
