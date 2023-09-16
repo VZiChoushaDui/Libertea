@@ -273,7 +273,7 @@ def traffic_stats_domain(domain):
         days = '7'
     days = int(days)
 
-    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day(days=days, domain=domain)
+    traffic_over_time_xs, traffic_over_time_ys = stats.get_traffic_per_day_all(days=days, domain=domain)
     traffic_over_time_xs = [x[5:] for x in traffic_over_time_xs]
 
     return {
