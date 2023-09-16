@@ -29,6 +29,9 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                 cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGb-' + conn_url
             elif date_resolution == 'month':
                 cache_entry_name = date.strftime("%Y-%m") + '-trafficGb-' + conn_url
+
+            if domain is not None:
+                cache_entry_name += '-' + domain
             
             # check if already cached
             stats_cache = db.stats_cache
