@@ -138,6 +138,7 @@ def user_stats():
     users_now_long = stats.get_connected_users_now(long=True)
     traffic_today = stats.get_gigabytes_today_all()
     traffic_this_month = stats.get_gigabytes_this_month_all()
+    traffic_past_30_days = stats.get_gigabytes_past_30_days_all()
     ips_today = stats.get_ips_today_all()
     users_today = stats.get_connected_users_today()
 
@@ -159,6 +160,7 @@ def user_stats():
         'users_now_long': users_now_long,
         'traffic_today': traffic_today,
         'traffic_this_month': traffic_this_month,
+        'traffic_past_30_days': traffic_past_30_days,
         'ips_today': ips_today,
         'users_today': users_today,
     }
@@ -334,6 +336,7 @@ def user(user):
         no_domain_warning=not utils.has_active_endpoints(),
         traffic_today=user['__cache_traffic_today'] if '__cache_traffic_today' in user else '-',
         traffic_this_month=user['__cache_traffic_this_month'] if '__cache_traffic_this_month' in user else '-',
+        traffic_past_30_days=stats.get_gigabytes_past_30_days(user['_id']),
         ips_today=user['__cache_ips_today'] if '__cache_ips_today' in user else '-',
         month_name=datetime.now().strftime("%B"),
         admin_uuid=config.get_admin_uuid(),

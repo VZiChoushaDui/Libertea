@@ -205,8 +205,8 @@
             <div class="stats-item-desc">Traffic today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value traffic-this-month">⌛</div>
-            <div class="stats-item-desc">Traffic in {{ month_name }}</div>
+            <div class="stats-item-value traffic-past-30-days">⌛</div>
+            <div class="stats-item-desc">Traffic in the past 30 days</div>
         </div>
     </div>
 </div>
@@ -257,7 +257,7 @@
                 document.querySelector('.users-connected-right-now').innerHTML = parseStatsValue(data.users_now_long);
                 document.querySelector('.users-connected-today').innerHTML = parseStatsValue(data.users_today);
                 document.querySelector('.traffic-today').innerHTML = parseStatsValue(data.traffic_today);
-                document.querySelector('.traffic-this-month').innerHTML = parseStatsValue(data.traffic_this_month);
+                document.querySelector('.traffic-past-30-days').innerHTML = parseStatsValue(data.traffic_past_30_days);
                 // document.querySelector('.ips-connected-today').innerHTML = parseStatsValue(data.ips_today);
                 document.querySelector('.ips-connected-right-now').innerHTML = parseStatsValue(data.ips_now_long);
             });

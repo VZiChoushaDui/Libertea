@@ -422,7 +422,7 @@
 {% endif %}
 
         <script>    
-            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
+            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=90')
                 .then(function(response) {
                     return response.json()
                 })
@@ -481,8 +481,8 @@
                     });
                 });
 
-            document.querySelector('.traffic-month-name').innerText = new Date().toLocaleString('default', { month: 'long' });
-            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=' + new Date().getDate())
+            document.querySelector('.traffic-month-name').innerText = 'past 30 days';
+            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
                 .then(function(response) {
                     return response.json()
                 })
@@ -491,7 +491,7 @@
                     for (var i = 0; i < data.y.length; i++) {
                         sum += data.y[i];
                     }
-                    document.querySelector('.traffic-month-value').innerText = Math.round(sum * 100) / 100 + ' GB';
+                    document.querySelector('.traffic-month-value').innerText = Math.round(sum * 1000) / 1000 + ' GB';
                 }); 
         </script>
     </div>

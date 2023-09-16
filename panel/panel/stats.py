@@ -230,6 +230,38 @@ def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_r
 
     return xs, ys
 
+def get_gigabytes_past_30_days(user_id, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    users = db.users
+    user = users.find_one({"_id": user_id})
+    conn_url = user['connect_url']
+
+    start_date = datetime.now() - timedelta(days=30)
+    end_date = datetime.now()
+    sum_gigabytes = 0
+    while start_date <= end_date:
+        sum_gigabytes += ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
+        start_date += timedelta(days=1)
+
+    return str(round(sum_gigabytes * 1000) / 1000) + ' GB'
+
+def get_gigabytes_past_30_days_all(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    start_date = datetime.now() - timedelta(days=30)
+    end_date = datetime.now()
+    sum_gigabytes = 0
+    while start_date <= end_date:
+        sum_gigabytes += ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
+        start_date += timedelta(days=1)
+
+    return str(round(sum_gigabytes * 1000) / 1000) + ' GB'
+
+
 def get_gigabytes_this_month_all():
     return ___get_total_gigabytes(datetime.now(), 'month', '[total]')
 
