@@ -36,7 +36,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
             if cached is not None:
                 gigabytes = cached['gigabytes']
                 if return_as_string:
-                    gigabytes = round(cached['gigabytes'] * 1000) / 1000
+                    gigabytes = round(cached['gigabytes'] * 100) / 100
                     gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
         
@@ -66,7 +66,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                     )
 
                 if return_as_string:
-                    gigabytes = round(gigabytes * 1000) / 1000
+                    gigabytes = round(gigabytes * 100) / 100
                     gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
                 
@@ -245,7 +245,7 @@ def get_gigabytes_past_30_days(user_id, db=None):
         sum_gigabytes += ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
         start_date += timedelta(days=1)
 
-    return str(round(sum_gigabytes * 1000) / 1000) + ' GB'
+    return str(round(sum_gigabytes * 100) / 100) + ' GB'
 
 def get_gigabytes_past_30_days_all(db=None):
     if db is None:
@@ -259,7 +259,7 @@ def get_gigabytes_past_30_days_all(db=None):
         sum_gigabytes += ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
         start_date += timedelta(days=1)
 
-    return str(round(sum_gigabytes * 1000) / 1000) + ' GB'
+    return str(round(sum_gigabytes * 100) / 100) + ' GB'
 
 
 def get_gigabytes_this_month_all():
