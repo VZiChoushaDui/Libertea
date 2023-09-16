@@ -19,20 +19,20 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
         else: 
             raise Exception('Invalid date resolution ' + str(date_resolution))
 
-        entry_name = ''
+        cache_entry_name = ''
         if cache_result:
             if db is None:
                 client = config.get_mongo_client()
                 db = client[config.MONGODB_DB_NAME]
             
             if date_resolution == 'day':
-                entry_name = date.strftime("%Y-%m-%d") + '-trafficGb-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGb-' + conn_url
             elif date_resolution == 'month':
-                entry_name = date.strftime("%Y-%m") + '-trafficGb-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m") + '-trafficGb-' + conn_url
             
             # check if already cached
             stats_cache = db.stats_cache
-            cached = stats_cache.find_one({'_id': entry_name})
+            cached = stats_cache.find_one({'_id': cache_entry_name})
             if cached is not None:
                 gigabytes = cached['gigabytes']
                 if return_as_string:
@@ -58,7 +58,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                 if cache_result:
                     stats_cache = db.stats_cache
                     stats_cache.update_one(
-                        {'_id': entry_name},
+                        {'_id': cache_entry_name},
                         {'$set': {
                             'gigabytes': gigabytes,
                         }},
@@ -92,20 +92,20 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
         else: 
             raise Exception('Invalid date resolution ' + str(date_resolution))
 
-        entry_name = ''
+        cache_entry_name = ''
         if cache_result:
             if db is None:
                 client = config.get_mongo_client()
                 db = client[config.MONGODB_DB_NAME]
             
             if date_resolution == 'day':
-                entry_name = date.strftime("%Y-%m-%d") + '-ips-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m-%d") + '-ips-' + conn_url
             elif date_resolution == 'month':
-                entry_name = date.strftime("%Y-%m") + '-ips-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m") + '-ips-' + conn_url
             
             # check if already cached
             stats_cache = db.stats_cache
-            cached = stats_cache.find_one({'_id': entry_name})
+            cached = stats_cache.find_one({'_id': cache_entry_name})
             if cached is not None:
                 return cached['ips']
             
@@ -120,7 +120,7 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
                 if cache_result:
                     stats_cache = db.stats_cache
                     stats_cache.update_one(
-                        {'_id': entry_name},
+                        {'_id': cache_entry_name},
                         {'$set': {
                             'ips': connections,
                         }},
