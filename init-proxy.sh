@@ -144,8 +144,8 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
         service docker restart
     fi
 else
-    echo "    - Installing python, haproxy, autossh..."
-    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh | sed 's/^/        /'
+    echo "    - Installing python, haproxy, autossh, build-essential..."
+    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh build-essential | sed 's/^/        /'
     
     echo "    - Installing python dependencies..."
     export PIP_BREAK_SYSTEM_PACKAGES=1
