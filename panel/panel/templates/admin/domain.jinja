@@ -483,7 +483,11 @@
                     // Zoom to last 30 days
                     const chart = Chart.getChart(ctx);
                     chart.resetZoom();
-                    chart.options.scales.x.min = data.x[data.x.length - 30];
+                    if (window.innerWidth < 768) {
+                        chart.options.scales.x.min = data.x[data.x.length - 7];
+                    } else {
+                        chart.options.scales.x.min = data.x[data.x.length - 30];
+                    }
                     chart.options.scales.x.max = data.x[data.x.length - 1];
                     chart.update();    
                 });
