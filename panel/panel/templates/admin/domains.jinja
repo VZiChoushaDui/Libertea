@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
-                    Availability: <span class="health-percent spinner text-spinner" data-domainid="{{ domain.id }}">⌛</span>
+                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ domain.id }}">⌛</span>
                     {% endif %}
                 </div>
             </div>
@@ -80,7 +80,7 @@
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
-                    Availability: <span class="health-percent spinner text-spinner" data-domainid="{{ proxy.ip }}">⌛</span>
+                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ proxy.ip }}">⌛</span>
                     {% endif %}
                 </div>
             </div>
