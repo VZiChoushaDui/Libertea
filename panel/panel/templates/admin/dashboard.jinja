@@ -7,7 +7,7 @@
     #securityRing {
         width: 120px;
         transition: opacity 0.6s ease-in-out;
-        opacity: 0;
+        opacity: 1;
         cursor: pointer;
     }
 </style>
@@ -85,7 +85,7 @@
         color: '#007bff',
         trailColor: '#eee',
         trailWidth: 1,
-        duration: 2000,
+        duration: 1500,
         easing: 'easeOut',
         strokeWidth: 6,
         from: { color: '#ff0000' },
@@ -126,7 +126,7 @@
         secRing.addEventListener('click', function() {
             availabilityInfoModal.show();
         });
-    }, 500);
+    }, 200);
 </script>
 
 <div class="modal fade" id="availabilityInfoModal" tabindex="-1" aria-labelledby="availabilityInfoModalLabel" aria-hidden="true">
@@ -169,11 +169,11 @@
             <div class="stats-item-desc">Secondary proxies</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value cpu-percent">⌛</div>
+            <div class="stats-item-value cpu-percent spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Current CPU usage</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value ram-percent">⌛</div>
+            <div class="stats-item-value ram-percent spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Current RAM usage</div>
         </div>
     </div>
@@ -185,27 +185,27 @@
             <h6 class="bordered">Connection status</h6>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value ips-connected-right-now">⌛</div>
+            <div class="stats-item-value ips-connected-right-now spinner text-spinner">⌛</div>
             <div class="stats-item-desc">IPs connected right now</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value users-connected-right-now">⌛</div>
+            <div class="stats-item-value users-connected-right-now spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Users connected right now</div>
         </div>
         <!-- <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value ips-connected-today">⌛</div>
+            <div class="stats-item-value ips-connected-today spinner text-spinner">⌛</div>
             <div class="stats-item-desc">IPs connected today</div>
         </div> -->
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value users-connected-today">⌛</div>
+            <div class="stats-item-value users-connected-today spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Users connected today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value traffic-today">⌛</div>
+            <div class="stats-item-value traffic-today spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Traffic today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value traffic-past-30-days">⌛</div>
+            <div class="stats-item-value traffic-past-30-days spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Traffic in the past 30 days</div>
         </div>
     </div>
@@ -214,7 +214,9 @@
     <div class="row">
         <div class="col-12">
             <h6 class="bordered">Traffic usage over time</h6>
-            <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
+            <div class="spinner">
+                <canvas id="trafficChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -222,7 +224,9 @@
     <div class="row">
         <div class="col-12">
             <h6 class="bordered">Connected IPs over time</h6>
-            <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
+            <div class="spinner">
+                <canvas id="connectionChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -244,7 +248,9 @@
             })
             .then(function(data) {
                 document.querySelector('.cpu-percent').innerHTML = parseStatsValue(data.cpu);
+                document.querySelector('.cpu-percent').classList.remove('spinner');
                 document.querySelector('.ram-percent').innerHTML = parseStatsValue(data.ram);
+                document.querySelector('.ram-percent').classList.remove('spinner');
             });
     }
 
@@ -255,11 +261,17 @@
             })
             .then(function(data) {
                 document.querySelector('.users-connected-right-now').innerHTML = parseStatsValue(data.users_now_long);
+                document.querySelector('.users-connected-right-now').classList.remove('spinner');
                 document.querySelector('.users-connected-today').innerHTML = parseStatsValue(data.users_today);
+                document.querySelector('.users-connected-today').classList.remove('spinner');
                 document.querySelector('.traffic-today').innerHTML = parseStatsValue(data.traffic_today);
+                document.querySelector('.traffic-today').classList.remove('spinner');
                 document.querySelector('.traffic-past-30-days').innerHTML = parseStatsValue(data.traffic_past_30_days);
+                document.querySelector('.traffic-past-30-days').classList.remove('spinner');
                 // document.querySelector('.ips-connected-today').innerHTML = parseStatsValue(data.ips_today);
+                // document.querySelector('.ips-connected-today').classList.remove('spinner');
                 document.querySelector('.ips-connected-right-now').innerHTML = parseStatsValue(data.ips_now_long);
+                document.querySelector('.ips-connected-right-now').classList.remove('spinner');                
             });
     }
 
@@ -287,6 +299,9 @@
                         }]
                     },
                     options: {
+                        animation: {
+                            duration: 0,
+                        },
                         interaction: {
                             intersect: false,
                             mode: 'index',
@@ -333,6 +348,8 @@
                 chart.options.scales.x.max = data.x[data.x.length - 1];
                 chart.update();
                 
+                ctx.classList.add('loaded');
+                ctx.parentElement.classList.remove('spinner');
             });
     }
 
@@ -359,6 +376,9 @@
                         }]
                     },
                     options: {
+                        animation: {
+                            duration: 0,
+                        },
                         interaction: {
                             intersect: false,
                             mode: 'index',
@@ -404,6 +424,9 @@
                 }
                 chart.options.scales.x.max = data.x[data.x.length - 1];
                 chart.update();
+
+                ctx.classList.add('loaded');
+                ctx.parentElement.classList.remove('spinner');
             });
     }
 
@@ -412,9 +435,12 @@
     
     getSystemStats();
     getUserStats();
-    updateConnectionChart();
-    updateTrafficChart();
-    
+    // setTimeout(updateConnectionChart, 1000);
+    // setTimeout(updateTrafficChart, 1000);
+    setTimeout(function() {
+        updateTrafficChart();
+        updateConnectionChart();
+    }, 1500);
 </script>
 
 {% endblock %}

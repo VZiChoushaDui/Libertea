@@ -45,22 +45,26 @@
             <div class="stats-item-desc">Traffic in past 30 days</div>
         </div>
         <div class="col-6 col-sm-3 stats-item">
-            <div class="stats-item-value ips-connected-right-now">⌛</div>
+            <div class="stats-item-value ips-connected-right-now spinner text-spinner">⌛</div>
             <div class="stats-item-desc">IPs connected right now</div>
         </div>
         <div class="col-6 col-sm-3 stats-item">
-            <div class="stats-item-value max-concurrent-connections">⌛</div>
+            <div class="stats-item-value max-concurrent-connections spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Max concurrent connections today</div>
         </div>
     </div>
 </div>
 <div class="section mb-4">
     <h6>Traffic usage over time</h6>
-    <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
+    <div class="spinner">
+        <canvas id="trafficChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+    </div>
 </div>
 <div class="section mb-4">
     <h6>Connected IPs over time</h6>
-    <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
+    <div class="spinner">
+        <canvas id="connectionChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+    </div>
 </div>
 <div class="section">
     <form method="post" class="mt-2">
@@ -223,6 +227,7 @@
                     } else {
                         document.querySelector('.ips-connected-right-now').innerHTML = '-';
                     }
+                    document.querySelector('.ips-connected-right-now').classList.remove('spinner');
                 });
         }
 
@@ -245,6 +250,7 @@
                     catch {
                         document.querySelector('.max-concurrent-connections').innerHTML = '-';
                     }
+                    document.querySelector('.max-concurrent-connections').classList.remove('spinner');
 
 
 
@@ -266,6 +272,9 @@
                             }]
                         },
                         options: {
+                            animation: {
+                                duration: 0,
+                            },
                             interaction: {
                                 intersect: false,
                                 mode: 'index',
@@ -313,6 +322,9 @@
                     }
                     chart.options.scales.x.max = data.x[data.x.length - 1];
                     chart.update();
+
+                    ctx.classList.add('loaded');
+                    ctx.parentElement.classList.remove('spinner');
                 });
         }
 
@@ -340,6 +352,9 @@
                             }]
                         },
                         options: {
+                            animation: {
+                                duration: 0,
+                            },
                             interaction: {
                                 intersect: false,
                                 mode: 'index',
@@ -386,6 +401,9 @@
                     }
                     chart.options.scales.x.max = data.x[data.x.length - 1];
                     chart.update();
+
+                    ctx.classList.add('loaded');
+                    ctx.parentElement.classList.remove('spinner');
                 });
         }
 
