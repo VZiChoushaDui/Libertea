@@ -479,6 +479,13 @@
                             },
                         }
                     });
+
+                    // Zoom to last 30 days
+                    const chart = Chart.getChart(ctx);
+                    chart.resetZoom();
+                    chart.options.scales.x.min = data.x[data.x.length - 30];
+                    chart.options.scales.x.max = data.x[data.x.length - 1];
+                    chart.update();    
                 });
 
             document.querySelector('.traffic-month-name').innerText = 'past 30 days';
