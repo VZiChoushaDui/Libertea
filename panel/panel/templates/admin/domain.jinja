@@ -28,31 +28,31 @@
 <div class="section stats">
     <div class="row">
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value"><span class="traffic-month-value">⌛</span></div>
+            <div class="stats-item-value"><span class="traffic-month-value spinner text-spinner">⌛</span></div>
             <div class="stats-item-desc">Traffic in <span class="traffic-month-name"></span></div>
         </div>
         {% if health_check %}
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value"><span class="health-percent">⌛</span></div>
-            <div class="stats-item-desc">Health in the past 24 hours</div>
+            <div class="stats-item-value"><span class="health-percent spinner text-spinner">⌛</span></div>
+            <div class="stats-item-desc">Availability in the past 3 days</div>
         </div>
         {% endif %}
         
         {% if secondary_proxy %}       
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value"><span class="server-country-flag-name"></span><span class="fi fis server-country-flag mx-1" style="font-size: 16px; padding-top: 5px;">⌛</span></div>
+            <div class="stats-item-value"><span class="server-country-flag-name spinner text-spinner">⌛</span><span class="fi fis server-country-flag mx-1" style="font-size: 16px; padding-top: 5px;"></span></div>
             <div class="stats-item-desc">Location</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value"><span class="server-tunnel-type">⌛</span></div>
+            <div class="stats-item-value"><span class="server-tunnel-type spinner text-spinner">⌛</span></div>
             <div class="stats-item-desc">Tunnel type</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value"><span class="cpu-percent">⌛</span></div>
+            <div class="stats-item-value"><span class="cpu-percent spinner text-spinner">⌛</span></div>
             <div class="stats-item-desc">Current CPU usage</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value"><span class="ram-percent">⌛</span></div>
+            <div class="stats-item-value"><span class="ram-percent spinner text-spinner">⌛</span></div>
             <div class="stats-item-desc">Current RAM usage</div>
         </div>
         {% else %}
@@ -75,7 +75,7 @@
     <div class="row mt-5 fake-traffic px-2" style="display: none;">
         <div class="mb-2"><strong>🛡️ Fake traffic protection is enabled</strong></div>
         <div class="mb-1">Due to the physical location of this server, Libertea will create fake asymmetric traffic to reduce the chance of detection.</div>
-        <div style="opacity: 0.7">Libertea creates approximately <span class="fake-traffic-gb-per-day">⌛</span> GB of fake traffic every day.</div>
+        <div style="opacity: 0.7">Libertea creates approximately <span class="fake-traffic-gb-per-day spinner text-spinner">⌛</span> GB of fake traffic every day.</div>
     </div>
 
     {% if secondary_proxy_update_available %}
@@ -169,12 +169,16 @@
 {% endif %}
     <div class="row mt-5 mx-2">
         <h6>Traffic usage over time</h6>
-        <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
+        <div class="spinner">
+            <canvas id="trafficChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+        </div>
     </div>
 {% if health_check %}
     <div class="row mt-5 mx-2">
-        <h6>Health over time</h6>
-        <canvas id="healthChart" style="width: 100%; height: 250px;"></canvas>
+        <h6>Availability over time</h6>
+        <div class="spinner">
+            <canvas id="healthChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+        </div>
     </div>
 {% endif %}
 
@@ -240,6 +244,7 @@
                 document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
                 document.querySelector('.server-country-flag').innerText = '';
                 document.querySelector('.server-country-flag-name').innerText = data.country_name;
+                document.querySelector('.server-country-flag-name').classList.remove('spinner');
             } else {
                 fetch('https://ipapi.co/{{ domain }}/json/')
                     .then(r => r.json())
@@ -247,6 +252,7 @@
                         document.querySelector('.server-country-flag').classList.add('fi-' + data.country.toLowerCase());
                         document.querySelector('.server-country-flag').innerText = '';
                         document.querySelector('.server-country-flag-name').innerText = data.country_name;
+                        document.querySelector('.server-country-flag-name').classList.remove('spinner');
 
                         localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
                     });
@@ -257,11 +263,15 @@
                     .then(r => r.json())
                     .then(data => {
                         document.querySelector('.cpu-percent').innerText = data.cpu;
+                        document.querySelector('.cpu-percent').classList.remove('spinner');
                         document.querySelector('.ram-percent').innerText = data.ram;
+                        document.querySelector('.ram-percent').classList.remove('spinner');
                         document.querySelector('.server-tunnel-type').innerText = data.proxy_type.toUpperCase();
+                        document.querySelector('.server-tunnel-type').classList.remove('spinner');
                         if (data.fake_traffic_enabled) {
                             document.querySelector('.fake-traffic').style.display = 'block';
                             document.querySelector('.fake-traffic-gb-per-day').innerText = data.fake_traffic_avg_gb_per_day;
+                            document.querySelector('.fake-traffic-gb-per-day').classList.remove('spinner');
                         }
                     });
             }
@@ -292,7 +302,7 @@
 
 {% if health_check %}
         <script>
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=24')
+            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=72')
                 .then(r => r.json())
                 .then(data => {
                     var elem = document.querySelector('.health-percent');
@@ -335,8 +345,9 @@
 
                     var avg_percent = Math.round(sum / count * 100);
                     elem.innerText = avg_percent + '%';
+                    elem.classList.remove('spinner');
                 });
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=168')
+            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=336')
                 .then(r => r.json())
                 .then(data => {
                     var times = [];
@@ -378,7 +389,7 @@
                         data: {
                             labels: chart_data_x,
                             datasets: [{
-                                label: 'Health (%)',
+                                label: 'Availability (%)',
                                 data: chart_data_y,
                                 borderWidth: 1,
                                 backgroundColor: 'rgba(229, 89, 119, 0.75)',
@@ -386,11 +397,14 @@
                             }]
                         },
                         options: {
+                            animation: {
+                                duration: 0,
+                            },
                             scales: {
                                 y: {
                                     title: {
                                         display: true,
-                                        text: "Health (%)",
+                                        text: "Availability (%)",
                                     },
                                     beginAtZero: true,
                                 }
@@ -417,12 +431,15 @@
                             },
                         }
                     });
+
+                    ctx.classList.add('loaded');
+                    ctx.parentElement.classList.remove('spinner');
                 });
         </script>
 {% endif %}
 
         <script>    
-            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
+            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=90')
                 .then(function(response) {
                     return response.json()
                 })
@@ -444,6 +461,9 @@
                             }]
                         },
                         options: {
+                            animation: {
+                                duration: 0,
+                            },
                             interaction: {
                                 intersect: false,
                                 mode: 'index',
@@ -479,10 +499,24 @@
                             },
                         }
                     });
+
+                    // Zoom to last 30 days
+                    const chart = Chart.getChart(ctx);
+                    chart.resetZoom();
+                    if (window.innerWidth < 768) {
+                        chart.options.scales.x.min = data.x[data.x.length - 14];
+                    } else {
+                        chart.options.scales.x.min = data.x[data.x.length - 30];
+                    }
+                    chart.options.scales.x.max = data.x[data.x.length - 1];
+                    chart.update();    
+
+                    ctx.classList.add('loaded');
+                    ctx.parentElement.classList.remove('spinner');
                 });
 
-            document.querySelector('.traffic-month-name').innerText = new Date().toLocaleString('default', { month: 'long' });
-            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=' + new Date().getDate())
+            document.querySelector('.traffic-month-name').innerText = 'past 30 days';
+            fetch('/{{ admin_uuid }}/stats/traffic/domain/{{ domain }}?days=30')
                 .then(function(response) {
                     return response.json()
                 })
@@ -492,6 +526,7 @@
                         sum += data.y[i];
                     }
                     document.querySelector('.traffic-month-value').innerText = Math.round(sum * 100) / 100 + ' GB';
+                    document.querySelector('.traffic-month-value').classList.remove('spinner');
                 }); 
         </script>
     </div>

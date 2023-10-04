@@ -47,7 +47,7 @@ proxy-groups:
       - tier{{tier.index}}-group
 {% endif %}{% endfor %}
     url: 'https://www.google.com/generate_204'
-    interval: 5
+    interval: 90
     global-default: true
     lazy: false
 
@@ -61,42 +61,11 @@ proxy-groups:
 {% endif %}
 {% endfor %}
 
-
-{% if udp_exists %}
-{% if meta or premium %}
-  - name: "main-udp"
-    type: fallback
-    proxies:
-{% for tier in tiers %}{% if tier.exists %}
-      - tier{{tier.index}}-group-udp
-{% endif %}{% endfor %}
-    url: 'https://www.google.com/generate_204'
-    interval: 5
-    lazy: false
-
-{% for tier in tiers %}
-{% if tier.exists %}
-{% with name="tier" + (tier.index) + "-group-udp", proxies=providers, tier=tier, panel_domain=panel_domain, user_id=user_id, udp_only=True %}
-{% if tier.type == 'urltest' %}{% include "groups/urltest.yaml" %}{% endif %}
-{% if tier.type == 'fallback' %}{% include "groups/fallback.yaml" %}{% endif %}
-{% if tier.type == 'loadbalance' %}{% include "groups/loadbalance.yaml" %}{% endif %}
+{% for group in groups %}
+{% with name=group.name, proxies=providers, panel_domain=panel_domain, user_id=user_id, group_id=group.index, health_check=health_check,  server = group.server, host = group.host, sni = group.sni, entry_type = group.entry_type %}
+{% include "groups/servergroupfallback.yaml" %}
 {% endwith %}
-{% endif %}
 {% endfor %}
-
-{% endif %}
-{% endif %}
-
-{% if health_check %}
-{% for provider in providers %}
-{% if not provider.meta_only or meta %}
-{% with name=provider.name, server=provider.server, sni=provider.sni, host=provider.host, type=provider.type, entry_type=provider.entry_type, panel_domain=panel_domain, user_id=user_id %}
-{% include ("groups/healthcheckserver.yaml") %}
-{% endwith %}
-{% endif %}
-{% endfor %}
-{% endif %}
-
 
 mixed-port: 1096
 redir-port: 7892
@@ -111,13 +80,4 @@ rules:
 {% include "rules/" + country + "-direct.yaml" %}
 {% endfor %}
 
-{% if udp_exists %}
-{% if meta %}
-  - AND,((NETWORK,UDP)),main-udp
-{% else %}
-{% if premium %}
-  - SCRIPT,udpnetwork,main-udp
-{% endif %}
-{% endif %}
-{% endif %}
   - MATCH,main

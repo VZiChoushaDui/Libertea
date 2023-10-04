@@ -217,6 +217,77 @@
                 border-bottom: 1px solid #999;
                 padding-bottom: 4px;
             }
+            
+            canvas.animated {
+                transform-origin: bottom left;
+            }
+
+            canvas.animated.loaded {
+                animation: canvas-entrance-animation 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+
+            @keyframes canvas-entrance-animation {
+                0% {
+                    opacity: 0;
+                    transform: scaleX(0.5);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scaleX(1);
+                }
+            }
+
+            @keyframes spinner {
+                to {transform: rotate(360deg);}
+            }
+            
+            .spinner {
+                position: relative;
+            }
+
+            .spinner:before {
+                content: '';
+                box-sizing: border-box;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 40px;
+                height: 40px;
+                margin-top: -20px;
+                margin-left: -20px;
+                border-radius: 50%;
+                border: 1px solid #ccc;
+                border-top-color: #cc4f6a;
+                animation: spinner .8s linear infinite;
+            }
+
+            .spinner.text-spinner:before {
+                width: 20px;
+                height: 20px;
+                margin-top: -10px;
+                margin-left: -10px;
+                left: 20px;
+            }
+
+            .spinner.small-spinner:before {
+                width: 12px;
+                height: 12px;
+                margin-top: -6px;
+                margin-left: -6px;
+                left: 10px;
+            }
+
+            .text-spinner {
+                transition: color 0.3s ease;
+            }
+
+            .text-spinner.spinner {
+                color: transparent;
+            }
+
+            .text-spinner:not(.spinner) {
+                color: inherit;
+            }
         </style>
     </head>
     <body>
@@ -230,6 +301,10 @@
                 <div class="tabs float-start">
                     <a href="/{{ admin_uuid }}/users/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Users</a>
                 </div>
+                {% elif back_to == 'dashboard' %}
+                <div class="tabs float-start">
+                    <a href="/{{ admin_uuid }}/dashboard/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Dashboard</a>
+                </div>
                 {% else %}
 
                 <a href="/{{ admin_uuid }}/">
@@ -241,7 +316,7 @@
                 <div style="clear: both;" class="d-block d-sm-none"></div>
 
                 <div class="tabs float-sm-end">
-                    <a href="/{{ admin_uuid }}/" class="tab {% if page=='dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="/{{ admin_uuid }}/dashboard/" class="tab {% if page=='dashboard' %}active{% endif %}">Dashboard</a>
                     <a href="/{{ admin_uuid }}/users/" class="tab {% if page=='users' %}active{% endif %}">Users</a>
                     <a href="/{{ admin_uuid }}/domains/" class="tab {% if page=='domains' %}active{% endif %}">Routes</a>
                     <a href="/{{ admin_uuid }}/settings/" class="tab {% if page=='settings' %}active{% endif %}">Settings</a>

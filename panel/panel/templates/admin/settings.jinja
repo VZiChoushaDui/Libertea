@@ -148,7 +148,7 @@
                 <select class="form-select" aria-label="Tier {{ tier }} server selection method" id="tier_{{tier}}_proxygroup_type" name="tier_{{tier}}_proxygroup_type">
                     <option value="urltest" {% if proxygroup_type_selected[tier] == 'urltest' %}selected{% endif %}>Ping</option>
                     <option value="loadbalance" {% if proxygroup_type_selected[tier] == 'loadbalance' %}selected{% endif %}>Load balance (round-robin)</option>
-                    <option value="fallback" disabled {% if proxygroup_type_selected[tier] == 'fallback' %}selected{% endif %}>Fallback (best health score first)</option>
+                    <option value="fallback" disabled {% if proxygroup_type_selected[tier] == 'fallback' %}selected{% endif %}>Fallback (best availability score first)</option>
                 </select>
             </div>
             {% endfor %}
@@ -178,7 +178,7 @@
         <div class="form-check mb-4">
             <input class="form-check-input" type="checkbox" value="on" name="health_check" id="health_check" {% if health_check %}checked{% endif %}>
             <label class="form-check-label" for="health_check">
-                Periodic health check from clients <strong>[BETA]</strong><br />
+                Periodic availability monitoring from clients <strong>[BETA]</strong><br />
                 <i style="opacity: 0.75">Only single-file clash configuration supports this feature</i>
             </label>
         </div>

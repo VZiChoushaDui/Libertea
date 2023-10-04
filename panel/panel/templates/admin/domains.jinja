@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
-                    Health: <span class="health-percent" data-domainid="{{ domain.id }}">⌛</span>
+                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ domain.id }}">⌛</span>
                     {% endif %}
                 </div>
             </div>
@@ -80,7 +80,7 @@
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
-                    Health: <span class="health-percent" data-domainid="{{ proxy.ip }}">⌛</span>
+                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ proxy.ip }}">⌛</span>
                     {% endif %}
                 </div>
             </div>
@@ -98,7 +98,7 @@
 {% if health_check %}
 <script>
     document.querySelectorAll('.health-percent').forEach(elem => {
-        fetch('/{{admin_uuid}}/health/' + elem.dataset.domainid + '?hours=24')
+        fetch('/{{admin_uuid}}/health/' + elem.dataset.domainid + '?hours=72')
             .then(r => r.json())
             .then(data => {
                 // group data by time_slice, and keep the max success_rate
@@ -139,6 +139,7 @@
 
                 var avg_percent = Math.round(sum / count * 100);
                 elem.innerText = avg_percent + '%';
+                elem.classList.remove('spinner');
             });
     });
 </script>

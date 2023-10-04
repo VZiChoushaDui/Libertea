@@ -1,6 +1,17 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
-<!-- <h1 class="mt-5">Welcome, Admin!</h1> -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.1.0/progressbar.min.js" integrity="sha512-EZhmSl/hiKyEHklogkakFnSYa5mWsLmTC4ZfvVzhqYNLPbXKAXsjUYRf2O9OlzQN33H0xBVfGSEIUeqt9astHQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+    #securityRing {
+        width: 120px;
+        transition: opacity 0.6s ease-in-out;
+        opacity: 1;
+        cursor: pointer;
+    }
+</style>
+
 {% if domains_count == 0 or users_count == 0 %}
 <div class="section tutorial">
     <div class="row">
@@ -31,37 +42,115 @@
 <hr />
 {% endif %}
 
-{% if update_available %}
-<div class="w-100 mt-4 px-3">
-    ⚠️ There's a new version of Libertea available. <a href="https://github.com/VZiChoushaDui/Libertea#update" target="_blank">Update now</a>
-</div>
-{% endif %}
-{% if proxy_update_available %}
-<div class="w-100 mt-4 px-3">
-    ⚠️ One or more of your Secondary Proxies needs to be updated. <a href="/{{ admin_uuid }}/domains/">more info</a>
-</div>
-{% endif %}
-
 {% if no_domain_warning %}
 <div class="w-100 mt-4 px-3">
     🚨 Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.<br /><a href="/{{ admin_uuid }}/domains/new/?next=dashboard">Add a domain</a>
 </div>
-{% endif %}
-{% if no_camouflage_warning %}
-<div class="w-100 mt-4 px-3">
-    🚨 Warning: You don't have a camouflage domain set up, this increases the chance of your VPN being blocked.<br /><a href="/{{ admin_uuid }}/settings/">Set up a camouflage domain</a>
+{% else %}
+<div class="section stats row">
+    <div class="col-12 col-sm-4 col-md-3 col-xxl-2 mt-3 mb-3 mt-sm-5 mb-sm-3 d-flex align-items-center justify-content-center">
+        <div id="securityRing"></div>
+    </div>
+    <div class="col-12 col-sm-8 col-md-9 col-xxl-10 mt-3 mb-3 mt-sm-5 mb-sm-3 d-flex align-items-center justify-content-center">
+        <div class="w-100 text-center text-sm-start">
+            {% if warning_level == 0 %}
+                <div style="font-weight: 700">Libertea is active and secure!</div>
+                <div class="mt-2">
+                    Your Libertea VPN is active and ready to use.
+                </div>
+            {% elif warning_level == 1 %}
+                <div style="font-weight: 700">Libertea is active and secure!</div>
+                <div class="mt-2">
+                    Your Libertea VPN is active and ready to use, but there are some tips you can follow to improve its security and availability.
+                </div>
+                <div class="mt-2">
+                    <a href="/{{ admin_uuid }}/security/">View tips</a>
+                </div>
+            {% else %}
+                <div style="font-weight: 700">Libertea is active</div>
+                <div class="mt-2">
+                    ⚠️ There are some warnings you can fix to improve your Libertea VPN's security and availability.
+                </div>
+                <div class="mt-2">
+                    <a href="/{{ admin_uuid }}/security/">View warnings</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endif %}
-{% if active_domains_count == 1 %}
-<div class="w-100 mt-4 px-3">
-    ⭐ Tip: Use <strong>more than one domain</strong> to increase your VPN's availability.
-</div>
-{% endif %}
-{% if proxies_count == 0 %}
-<div class="w-100 mt-4 px-3">
-    ⭐ Tip: Consider adding a <strong>secondary proxy</strong> for better availability across various networks.<br /><a href="/{{ admin_uuid }}/proxies/new/">Add a secondary proxy</a>
-</div>
-{% endif %}
+
+<script>
+    var myProgress = new ProgressBar.Circle('#securityRing', {
+        color: '#007bff',
+        trailColor: '#eee',
+        trailWidth: 1,
+        duration: 1500,
+        easing: 'easeOut',
+        strokeWidth: 6,
+        from: { color: '#ff0000' },
+        to: { color: '#28a745' },
+        step: function(state, circle) {
+            circle.path.setAttribute('stroke', state.color);
+            if (circle.value() == 0) {
+                circle.setText('');
+            } else {
+                // circle.setText(Math.round(circle.value() * 10) + '/10');
+                // set html content
+                circle.setText('<div class="d-flex flex-column justify-content-center align-items-center text-center" style="margin-left: -20px; margin-right: -20px; margin-top: 6px;"><div style="font-size: 0.6em; font-weight: 700"><i class="fa-solid fa-circle-info px-1"></i>Availability score</div><div>' + Math.round(circle.value() * 10) + '/10</div><div style="font-size: 0.6em;"></div></div>');
+                circle.text.style.color = state.color;
+            }
+        },
+        text: {
+            style: {
+                color: '#28a745',
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                padding: 0,
+                margin: 0,
+                transform: {
+                    prefix: true,
+                    value: 'translate(-50%, -50%)'
+                },
+                fontWeight: '700',      
+            }
+        }
+    });
+
+    setTimeout(function() {
+        const secRing = document.getElementById('securityRing');
+        secRing.style.opacity = 1;
+        myProgress.animate({{ security_score }});
+        let availabilityInfoModal = new bootstrap.Modal(document.getElementById('availabilityInfoModal'), {});
+        secRing.addEventListener('click', function() {
+            availabilityInfoModal.show();
+        });
+    }, 200);
+</script>
+
+<div class="modal fade" id="availabilityInfoModal" tabindex="-1" aria-labelledby="availabilityInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="availabilityInfoModalLabel">What is availability score?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>
+                Libertea VPN's availability score is a measure of how secure and available your Libertea VPN is. The higher the score, the more secure and available your Libertea VPN is, and it's more reliable for your users to use.
+            </p>
+            <p>
+                You can improve your Libertea VPN's availability by following the tips on <a href="/{{ admin_uuid }}/security/">this page</a>.
+            </p> 
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <div class="section stats">
     <div class="row">
         <div class="col-12">
@@ -80,11 +169,11 @@
             <div class="stats-item-desc">Secondary proxies</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value cpu-percent">⌛</div>
+            <div class="stats-item-value cpu-percent spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Current CPU usage</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value ram-percent">⌛</div>
+            <div class="stats-item-value ram-percent spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Current RAM usage</div>
         </div>
     </div>
@@ -96,28 +185,28 @@
             <h6 class="bordered">Connection status</h6>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value ips-connected-right-now">⌛</div>
+            <div class="stats-item-value ips-connected-right-now spinner text-spinner">⌛</div>
             <div class="stats-item-desc">IPs connected right now</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value users-connected-right-now">⌛</div>
+            <div class="stats-item-value users-connected-right-now spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Users connected right now</div>
         </div>
         <!-- <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value ips-connected-today">⌛</div>
+            <div class="stats-item-value ips-connected-today spinner text-spinner">⌛</div>
             <div class="stats-item-desc">IPs connected today</div>
         </div> -->
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value users-connected-today">⌛</div>
+            <div class="stats-item-value users-connected-today spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Users connected today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value traffic-today">⌛</div>
+            <div class="stats-item-value traffic-today spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Traffic today</div>
         </div>
         <div class="col-6 col-sm-4 stats-item">
-            <div class="stats-item-value traffic-this-month">⌛</div>
-            <div class="stats-item-desc">Traffic in {{ month_name }}</div>
+            <div class="stats-item-value traffic-past-30-days spinner text-spinner">⌛</div>
+            <div class="stats-item-desc">Traffic in the past 30 days</div>
         </div>
     </div>
 </div>
@@ -125,7 +214,9 @@
     <div class="row">
         <div class="col-12">
             <h6 class="bordered">Traffic usage over time</h6>
-            <canvas id="trafficChart" style="width: 100%; height: 250px;"></canvas>
+            <div class="spinner">
+                <canvas id="trafficChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -133,7 +224,9 @@
     <div class="row">
         <div class="col-12">
             <h6 class="bordered">Connected IPs over time</h6>
-            <canvas id="connectionChart" style="width: 100%; height: 250px;"></canvas>
+            <div class="spinner">
+                <canvas id="connectionChart" class="animated" style="width: 100%; height: 250px;"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -155,7 +248,9 @@
             })
             .then(function(data) {
                 document.querySelector('.cpu-percent').innerHTML = parseStatsValue(data.cpu);
+                document.querySelector('.cpu-percent').classList.remove('spinner');
                 document.querySelector('.ram-percent').innerHTML = parseStatsValue(data.ram);
+                document.querySelector('.ram-percent').classList.remove('spinner');
             });
     }
 
@@ -166,11 +261,17 @@
             })
             .then(function(data) {
                 document.querySelector('.users-connected-right-now').innerHTML = parseStatsValue(data.users_now_long);
+                document.querySelector('.users-connected-right-now').classList.remove('spinner');
                 document.querySelector('.users-connected-today').innerHTML = parseStatsValue(data.users_today);
+                document.querySelector('.users-connected-today').classList.remove('spinner');
                 document.querySelector('.traffic-today').innerHTML = parseStatsValue(data.traffic_today);
-                document.querySelector('.traffic-this-month').innerHTML = parseStatsValue(data.traffic_this_month);
+                document.querySelector('.traffic-today').classList.remove('spinner');
+                document.querySelector('.traffic-past-30-days').innerHTML = parseStatsValue(data.traffic_past_30_days);
+                document.querySelector('.traffic-past-30-days').classList.remove('spinner');
                 // document.querySelector('.ips-connected-today').innerHTML = parseStatsValue(data.ips_today);
+                // document.querySelector('.ips-connected-today').classList.remove('spinner');
                 document.querySelector('.ips-connected-right-now').innerHTML = parseStatsValue(data.ips_now_long);
+                document.querySelector('.ips-connected-right-now').classList.remove('spinner');                
             });
     }
 
@@ -198,6 +299,9 @@
                         }]
                     },
                     options: {
+                        animation: {
+                            duration: 0,
+                        },
                         interaction: {
                             intersect: false,
                             mode: 'index',
@@ -234,12 +338,18 @@
                     }
                 });
 
-                // Zoom to last 7 days
                 const chart = Chart.getChart(ctx);
                 chart.resetZoom();
-                chart.options.scales.x.min = data.x[data.x.length - 7 * 24 * (60 / 10)];
+                if (window.innerWidth < 768) {
+                    chart.options.scales.x.min = data.x[data.x.length - 3 * 24 * (60 / 10)];
+                } else {
+                    chart.options.scales.x.min = data.x[data.x.length - 7 * 24 * (60 / 10)];
+                }
                 chart.options.scales.x.max = data.x[data.x.length - 1];
                 chart.update();
+                
+                ctx.classList.add('loaded');
+                ctx.parentElement.classList.remove('spinner');
             });
     }
 
@@ -266,6 +376,9 @@
                         }]
                     },
                     options: {
+                        animation: {
+                            duration: 0,
+                        },
                         interaction: {
                             intersect: false,
                             mode: 'index',
@@ -302,12 +415,18 @@
                     }
                 });
 
-                // Zoom to last 30 days
                 const chart = Chart.getChart(ctx);
                 chart.resetZoom();
-                chart.options.scales.x.min = data.x[data.x.length - 30];
+                if (window.innerWidth < 768) {
+                    chart.options.scales.x.min = data.x[data.x.length - 14];
+                } else {
+                    chart.options.scales.x.min = data.x[data.x.length - 30];
+                }
                 chart.options.scales.x.max = data.x[data.x.length - 1];
                 chart.update();
+
+                ctx.classList.add('loaded');
+                ctx.parentElement.classList.remove('spinner');
             });
     }
 
@@ -316,9 +435,12 @@
     
     getSystemStats();
     getUserStats();
-    updateConnectionChart();
-    updateTrafficChart();
-    
+    // setTimeout(updateConnectionChart, 1000);
+    // setTimeout(updateTrafficChart, 1000);
+    setTimeout(function() {
+        updateTrafficChart();
+        updateConnectionChart();
+    }, 1500);
 </script>
 
 {% endblock %}

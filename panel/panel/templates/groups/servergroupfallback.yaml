@@ -1,0 +1,14 @@
+  - name: "{{name}}"
+    type: fallback
+    proxies:
+{% for provider in providers %}{% if provider.group_name == name %}{% if not provider.meta_only or meta %}{% if provider.type != 'servergroup' %}
+      - {{ provider.name }}
+{% endif %}{% endif %}{% endif %}{% endfor %}
+{% if health_check %}
+    url: 'https://{{panel_domain}}/{{user_id}}/health?protocol=all-fallback&domain={% if entry_type == "SecondaryProxy" %}{{ server }}{% else %}{{ host }}{% endif %}&domain_dns={{ server }}'
+    interval: 290
+{% else %}
+    url: 'http://www.google.com/generate_204'
+    interval: {{ 290 + group_id * 7 }}
+{% endif %}
+    lazy: false

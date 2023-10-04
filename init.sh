@@ -172,6 +172,16 @@ else
         sed -i '/FIREWALL_OUTBOUND_TCP_PORTS="22 53 80 8080 443 8443 3389"/d' .env
     fi
 
+    if grep -q "FIREWALL_OUTBOUND_TCP_PORTS=\"22 53 80 8080 443 8443 3389 5222\"" .env; then
+        echo "    - Removing old default FIREWALL_OUTBOUND_TCP_PORTS from .env..."
+        sed -i '/FIREWALL_OUTBOUND_TCP_PORTS="22 53 80 8080 443 8443 3389 5222"/d' .env
+    fi
+
+    if grep -q "FIREWALL_OUTBOUND_UDP_PORTS=\"53 443 123 19302:19309\"" .env; then
+        echo "    - Removing old default FIREWALL_OUTBOUND_UDP_PORTS from .env..."
+        sed -i '/FIREWALL_OUTBOUND_UDP_PORTS="53 443 123 19302:19309"/d' .env
+    fi
+
     # If a variable is missing from .env, add it and fill it with value
     while IFS= read -r line; do
         if [[ $line != *"=" ]]; then

@@ -2,9 +2,9 @@
     type: load-balance
     strategy: round-robin
     proxies:
-{% for provider in providers %}{% if provider.tier == tier.index %}{% if not provider.meta_only or meta %}{% if not udp_only or provider.type == 'trojan-ws' or provider.type == 'trojan-grpc' or provider.type == 'vless-ws' or provider.type == 'vless-grpc' or provider.type == 'vmess-ws' or provider.type == 'vless-grpc' %}
+{% for provider in providers %}{% if provider.tier == tier.index %}{% if not provider.meta_only or meta %}{% if provider.type == 'servergroup' %}
       - {{ provider.name }}
 {% endif %}{% endif %}{% endif %}{% endfor %}
-    url: 'https://www.google.com/generate_204'
-    interval: 30
+    url: 'http://www.google.com/generate_204'
+    interval: {{ 60 + (tier.index | int - 1) * 11 }}
     lazy: false

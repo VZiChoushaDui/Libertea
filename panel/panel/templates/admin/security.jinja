@@ -1,0 +1,79 @@
+{% extends "admin/base.jinja" %}
+{% block content %}
+
+<style>
+    .security-card {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 30px;
+        margin-bottom: 30px;
+        background: #f7f7f7;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .security-card h5 {
+        margin-bottom: 20px;
+    }
+
+    .main-content {
+        padding: 10px 20px;
+    }
+</style>
+
+{% if health_warnings.no_camouflage.status %}
+<div class="section security-card">
+    <h5>⚠️ Camouflage website</h5>
+    <p>Your domains will show the content from camouflage website so that it looks like a normal website and the chance of being blocked is much lower.</p>
+    <a href="/{{ admin_uuid }}/welcome/camouflage/?next_page=security">Set up camouflage website</a>
+</div>
+{% endif %}
+
+{% if health_warnings.update_available.status %}
+<div class="section security-card">
+    <h5>Update available</h5>
+    <p>There is a new version of Libertea available.</p>
+    <a href="https://github.com/VZiChoushaDui/Libertea#update" target="_blank">Update now</a>
+</div>
+{% endif %}
+
+{% if health_warnings.proxy_update_available.status %}
+<div class="section security-card">
+    <h5>Proxy update available</h5>
+    <p>One or more of your Secondary Proxies needs to be updated.</p>
+    <a href="/{{ admin_uuid }}/domains/">More info</a>
+</div>
+{% endif %}
+
+{% if health_warnings.no_direct_country.status %}
+<div class="section security-card">
+    <h5>Direct route for your country</h5>
+    <p>You have not set up your country in Libertea. By doing so, you will be able to access domestic websites faster, and also reduce the chance of being blocked.</p>
+    <a href="/{{ admin_uuid }}/welcome/country/?next_page=security">Set up your country</a>
+</div>
+{% endif %}
+
+{% if health_warnings.same_domain_for_panel_and_vpn.status %}
+<div class="section security-card">
+    <h5>Same domain for Panel and VPN</h5>
+    <p>You have set the same domain <strong>{{ panel_domain }}</strong> for Panel and VPN. This is not recommended because in case of a block, your clients will not be able to receive updates for the new routes.</p>
+    <p>We recommend using separate domains for Panel and VPN.</p>
+    <a href="/{{ admin_uuid }}/domains/">Change your domains</a>
+</div>
+{% endif %}
+
+{% if health_warnings.no_secondary_route.status %}
+<div class="section security-card">
+    <h5>Secondary proxies</h5>
+    <p>Consider adding a <strong>secondary proxy</strong> for better availability across various networks.</p>
+    <a href="/{{ admin_uuid }}/proxies/new/">Add a secondary proxy</a>
+</div>
+{% endif %}
+
+{% if no_warnings %}
+<div class="section mt-5 text-center">
+    <p>Everything looks good on your Libertea server. 🎉</p>
+    <a href="/{{ admin_uuid }}/dashboard/">Go back to Dashboard</a>
+</div>
+{% endif %}
+
+{% endblock %}

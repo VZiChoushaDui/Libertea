@@ -6,8 +6,43 @@ from . import config
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 
-def ___get_total_gigabytes(file_name, conn_url, return_as_string=True, domain=None):
+def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=True, domain=None, db=None):
     try:
+        # cache if not for today
+        cache_result = False
+        if date_resolution == 'day':
+            file_name = f'./data/usages/{date_resolution}/{date.strftime("%Y-%m-%d")}.json'
+            cache_result = date < datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        elif date_resolution == 'month':
+            file_name = f'./data/usages/{date_resolution}/{date.strftime("%Y-%m")}.json'
+            cache_result = date < datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        else: 
+            raise Exception('Invalid date resolution ' + str(date_resolution))
+
+        cache_entry_name = ''
+        if cache_result:
+            if db is None:
+                client = config.get_mongo_client()
+                db = client[config.MONGODB_DB_NAME]
+            
+            if date_resolution == 'day':
+                cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGb-' + conn_url
+            elif date_resolution == 'month':
+                cache_entry_name = date.strftime("%Y-%m") + '-trafficGb-' + conn_url
+
+            if domain is not None:
+                cache_entry_name += '-' + domain
+            
+            # check if already cached
+            stats_cache = db.stats_cache
+            cached = stats_cache.find_one({'_id': cache_entry_name})
+            if cached is not None:
+                gigabytes = cached['gigabytes']
+                if return_as_string:
+                    gigabytes = round(cached['gigabytes'] * 100) / 100
+                    gigabytes = str(gigabytes) + ' GB'
+                return gigabytes
+        
         with open(config.get_root_dir() + file_name, 'r') as f:
             data = json.load(f)
 
@@ -23,8 +58,18 @@ def ___get_total_gigabytes(file_name, conn_url, return_as_string=True, domain=No
                     else:
                         gigabytes = 0
 
+                if cache_result:
+                    stats_cache = db.stats_cache
+                    stats_cache.update_one(
+                        {'_id': cache_entry_name},
+                        {'$set': {
+                            'gigabytes': gigabytes,
+                        }},
+                        upsert=True
+                    )
+
                 if return_as_string:
-                    gigabytes = round(gigabytes * 1000) / 1000
+                    gigabytes = round(gigabytes * 100) / 100
                     gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
                 
@@ -37,8 +82,37 @@ def ___get_total_gigabytes(file_name, conn_url, return_as_string=True, domain=No
             return '-'
         return None
 
-def ___get_total_ips(file_name, conn_url):
+def ___get_total_ips(date, date_resolution, conn_url, db=None):
     try:
+        # cache if not for today
+        cache_result = False
+        if date_resolution == 'day':
+            file_name = f'./data/usages/{date_resolution}/{date.strftime("%Y-%m-%d")}.json'
+            cache_result = date < datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        elif date_resolution == 'month':
+            file_name = f'./data/usages/{date_resolution}/{date.strftime("%Y-%m")}.json'
+            cache_result = date < datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        else: 
+            raise Exception('Invalid date resolution ' + str(date_resolution))
+
+        cache_entry_name = ''
+        if cache_result:
+            if db is None:
+                client = config.get_mongo_client()
+                db = client[config.MONGODB_DB_NAME]
+            
+            if date_resolution == 'day':
+                cache_entry_name = date.strftime("%Y-%m-%d") + '-ips-' + conn_url
+            elif date_resolution == 'month':
+                cache_entry_name = date.strftime("%Y-%m") + '-ips-' + conn_url
+            
+            # check if already cached
+            stats_cache = db.stats_cache
+            cached = stats_cache.find_one({'_id': cache_entry_name})
+            if cached is not None:
+                return cached['ips']
+            
+
         with open(config.get_root_dir() + file_name, 'r') as f:
             data = json.load(f)
 
@@ -46,6 +120,15 @@ def ___get_total_ips(file_name, conn_url):
             entry_name = list(user.keys())[0]
             if entry_name == conn_url:
                 connections = user[entry_name]['ips']
+                if cache_result:
+                    stats_cache = db.stats_cache
+                    stats_cache.update_one(
+                        {'_id': cache_entry_name},
+                        {'$set': {
+                            'ips': connections,
+                        }},
+                        upsert=True
+                    )
                 connections = str(connections)
                 return connections
 
@@ -60,8 +143,7 @@ def get_gigabytes_today(user_id, db=None):
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
-    file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
-    return ___get_total_gigabytes(file_name, conn_url)
+    return ___get_total_gigabytes(datetime.now(), 'day', conn_url, db=db)
 
 def get_gigabytes_this_month(user_id, db=None):
     if db is None:
@@ -70,8 +152,7 @@ def get_gigabytes_this_month(user_id, db=None):
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
-    file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
-    return ___get_total_gigabytes(file_name, conn_url)
+    return ___get_total_gigabytes(datetime.now(), 'month', conn_url, db=db)
 
 def get_ips_today(user_id, db=None):
     if db is None:
@@ -80,8 +161,7 @@ def get_ips_today(user_id, db=None):
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
-    file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
-    return ___get_total_ips(file_name, conn_url)
+    return ___get_total_ips(datetime.now(), 'day', conn_url, db=db)
 
 def get_ips_this_month(user_id, db=None):
     if db is None:
@@ -90,12 +170,10 @@ def get_ips_this_month(user_id, db=None):
     users = db.users
     user = users.find_one({"_id": user_id})
     conn_url = user['connect_url']
-    file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
-    return ___get_total_ips(file_name, conn_url)
+    return ___get_total_ips(datetime.now(), 'month', conn_url, db=db)
 
 def get_gigabytes_today_all():
-    file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
-    return ___get_total_gigabytes(file_name, '[total]')
+    return ___get_total_gigabytes(datetime.now(), 'day', '[total]')
 
 def get_traffic_per_day(user_id, days=7, domain=None, db=None):
     if db is None:
@@ -110,15 +188,14 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
     for i in range(days - 1, -1, -1):
         date_obj = datetime.now() - timedelta(days=i)
         date = date_obj.strftime('%Y-%m-%d')
-        file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
         try:
-            traffic = ___get_total_gigabytes(file_name, conn_url, return_as_string=False, domain=domain)
+            traffic = ___get_total_gigabytes(date_obj, 'day', conn_url, return_as_string=False, domain=domain, db=db)
             if traffic is None:
                 traffic = 0
 
             if domain is not None:
-                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
+                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day, db=db)
                 if extra_traffic is not None:
                     for port in extra_traffic:
                         traffic += (extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']) / 1024 / 1024 / 1024
@@ -139,15 +216,14 @@ def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_r
     for i in range(days - 1, -1, -1):
         date_obj = datetime.now() - timedelta(days=i)
         date = date_obj.strftime('%Y-%m-%d')
-        file_name = './data/usages/day/{}.json'.format(date)
         xs.append(date)
         try:
-            traffic = ___get_total_gigabytes(file_name, '[total]', return_as_string=False, domain=domain)
+            traffic = ___get_total_gigabytes(date_obj, 'day', '[total]', return_as_string=False, domain=domain, db=db)
             if traffic is None:
                 traffic = 0
 
             if domain is not None:
-                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day)
+                extra_traffic = utils.online_route_get_traffic(domain, date_obj.year, date_obj.month, date_obj.day, db=db)
                 if extra_traffic is not None:
                     for port in extra_traffic:
                         traffic += (extra_traffic[port]['received_bytes'] + extra_traffic[port]['sent_bytes']) / 1024 / 1024 / 1024
@@ -157,17 +233,50 @@ def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_r
 
     return xs, ys
 
+def get_gigabytes_past_30_days(user_id, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    users = db.users
+    user = users.find_one({"_id": user_id})
+    conn_url = user['connect_url']
+
+    start_date = datetime.now() - timedelta(days=30)
+    end_date = datetime.now()
+    sum_gigabytes = 0
+    while start_date <= end_date:
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
+        if cur_gigabytes is not None:
+            sum_gigabytes += cur_gigabytes
+        start_date += timedelta(days=1)
+
+    return str(round(sum_gigabytes * 100) / 100) + ' GB'
+
+def get_gigabytes_past_30_days_all(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    start_date = datetime.now() - timedelta(days=30)
+    end_date = datetime.now()
+    sum_gigabytes = 0
+    while start_date <= end_date:
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
+        if cur_gigabytes is not None:
+            sum_gigabytes += cur_gigabytes
+        start_date += timedelta(days=1)
+
+    return str(round(sum_gigabytes * 100) / 100) + ' GB'
+
+
 def get_gigabytes_this_month_all():
-    file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
-    return ___get_total_gigabytes(file_name, '[total]')
+    return ___get_total_gigabytes(datetime.now(), 'month', '[total]')
 
 def get_ips_today_all():
-    file_name = './data/usages/day/{}.json'.format(datetime.now().strftime('%Y-%m-%d'))
-    return ___get_total_ips(file_name, '[total]')
+    return ___get_total_ips(datetime.now(), 'day', '[total]')
 
 def get_ips_this_month_all():
-    file_name = './data/usages/month/{}.json'.format(datetime.now().strftime('%Y-%m'))
-    return ___get_total_ips(file_name, '[total]')
+    return ___get_total_ips(datetime.now(), 'month', '[total]')
     
 def get_connected_ips_right_now(user_id, long=False, db=None):
     if db is None:

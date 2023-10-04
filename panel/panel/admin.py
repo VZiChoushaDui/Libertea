@@ -17,7 +17,16 @@ blueprint = Blueprint('admin', __name__)
 root_url = '/' + config.get_admin_uuid() + '/'
 
 @blueprint.route(root_url)
-def dashboard():
+def rootpage():
+    users_count = len(utils.get_users())
+    if users_count <= 1:
+        # if not settings.get_has_dashboard_opened():
+        #     return redirect(url_for('welcome.welcome'))
+        return redirect(url_for('welcome.welcome'))
+
+    return redirect(url_for('admin.dashboard'))
+
+def get_health_warnings():
     update_available = False
     try:
         latest_version = requests.get(config.VERSION_ENDPOINT, timeout=1).text
@@ -27,26 +36,87 @@ def dashboard():
     except:
         pass
 
-    domains_count = len(utils.get_domains())
-    users_count = len(utils.get_users())
+    route_direct_country_enabled = {x['id']: settings.get_route_direct_country_enabled(x['id']) for x in config.ROUTE_IP_LISTS}
+    
+    return {
+        'no_camouflage': {
+            'status': settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
+            'score_penalty': 0.4,
+            'severity': 2,
+        },
+        'update_available': {
+            'status': update_available,
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'proxy_update_available': {
+            'status': utils.online_route_any_update_available(),
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'no_direct_country': {
+            'status': not any(route_direct_country_enabled.values()),
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'same_domain_for_panel_and_vpn': {
+            'status': config.get_panel_domain() in utils.get_domains(),
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'no_secondary_route': {
+            'status': len(utils.online_route_get_all()) == 0,
+            'score_penalty': 0.1,
+            'severity': 1,
+        }
+    }
 
-    if domains_count == 0 and users_count == 0:
-        return redirect(url_for('welcome.welcome'))
+@blueprint.route(root_url + "security/")
+def security():
+    health_warnings = get_health_warnings()
+
+    no_warnings = True
+    for warning in health_warnings:
+        if health_warnings[warning]['status']:
+            no_warnings = False
+            break
+
+    return render_template('admin/security.jinja',
+        page='security',
+        back_to='dashboard',
+        admin_uuid=config.get_admin_uuid(),
+        health_warnings=health_warnings,
+        no_warnings=no_warnings,
+        panel_domain=config.get_panel_domain(),
+    )
+
+@blueprint.route(root_url + "dashboard/")
+def dashboard():
+    settings.set_has_dashboard_opened(True)
+
+    health_warnings = get_health_warnings()
+    warning_level = 0
+    security_score = 1
+    for warning in health_warnings:
+        if health_warnings[warning]['status']:
+            warning_level = max(warning_level, health_warnings[warning]['severity'])
+            security_score -= health_warnings[warning]['score_penalty']
+            
 
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
         admin_uuid=config.get_admin_uuid(),
-        users_count=users_count,
-        domains_count=domains_count,
+        users_count=len(utils.get_users()),
+        domains_count=len(utils.get_domains()),
         active_domains_count=len(utils.get_active_domains()),
         proxies_count=len(utils.online_route_get_all()),
         no_domain_warning=not utils.has_active_endpoints(),
-        no_camouflage_warning=settings.get_camouflage_domain() == None or settings.get_camouflage_domain() == '',
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
-        update_available=update_available,
         cur_version=config.LIBERTEA_VERSION,
         proxy_update_available=utils.online_route_any_update_available(),
+        warning_level=warning_level,
+        security_score=security_score,
     )
 
 
@@ -68,6 +138,7 @@ def user_stats():
     users_now_long = stats.get_connected_users_now(long=True)
     traffic_today = stats.get_gigabytes_today_all()
     traffic_this_month = stats.get_gigabytes_this_month_all()
+    traffic_past_30_days = stats.get_gigabytes_past_30_days_all()
     ips_today = stats.get_ips_today_all()
     users_today = stats.get_connected_users_today()
 
@@ -89,6 +160,7 @@ def user_stats():
         'users_now_long': users_now_long,
         'traffic_today': traffic_today,
         'traffic_this_month': traffic_this_month,
+        'traffic_past_30_days': traffic_past_30_days,
         'ips_today': ips_today,
         'users_today': users_today,
     }
@@ -223,6 +295,7 @@ def users():
         "created_at_timestamp": user["created_at"].timestamp(),
         "traffic_today": user["__cache_traffic_today"].replace(' GB', '') if "__cache_traffic_today" in user else "0",
         "traffic_this_month": user["__cache_traffic_this_month"].replace(' GB', '') if "__cache_traffic_this_month" in user else "0",
+        "traffic_past_30_days": user["__cache_traffic_past_30_days"].replace(' GB', '') if "__cache_traffic_past_30_days" in user else "0",
         "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
     } for user in users.find()]
 
@@ -262,8 +335,9 @@ def user(user):
     return render_template('admin/user.jinja',
         back_to='users',
         no_domain_warning=not utils.has_active_endpoints(),
-        traffic_today=user['__cache_traffic_today'] if '__cache_traffic_today' in user else '-',
+        traffic_today=stats.get_gigabytes_today(user['_id'], db=db),
         traffic_this_month=user['__cache_traffic_this_month'] if '__cache_traffic_this_month' in user else '-',
+        traffic_past_30_days=stats.get_gigabytes_past_30_days(user['_id'], db=db),
         ips_today=user['__cache_ips_today'] if '__cache_ips_today' in user else '-',
         month_name=datetime.now().strftime("%B"),
         admin_uuid=config.get_admin_uuid(),
@@ -295,7 +369,7 @@ def user_save(user):
     if note.strip() == '':
         note = user
     utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription)        
-    return redirect(url_for('admin.users', user=user))
+    return redirect(url_for('admin.user', user=user))
 
 @blueprint.route(root_url + 'users/<user>/', methods=['DELETE'])
 def user_delete(user):
@@ -436,7 +510,7 @@ def domain_save(domain):
         priority = int(priority)
         utils.set_domain_or_online_route_tier(domain, priority)
     
-    return redirect(url_for('admin.domains'))
+    return redirect(url_for('admin.domain', domain=domain))
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
 def domain_delete(domain):
@@ -525,11 +599,10 @@ def app_settings_save():
 
     if max_ips is not None:
         settings.set_default_max_ips(max_ips)
-    if add_domains_even_if_inactive is not None:
-        settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
     if proxy_port is not None:
         settings.set_secondary_proxy_ports(proxy_port)
 
+    settings.set_add_domains_even_if_inactive(add_domains_even_if_inactive == 'on')
     settings.set_single_clash_file_configuration(single_file_clash == 'on')
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')
