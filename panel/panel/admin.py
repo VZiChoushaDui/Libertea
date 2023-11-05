@@ -501,7 +501,7 @@ def domain_save(domain):
     if ip_override is not None:
         ip_override = ip_override.strip()
         if ip_override == '':
-            ip_override = None
+            ip_override = domain
 
         utils.update_domain(domain, dns_domain=ip_override)
 
