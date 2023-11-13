@@ -376,7 +376,6 @@ def user_delete(user):
     utils.delete_user(user)
     return '', 200
 
-
 @blueprint.route(root_url + 'domains/')
 def domains():
     client = config.get_mongo_client()
@@ -632,3 +631,7 @@ def app_settings_save():
 
     return redirect(url_for('admin.app_settings'))
 
+@blueprint.route(root_url + 'settings/reset_tiers/', methods=['POST'])
+def app_settings_reset_tiers():
+    utils.reset_all_user_tiers_enabled_for_subscription()
+    return "ok", 200

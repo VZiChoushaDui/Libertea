@@ -37,7 +37,7 @@ def init_provider_info(type, name, group_name, host, port, password, path, meta_
         'tier': tier,
     }
 
-def get_providers(connect_url, db, is_for_subscription=False):
+def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None):
     servers = []
 
     ports = settings.get_secondary_proxy_ports(db=db)
@@ -63,6 +63,9 @@ def get_providers(connect_url, db, is_for_subscription=False):
         tier = utils.get_domain_or_online_route_tier(server, db=db)
         if tier is None:
             tier = utils.get_default_tier(server_entry_type)
+
+        if enabled_tiers is not None and str(tier) not in enabled_tiers:
+            continue
 
         server_ips_str = utils.get_domain_dns_domain(server, db=db)
         server_ips = [server_ips_str]
@@ -175,14 +178,14 @@ def get_providers(connect_url, db, is_for_subscription=False):
 
     return providers
 
-def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
+def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, enabled_tiers=None):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
 
-    providers = get_providers(connect_url, db)
+    providers = get_providers(connect_url, db, enabled_tiers=enabled_tiers)
     
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:
@@ -241,7 +244,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False):
 
     return result
 
-def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
+def generate_conf(file_name, user_id, connect_url, meta=False, premium=False, enabled_tiers=None):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -255,7 +258,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     
-    providers = get_providers(connect_url, db=db)
+    providers = get_providers(connect_url, db=db, enabled_tiers=enabled_tiers)
 
     ips_direct_countries = []
     for country in config.ROUTE_IP_LISTS:

@@ -120,6 +120,14 @@ def get_user_tiers_enabled_for_subscription(panel_id):
 
     return user['tier_enabled_for_subscription']
 
+def reset_all_user_tiers_enabled_for_subscription():
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+    users = db.users
+
+    # delete all tier_enabled_for_subscription fields
+    users.update_many({}, {"$unset": {"tier_enabled_for_subscription": ""}})
+
 def get_panel_id_from_note(note):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
