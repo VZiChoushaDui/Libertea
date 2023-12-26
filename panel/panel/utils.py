@@ -429,6 +429,45 @@ def online_route_get_all(max_age_secs=300, db=None):
 
     return ips
 
+def secondary_route_get_all(db=None):
+    # get all secondary routes
+    now = datetime.now()
+
+    ips = []
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    for secondary_route in online_routes.find():
+        if 'deleted' in secondary_route and secondary_route['deleted']:
+            continue
+        ip = secondary_route["_id"]
+        online = False
+        last_seen = secondary_route["last_seen"]
+        if (now - last_seen).total_seconds() < 300:
+            online = True
+        ips.append({
+            "ip": ip,
+            "online": online,
+            "last_seen": last_seen,
+            "tier": get_domain_or_online_route_tier(ip, db=db, return_default_if_none=True),
+            "update_available": online_route_update_available(ip, db=db),
+        })
+
+    return ips
+
+def mark_route_as_deleted(ip, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    online_routes = db.online_routes
+    route = online_routes.find_one({"_id": ip})
+    if route is None:
+        return False
+
+    online_routes.update_one({"_id": ip}, {"$set": {"deleted": True}})
+
 def online_route_update_traffic(ip, traffic_data, db=None):
     if db is None:
         client = config.get_mongo_client()

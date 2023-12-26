@@ -389,13 +389,16 @@ def domains():
         "tier": utils.get_domain_or_online_route_tier(domain["_id"], db=db, return_default_if_none=True),
     } for domain in domains.find()]
 
-    proxy_ips = utils.online_route_get_all()
+    proxy_ips = utils.secondary_route_get_all(db)
     proxies = [{
-        "ip": x,
-        "tier": utils.get_domain_or_online_route_tier(x, db=db, return_default_if_none=True),
-        "update_available": utils.online_route_update_available(x, db=db),
+        "ip": x['ip'],
+        "tier": x['tier'],
+        "update_available": x['update_available'],
+        "online": x['online'],
     } for x in proxy_ips]
 
+    proxies = sorted([x for x in proxies if x['online']], key=lambda k: int(k['tier'])) + \
+        sorted([x for x in proxies if not x['online']], key=lambda k: int(k['tier']))
 
     return render_template('admin/domains.jinja', 
         page='domains',
@@ -437,12 +440,15 @@ def domain(domain):
     tier = str(tier)
 
     if domain_entry is None:
-        proxy_ips = utils.online_route_get_all()
-        if not domain in proxy_ips:
+        proxy_ips = utils.secondary_route_get_all()
+        entry = [x for x in proxy_ips if x['ip'] == domain]
+        if len(entry) == 0:
             return '', 404
+
+        entry = entry[0]
         return render_template('admin/domain.jinja', 
             back_to='domains',
-            status='active',
+            status='active' if entry['online'] else 'inactive',
             admin_uuid=config.get_admin_uuid(),
             server_ip=config.SERVER_MAIN_IP,
             domain=domain,
@@ -513,7 +519,8 @@ def domain_save(domain):
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
 def domain_delete(domain):
-    utils.remove_domain(domain)
+    if not utils.remove_domain(domain):
+        utils.mark_route_as_deleted(domain)
     return '', 200
 
 @blueprint.route(root_url + 'proxies/')
