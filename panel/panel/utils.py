@@ -1,3 +1,4 @@
+import re
 import uuid
 import socket
 import pymongo
@@ -429,6 +430,17 @@ def online_route_get_all(max_age_secs=300, db=None):
 
     return ips
 
+def validate_ip(ip):
+    # validate ip as ipv4 or ipv6 using regex
+    try:
+        if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) is not None:
+            return True
+        if re.match(r"^[0-9a-fA-F:]+$", ip) is not None:
+            return True
+    except:
+        pass
+    return False
+
 def secondary_route_get_all(db=None):
     # get all secondary routes
     now = datetime.now()
@@ -442,6 +454,8 @@ def secondary_route_get_all(db=None):
         if 'deleted' in secondary_route and secondary_route['deleted']:
             continue
         ip = secondary_route["_id"]
+        if not validate_ip(ip):
+            continue
         online = False
         last_seen = secondary_route["last_seen"]
         if (now - last_seen).total_seconds() < 300:
