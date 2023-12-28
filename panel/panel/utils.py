@@ -196,6 +196,8 @@ def add_domain(domain, dns_domain=None, sni=None):
     if not sysops.haproxy_update_domains_list():
         remove_domain(domain)
         return 500
+
+    settings.all_domains_ever_push(domain)
     
     # try issuing a cert for the new domain in the background
     # this is not critical, so we don't care if it fails

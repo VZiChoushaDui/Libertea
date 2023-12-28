@@ -298,6 +298,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/certs/selfsigned/fullchain.pem
 mkdir -p /etc/ssl/ha-certs
 cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
+chmod +x haproxy/cert-camouflage.sh
 
 echo " ** Initializing ssh tunnel..."
 # create a user for ssh tunnel named "libertea" if not exists
@@ -334,6 +335,7 @@ echo "    - vmess-grpc..."
 
 
 echo " ** Installing web panel..."
+touch ./data/all-domains-ever.lst
 cp panel/libertea-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project
 sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-panel.service

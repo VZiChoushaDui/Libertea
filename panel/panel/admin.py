@@ -6,6 +6,7 @@ import threading
 from . import utils
 from . import stats
 from . import config
+from . import sysops
 from . import settings
 from . import health_check
 from pymongo import MongoClient
@@ -83,6 +84,7 @@ def security():
 
     return render_template('admin/security.jinja',
         page='security',
+        libertea_version=config.LIBERTEA_VERSION,
         back_to='dashboard',
         admin_uuid=config.get_admin_uuid(),
         health_warnings=health_warnings,
@@ -102,9 +104,14 @@ def dashboard():
             warning_level = max(warning_level, health_warnings[warning]['severity'])
             security_score -= health_warnings[warning]['score_penalty']
             
+    flavour = config.get_libertea_branch()
+    if flavour is None or flavour == "" or flavour == "master":
+        flavour = "release"
 
     return render_template('admin/dashboard.jinja', 
         page='dashboard',
+        libertea_version=config.LIBERTEA_VERSION,
+        libertea_flavour=flavour,
         admin_uuid=config.get_admin_uuid(),
         users_count=len(utils.get_users()),
         domains_count=len(utils.get_domains()),
@@ -113,7 +120,6 @@ def dashboard():
         no_domain_warning=not utils.has_active_endpoints(),
         panel_domain=config.get_panel_domain(),
         month_name=datetime.now().strftime("%B"),
-        cur_version=config.LIBERTEA_VERSION,
         proxy_update_available=utils.online_route_any_update_available(),
         warning_level=warning_level,
         security_score=security_score,
@@ -301,6 +307,7 @@ def users():
 
     return render_template('admin/users.jinja', 
         page='users',
+        libertea_version=config.LIBERTEA_VERSION,
         no_domain_warning=not utils.has_active_endpoints(),
         month_name=month_short_name,
         month_long_name=datetime.now().strftime("%B"),
@@ -312,6 +319,7 @@ def user(user):
     if user == 'new':
         return render_template('admin/new_user.jinja',
             back_to='users',
+            libertea_version=config.LIBERTEA_VERSION,
             admin_uuid=config.get_admin_uuid(),
             max_ips=settings.get_default_max_ips()
         )
@@ -334,6 +342,7 @@ def user(user):
 
     return render_template('admin/user.jinja',
         back_to='users',
+        libertea_version=config.LIBERTEA_VERSION,
         no_domain_warning=not utils.has_active_endpoints(),
         traffic_today=stats.get_gigabytes_today(user['_id'], db=db),
         traffic_this_month=user['__cache_traffic_this_month'] if '__cache_traffic_this_month' in user else '-',
@@ -402,6 +411,7 @@ def domains():
 
     return render_template('admin/domains.jinja', 
         page='domains',
+        libertea_version=config.LIBERTEA_VERSION,
         admin_uuid=config.get_admin_uuid(),
         domains=all_domains,
         proxies=proxies,
@@ -413,6 +423,7 @@ def domains():
 def new_proxy():
     return render_template('admin/new_secondary_proxy.jinja',
         back_to='domains',
+        libertea_version=config.LIBERTEA_VERSION,
         server_ip=config.SERVER_MAIN_IP,
         admin_uuid=config.get_admin_uuid(),
         bootstrap_script_url=config.get_bootstrap_script_url(),
@@ -426,6 +437,7 @@ def domain(domain):
     if domain == 'new':
         return render_template('admin/new_domain.jinja',
             back_to='domains',
+            libertea_version=config.LIBERTEA_VERSION,
             server_ip=config.SERVER_MAIN_IP,
             admin_uuid=config.get_admin_uuid(),
         )
@@ -448,6 +460,7 @@ def domain(domain):
         entry = entry[0]
         return render_template('admin/domain.jinja', 
             back_to='domains',
+            libertea_version=config.LIBERTEA_VERSION,
             status='active' if entry['online'] else 'inactive',
             admin_uuid=config.get_admin_uuid(),
             server_ip=config.SERVER_MAIN_IP,
@@ -466,6 +479,7 @@ def domain(domain):
 
     return render_template('admin/domain.jinja', 
         back_to='domains',
+        libertea_version=config.LIBERTEA_VERSION,
         admin_uuid=config.get_admin_uuid(),
         server_ip=config.SERVER_MAIN_IP,
         ip_override=utils.get_domain_dns_domain(domain_entry['_id']),
@@ -533,6 +547,7 @@ def proxies():
 
     return render_template('admin/proxies.jinja',
         page='proxies',
+        libertea_version=config.LIBERTEA_VERSION,
         proxies=proxies,
         bootstrap_script_url=config.get_bootstrap_script_url(),
         bootstrap_env=get_bootstrap_env(),
@@ -565,6 +580,7 @@ def app_settings():
 
     return render_template('admin/settings.jinja',
         page='settings',
+        libertea_version=config.LIBERTEA_VERSION,
         main_domain=config.get_panel_domain(),
         server_ip=config.SERVER_MAIN_IP,
         admin_uuid=config.get_admin_uuid(),
@@ -632,7 +648,10 @@ def app_settings_save():
             # check if domain is reachable
             camouflage_domain_status, camouflage_domain = utils.check_camouflage_domain(camouflage_domain)
             if camouflage_domain_status == "":
-                settings.set_camouflage_domain(camouflage_domain)
+                prev_camouflage_domain = settings.get_camouflage_domain()
+                if prev_camouflage_domain != camouflage_domain:
+                    settings.set_camouflage_domain(camouflage_domain)
+                    sysops.regenerate_camouflage_cert()
             else:
                 return redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 

@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from flask import render_template
 from datetime import datetime, timedelta
 
-def init_provider_info(type, name, group_name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None):
+def init_provider_info(type, name, group_name, host, port, password, path, meta_only, entry_type, server=None, sni=None, tier=None, use_camouflage=True):
     if server is None:
         server = host
     if sni is None:
@@ -16,10 +16,17 @@ def init_provider_info(type, name, group_name, host, port, password, path, meta_
 
     # if server is an ip address, sni and host are google.com, else sni and host are server
     skip_cert_verify = "false"
-    if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', host):
-        sni = 'google.com'
-        host = 'google.com'
-        skip_cert_verify = "true"
+    if utils.validate_ip(host):
+        if use_camouflage:
+            camouflage_domain = settings.get_camouflage_domain_without_protocol()
+            if camouflage_domain is None:
+                camouflage_domain = 'example.com'
+            sni = camouflage_domain
+            host = camouflage_domain
+            skip_cert_verify = "true"
+        else:
+            sni = 'google.com'
+            host = 'google.com'
 
     return {
         'type': type,
@@ -72,18 +79,25 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
         if server_ips_str is not None and ',' in server_ips_str:
             server_ips = server_ips_str.split(',')
         for s in server_ips:
+            group_name = str(idx) + "-" + server
             providers.append({
                 'type': 'servergroup',
                 'tier': tier,
-                'name': str(idx) + "-" + server,
-                'group_name': str(idx) + "-" + server,
+                'name': group_name,
+                'group_name': group_name,
                 'meta_only': False,
             })
+            trW = None
+            vlW = None
+            trG = None
+            vlG = None
+            vmG = None
+            ssW = None
             if settings.get_provider_enabled('trojanws', db=db):
-                providers.append(init_provider_info(
+                trW = init_provider_info(
                     type='trojan-ws',
                     name='TrW-' + str(idx) + "-" + server,
-                    group_name=str(idx) + "-" + server,
+                    group_name=group_name,
                     port=port,
                     password=os.environ.get('CONN_TROJAN_WS_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_WS_URL'),
@@ -93,12 +107,12 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
                     host=server,
                     server=s,
                     tier=tier,
-                ))
+                )
             if settings.get_provider_enabled('vlessws', db=db):
-                providers.append(init_provider_info(
+                vlW = init_provider_info(
                     type='vless-ws',
                     name='VlW-' + str(idx) + "-" + server,
-                    group_name=str(idx) + "-" + server,
+                    group_name=group_name,
                     port=port,
                     password=os.environ.get('CONN_VLESS_WS_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_WS_URL'),
@@ -108,12 +122,12 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
                     host=server,
                     server=s,
                     tier=tier,
-                ))
+                )
             if settings.get_provider_enabled('trojangrpc', db=db):
-                providers.append(init_provider_info(
+                trG = init_provider_info(
                     type='trojan-grpc',
                     name='TrG-' + str(idx) + "-" + server,
-                    group_name=str(idx) + "-" + server,
+                    group_name=group_name,
                     port=port,
                     password=os.environ.get('CONN_TROJAN_GRPC_AUTH_PASSWORD'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_TROJAN_GRPC_URL'),
@@ -123,14 +137,14 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
                     host=server,
                     server=s,
                     tier=tier,
-                ))
+                )
             if settings.get_provider_enabled('vlessgrpc', db=db):
                 if server_entry_type != 'SecondaryProxy' or is_for_subscription:
                     # SecondaryProxy does not support vless-grpc in clash
-                    providers.append(init_provider_info(
+                    vlG = init_provider_info(
                         type='vless-grpc',
                         name='VlG-' + str(idx) + "-" + server,
-                        group_name=str(idx) + "-" + server,
+                        group_name=group_name,
                         port=port,
                         password=os.environ.get('CONN_VLESS_GRPC_AUTH_UUID'),
                         path='/' + connect_url + '/' + os.environ.get('CONN_VLESS_GRPC_URL'),
@@ -140,12 +154,12 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
                         host=server,
                         server=s,
                         tier=tier,
-                    ))
+                    )
             if settings.get_provider_enabled('vmessgrpc', db=db):
-                providers.append(init_provider_info(
+                vmG = init_provider_info(
                     type='vmess-grpc',
                     name='VmG-' + str(idx) + "-" + server,
-                    group_name=str(idx) + "-" + server,
+                    group_name=group_name,
                     port=port,
                     password=os.environ.get('CONN_VMESS_GRPC_AUTH_UUID'),
                     path='/' + connect_url + '/' + os.environ.get('CONN_VMESS_GRPC_URL'),
@@ -155,14 +169,14 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
                     host=server,
                     server=s,
                     tier=tier,
-                ))
+                )
             if settings.get_provider_enabled('ssv2ray', db=db):
                 if not is_for_subscription or server_entry_type != 'SecondaryProxy':
                     # subscription does not support secondary proxy (invalid cert)
-                    providers.append(init_provider_info(
+                    ssW = init_provider_info(
                         type='ss-v2ray',
                         name='ssW-' + str(idx) + "-" + server,
-                        group_name=str(idx) + "-" + server,
+                        group_name=group_name,
                         port=port,
                         password=os.environ.get('CONN_SHADOWSOCKS_V2RAY_AUTH_PASSWORD'),
                         path='/' + connect_url + '/' + os.environ.get('CONN_SHADOWSOCKS_V2RAY_URL'),
@@ -172,7 +186,36 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
                         host=server,
                         server=s,
                         tier=tier,
-                    ))
+                    )
+
+            if server_entry_type == 'SecondaryProxy':
+                if trG is not None:
+                    providers.append(trG)
+                if vlG is not None:
+                    providers.append(vlG)
+                if vmG is not None:
+                    providers.append(vmG)
+                if trW is not None:
+                    providers.append(trW)
+                if vlW is not None:
+                    providers.append(vlW)
+                if ssW is not None:
+                    providers.append(ssW)
+            else:
+                if trW is not None:
+                    providers.append(trW)
+                if vlW is not None:
+                    providers.append(vlW)
+                if trG is not None:
+                    providers.append(trG)
+                if vlG is not None:
+                    providers.append(vlG)
+                if vmG is not None:
+                    providers.append(vmG)
+                if ssW is not None:
+                    providers.append(ssW)
+                    
+                
             
             idx += 1
 

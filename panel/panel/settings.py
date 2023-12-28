@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 import socket
@@ -141,6 +142,14 @@ def get_camouflage_domain(db=None):
         return ""
     return setting["value"]
 
+def get_camouflage_domain_without_protocol(db=None):
+    domain = get_camouflage_domain(db=db)
+    if domain is None or domain == "":
+        return None
+    if '://' in domain:
+        return domain.split('://')[1]
+    return domain
+
 def set_camouflage_domain(val, db=None):
     if db is None:
         client = config.get_mongo_client()
@@ -239,3 +248,41 @@ def set_has_dashboard_opened(val, db=None):
     db.settings.update_one({"_id": "has_dashboard_opened"}, {"$set": {"value": val}}, upsert=True)
     return True
 
+def get_migration_counter(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    try:
+        setting = db.settings.find_one({"_id": "migration_counter"})
+        if setting is None:
+            return 0
+        return int(setting["value"])
+    except:
+        return 0
+
+def set_migration_counter(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    
+    db.settings.update_one({"_id": "migration_counter"}, {"$set": {"value": int(val)}}, upsert=True)
+    return True
+    
+def get_all_domains_ever():
+    filename = config.get_root_dir() + 'data/all-domains-ever.lst'
+    if not os.path.exists(filename):
+        return []
+    
+    with open(filename, 'r') as f:
+        return f.read().splitlines()
+    
+
+def all_domains_ever_push(domain):
+    all_domains = get_all_domains_ever()
+    if domain in all_domains:
+        return
+
+    with open(config.get_root_dir() + 'data/all-domains-ever.lst', 'a') as f:
+        f.write(domain + '\n')
+    
