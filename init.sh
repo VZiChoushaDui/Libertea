@@ -289,16 +289,21 @@ set +a
 # ./haproxy/certbot-init.sh >/dev/null
 
 # Generate self-signed certificate to a single file
-echo " ** Generating self-signed certificate..."
-mkdir -p data/certs/selfsigned
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout data/certs/selfsigned/privkey.pem \
-    -out data/certs/selfsigned/cert.pem \
-    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.google.com" 2>/dev/null
-cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/certs/selfsigned/fullchain.pem
+
 mkdir -p /etc/ssl/ha-certs
-cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 chmod +x haproxy/cert-camouflage.sh
+
+# if /etc/ssl/ha-certs/selfsigned.pem does not exist
+if [ ! -f /etc/ssl/ha-certs/selfsigned.pem ]; then
+    echo " ** Generating self-signed certificate..."
+    mkdir -p data/certs/selfsigned
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout data/certs/selfsigned/privkey.pem \
+        -out data/certs/selfsigned/cert.pem \
+        -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" 2>/dev/null
+    cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/certs/selfsigned/fullchain.pem
+    cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
+fi
 
 echo " ** Initializing ssh tunnel..."
 # create a user for ssh tunnel named "libertea" if not exists
