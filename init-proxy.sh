@@ -20,10 +20,10 @@ if [ ! -z "$OTHER_PARAM" ]; then
     exit
 fi
 
-MAIN_IP=$(curl -s "$CONFIGURATION_URL/main-ip")
-PANEL_DOMAIN=$(curl -s "$CONFIGURATION_URL/panel-domain")
-PANEL_SECRET_KEY=$(curl -s "$CONFIGURATION_URL/panel-secret-key")
-PROXY_CONNECT_UUID=$(curl -s "$CONFIGURATION_URL/proxy-connect-uuid")
+MAIN_IP=$(curl --fail -s "$CONFIGURATION_URL/main-ip")
+PANEL_DOMAIN=$(curl --fail -s "$CONFIGURATION_URL/panel-domain")
+PANEL_SECRET_KEY=$(curl --fail -s "$CONFIGURATION_URL/panel-secret-key")
+PROXY_CONNECT_UUID=$(curl --fail -s "$CONFIGURATION_URL/proxy-connect-uuid")
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
@@ -37,6 +37,9 @@ if [ -z "$MAIN_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PANEL_DOMAIN" ] || 
     echo "Failed to get configuration from $CONFIGURATION_URL"
     exit 1
 fi
+
+echo "Installing Libertea proxy..."
+echo "  Main server is $PANEL_DOMAIN ($MAIN_IP)"
 
 if [ -z "$PROXY_TYPE" ]; then
     PROXY_TYPE="auto"
