@@ -472,6 +472,8 @@ def domain(domain):
             bootstrap_script_url=config.get_bootstrap_script_url(),
             bootstrap_env=get_bootstrap_env(),
             panel_secret_key=config.get_panel_secret_key(),
+            proxy_configuration_uuid=config.get_proxy_configuration_uuid(),
+            panel_domain=config.get_panel_domain(),
             proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
             health_check=settings.get_periodic_health_check(),
             tier=tier,
