@@ -262,7 +262,7 @@ else
         echo "ERROR: Invalid proxy type: $PROXY_TYPE"
         exit 1
     fi
-    sed -i "s|\${MAIN_IP}|$MAIN_IP|g" /etc/haproxy/haproxy.cfg
+    sed -i "s|\${CONN_PROXY_IP}|$MAIN_IP|g" /etc/haproxy/haproxy.cfg
     systemctl enable haproxy
     systemctl start haproxy
 fi
