@@ -88,7 +88,7 @@
     }
 
     function setCodeToCopy() {
-        var code = "{{ bootstrap_env }}curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy {{ server_ip }} {{ panel_secret_key }} {{ proxy_register_endpoint }} ";
+        var code = "{{ bootstrap_env }}curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy https://{{ panel_domain }}/{{ proxy_configuration_uuid }} ";
         code += getServerType();
         document.getElementById("codeToCopy").innerHTML = code;
     }

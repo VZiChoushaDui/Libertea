@@ -73,6 +73,7 @@ def haproxy_update_users_list():
             f.write('/' + user['_id'] + '/' + '\n')
             count += 1
         f.write('/' + config.get_proxy_connect_uuid() + '/' + '\n')
+        f.write('/' + config.get_proxy_configuration_uuid() + '/' + '\n')
         count += 1
 
     print("Wrote " + str(count) + " users to haproxy-lists/valid-panel-endpoints.lst")

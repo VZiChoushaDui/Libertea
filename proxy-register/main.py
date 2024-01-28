@@ -25,6 +25,7 @@ if PROXY_TYPE is None or PROXY_TYPE == '':
     PROXY_TYPE = 'https'
 
 REGISTER_ENDPOINT = "https://localhost/" + PROXY_CONNECT_UUID + "/route"
+FALLBACK_REGISTER_ENDPOINT = "https://" + PANEL_DOMAIN + "/" + PROXY_CONNECT_UUID + "/route"
 
 FAKE_TRAFFIC_AVERAGE_GIGABYTES_PER_DAY = 10
 FAKE_TRAFFIC_AVERAGE_DELAY_BETWEEN_REQUESTS = 0.25
@@ -148,6 +149,9 @@ def register_periodically():
 
     time.sleep(5)
 
+    # Fallback to main server is used for the initial registration on ssh proxy type
+    use_fallback = False
+    fallback_used_count = 0
     while True:
         try:
             bytes_data = {}
@@ -178,7 +182,13 @@ def register_periodically():
             if LOG_LEVEL >= 3:
                 print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Data:", data)
 
-            result = requests.post(REGISTER_ENDPOINT,
+            endpoint = REGISTER_ENDPOINT
+            if use_fallback:
+                endpoint = FALLBACK_REGISTER_ENDPOINT
+                fallback_used_count += 1
+                use_fallback = False
+
+            result = requests.post(endpoint,
                 verify=False, timeout=5,
                 headers={
                     "X-API-KEY": API_KEY,
@@ -191,6 +201,10 @@ def register_periodically():
             time.sleep(random.randint(15, 45))
         except Exception as e:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e)
+            if fallback_used_count < 3:
+                use_fallback = True
+                time.sleep(3)
+                continue
             time.sleep(30)
 
 

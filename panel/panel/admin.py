@@ -425,6 +425,8 @@ def new_proxy():
         back_to='domains',
         libertea_version=config.LIBERTEA_VERSION,
         server_ip=config.SERVER_MAIN_IP,
+        proxy_configuration_uuid=config.get_proxy_configuration_uuid(),
+        panel_domain=config.get_panel_domain(),
         admin_uuid=config.get_admin_uuid(),
         bootstrap_script_url=config.get_bootstrap_script_url(),
         bootstrap_env=get_bootstrap_env(),

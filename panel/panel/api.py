@@ -143,7 +143,7 @@ def get_domains():
     domains = utils.get_domains()
     return domains
 
-@blueprint.route('/' + config.get_proxy_config_uuid() + '/<config_id>', methods=['GET'])
+@blueprint.route('/' + config.get_proxy_configuration_uuid() + '/<config_id>', methods=['GET'])
 def get_configuration(config_id):
     if config_id == 'main-ip':
         return config.SERVER_MAIN_IP, 200
