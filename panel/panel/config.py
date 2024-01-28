@@ -20,8 +20,8 @@ socket.getaddrinfo = new_getaddrinfo
 def get_libertea_branch():
     return os.environ.get('LIBERTEA_BRANCH_NAME')
 
-LIBERTEA_VERSION = 1038
-LIBERTEA_PROXY_VERSION = 1004
+LIBERTEA_VERSION = 1039
+LIBERTEA_PROXY_VERSION = 1005
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
 
 HAPROXY_CONTAINER_NAME = 'libertea-haproxy'

@@ -151,6 +151,8 @@ def get_configuration(config_id):
         return config.get_panel_secret_key(), 200
     elif config_id == 'proxy-connect-uuid':
         return config.get_proxy_connect_uuid(), 200
+    elif config_id == 'panel-domain':
+        return config.get_panel_domain(), 200
     
     return "", 404
     
