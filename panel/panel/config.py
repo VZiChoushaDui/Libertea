@@ -118,6 +118,9 @@ def get_admin_uuid():
 def get_proxy_connect_uuid():
     return os.environ.get('PANEL_PROXY_CONNECT_UUID')
 
+def get_proxy_configuration_uuid():
+    return os.environ.get('PANEL_PROXY_CONFIGURATION_UUID')
+
 def get_panel_domain():
     return os.environ.get('PANEL_DOMAIN')
 

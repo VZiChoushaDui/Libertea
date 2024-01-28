@@ -14,15 +14,24 @@ from urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-LIBERTEA_PROXY_VERSION = 1004
+LIBERTEA_PROXY_VERSION = 1005
+
+PROXY_CONNECT_UUID = os.environ.get('PROXY_CONNECT_UUID')
+MAIN_IP = os.environ.get('MAIN_IP')
+PANEL_DOMAIN = os.environ.get('PANEL_DOMAIN')
+API_KEY = os.environ.get('PANEL_SECRET_KEY')
+PROXY_TYPE = os.environ.get('PROXY_TYPE')
+if PROXY_TYPE is None or PROXY_TYPE == '':
+    PROXY_TYPE = 'https'
+
+REGISTER_ENDPOINT = "https://localhost/" + PROXY_CONNECT_UUID + "/route"
 
 FAKE_TRAFFIC_AVERAGE_GIGABYTES_PER_DAY = 10
 FAKE_TRAFFIC_AVERAGE_DELAY_BETWEEN_REQUESTS = 0.25
 FAKE_TRAFFIC_MIN_DELAY_BETWEEN_REQUESTS = 0.01
 LOG_LEVEL = 0
 
-FAKE_TRAFFIC_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT') + '/fake-traffic'
-FAKE_TRAFFIC_ENDPOINT = FAKE_TRAFFIC_ENDPOINT.replace(os.environ.get('CONN_PROXY_IP'), '127.0.0.1')
+FAKE_TRAFFIC_ENDPOINT = REGISTER_ENDPOINT + '/fake-traffic'
 
 FAKE_TRAFFIC_COUNTRIES_LIST = ["CN", "CU", "TH", "TM", "IR", "SY", "SA", "TR"]
 
@@ -107,12 +116,6 @@ SERVER_MAIN_IP = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8'
 
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
     raise Exception("couldn't fetch SERVER_MAIN_IP. Result was: " + str(SERVER_MAIN_IP))
-
-REGISTER_ENDPOINT = os.environ.get('PROXY_REGISTER_ENDPOINT')
-API_KEY = os.environ.get('PANEL_SECRET_KEY')
-PROXY_TYPE = os.environ.get('PROXY_TYPE')
-if PROXY_TYPE is None or PROXY_TYPE == '':
-    PROXY_TYPE = 'https'
 
 SSH_PUBLIC_KEY_PATH = '/root/.ssh/id_rsa.pub'
 with open(SSH_PUBLIC_KEY_PATH, 'r') as f:

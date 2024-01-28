@@ -8,22 +8,12 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
-CONFIGURATION_URL="$1"
-PROXY_TYPE="$2"
+CONN_PROXY_IP="$1"
+PANEL_SECRET_KEY="$2"
+PROXY_REGISTER_ENDPOINT="$3"
+PROXY_TYPE="$4"
 DOCKERIZED_PROXY="0"
 IS_UPDATING="0"
-
-OTHER_PARAM="$3"
-if [ ! -z "$OTHER_PARAM" ]; then
-    echo "Legacy mode detected. Switching to legacy mode..."
-    bash init-proxy.legacy.sh "$@"
-    exit
-fi
-
-MAIN_IP=$(curl -s "$CONFIGURATION_URL/main-ip")
-PANEL_DOMAIN=$(curl -s "$CONFIGURATION_URL/panel-domain")
-PANEL_SECRET_KEY=$(curl -s "$CONFIGURATION_URL/panel-secret-key")
-PROXY_CONNECT_UUID=$(curl -s "$CONFIGURATION_URL/proxy-connect-uuid")
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
@@ -33,8 +23,9 @@ if [ "$1" == "update" ]; then
     IS_UPDATING="1"
 fi
 
-if [ -z "$MAIN_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PANEL_DOMAIN" ] || [ -z "$PROXY_CONNECT_UUID" ]; then
-    echo "Failed to get configuration from $CONFIGURATION_URL"
+if [ -z "$CONN_PROXY_IP" ] || [ -z "$PANEL_SECRET_KEY" ] || [ -z "$PROXY_REGISTER_ENDPOINT" ]; then
+    echo "Usage: $0 <CONN_PROXY_IP> <PANEL_SECRET_KEY> <PROXY_REGISTER_ENDPOINT> <PROXY_TYPE>"
+    echo "    or $0 update"
     exit 1
 fi
 
@@ -166,11 +157,9 @@ if [ -f .env ]; then
     rm -f .env.bak
     mv .env .env.bak
 fi
-echo "MAIN_IP=$MAIN_IP" >> .env
+echo "CONN_PROXY_IP=$CONN_PROXY_IP" >> .env
 echo "PANEL_SECRET_KEY=$PANEL_SECRET_KEY" >> .env
-# echo "PROXY_REGISTER_ENDPOINT=$PROXY_REGISTER_ENDPOINT" >> .env
-echo "PROXY_CONNECT_UUID=$PROXY_CONNECT_UUID" >> .env
-echo "PANEL_DOMAIN=$PANEL_DOMAIN" >> .env
+echo "PROXY_REGISTER_ENDPOINT=$PROXY_REGISTER_ENDPOINT" >> .env
 echo "PROXY_TYPE=$PROXY_TYPE" >> .env
 
 # Generate self-signed certificate to a single file
@@ -236,7 +225,7 @@ else
 
     if [ "$PROXY_TYPE" == "ssh" ]; then
         echo "     - proxy-ssh-tunnel-tls"
-        ./proxy-ssh-tunnel/install-services.sh "$MAIN_IP" "8443" "libertea" 10001 3
+        ./proxy-ssh-tunnel/install-services.sh "$CONN_PROXY_IP" "8443" "libertea" 10001 3
 
         set +e
         CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
@@ -262,7 +251,7 @@ else
         echo "ERROR: Invalid proxy type: $PROXY_TYPE"
         exit 1
     fi
-    sed -i "s|\${MAIN_IP}|$MAIN_IP|g" /etc/haproxy/haproxy.cfg
+    sed -i "s|\${CONN_PROXY_IP}|$CONN_PROXY_IP|g" /etc/haproxy/haproxy.cfg
     systemctl enable haproxy
     systemctl start haproxy
 fi
@@ -275,4 +264,4 @@ if ! crontab -l | grep -q "libertea-autoupdate-proxy.sh"; then
 fi
 
 echo ""
-echo " ** Done! The proxy is now running and connected to your main Libertea server at $MAIN_IP."
+echo " ** Done! The proxy is now running and connected to your main Libertea server at $CONN_PROXY_IP."

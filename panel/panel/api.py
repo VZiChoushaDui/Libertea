@@ -143,6 +143,18 @@ def get_domains():
     domains = utils.get_domains()
     return domains
 
+@blueprint.route('/' + config.get_proxy_config_uuid() + '/<config_id>', methods=['GET'])
+def get_configuration(config_id):
+    if config_id == 'main-ip':
+        return config.SERVER_MAIN_IP, 200
+    elif config_id == 'panel-secret-key':
+        return config.get_panel_secret_key(), 200
+    elif config_id == 'proxy-connect-uuid':
+        return config.get_proxy_connect_uuid(), 200
+    
+    return "", 404
+    
+
 @blueprint.route('/' + config.get_proxy_connect_uuid() + '/route', methods=['POST'])
 def add_route():
     if not validate_user_panel_secret():
