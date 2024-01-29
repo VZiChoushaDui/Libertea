@@ -17,6 +17,8 @@ def cleanup_json_cache():
     if (datetime.now() - ___json_cache['___LAST_CLEANUP']).total_seconds() < 30:
         return
 
+    ___json_cache['___LAST_CLEANUP'] = datetime.now()
+    
     try:
         for key in list(___json_cache.keys()):
             if ___json_cache[key][0] < datetime.now():
