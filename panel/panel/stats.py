@@ -6,7 +6,10 @@ from . import config
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 
+___json_cache = {}
+
 def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=True, domain=None, db=None):
+    global ___json_cache
     try:
         # cache if not for today
         cache_result = False
@@ -43,8 +46,12 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                     gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
         
-        with open(config.get_root_dir() + file_name, 'r') as f:
-            data = json.load(f)
+        if file_name in ___json_cache and ___json_cache[file_name][0] < datetime.now():
+            data = ___json_cache[file_name][1]
+        else:
+            with open(config.get_root_dir() + file_name, 'r') as f:
+                data = json.load(f)
+            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
 
         for user in data['users']:
             entry_name = list(user.keys())[0]
@@ -83,6 +90,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
         return None
 
 def ___get_total_ips(date, date_resolution, conn_url, db=None):
+    global ___json_cache
     try:
         # cache if not for today
         cache_result = False
@@ -112,10 +120,13 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
             if cached is not None:
                 return cached['ips']
             
-
-        with open(config.get_root_dir() + file_name, 'r') as f:
-            data = json.load(f)
-
+        if file_name in ___json_cache and ___json_cache[file_name][0] < datetime.now():
+            data = ___json_cache[file_name][1]
+        else:
+            with open(config.get_root_dir() + file_name, 'r') as f:
+                data = json.load(f)
+            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
+            
         for user in data['users']:
             entry_name = list(user.keys())[0]
             if entry_name == conn_url:
