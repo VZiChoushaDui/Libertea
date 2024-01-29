@@ -24,6 +24,7 @@ def periodic_update_domains(signal):
     domains = utils.get_domains()
     for domain in domains:
         utils.update_domain_cache(domain)
+    print("CRON: done updating domains cache")
 
 @uwsgidecorators.timer(5 * 60)
 def periodic_update_users_stats(signal):
@@ -31,19 +32,19 @@ def periodic_update_users_stats(signal):
     users = utils.get_users()
     for user in users:
         utils.update_user_stats_cache(user['panel_id'])
-    print("CRON: done")
+    print("CRON: done updating users stats cache")
 
 @uwsgidecorators.timer(15 * 60)
 def periodic_health_check_parse(signal):
     print("CRON: Health check parse")
     health_check.parse()
-    print("CRON: done")
+    print("CRON: done health check parse")
 
 @uwsgidecorators.cron(-10, -1, -1, -1, -1)
 def save_connected_ips(signal):
     print("CRON: Saving connected IPs")
     stats.save_connected_ips_count()
-    print("CRON: done")
+    print("CRON: done saving connected IPs")
 
 @uwsgidecorators.cron(-5, -1, -1, -1, -1)
 def update_certificates(signal):
@@ -52,7 +53,7 @@ def update_certificates(signal):
     domains.append(config.get_panel_domain())
     for domain in domains:
         certbot.generate_certificate(domain)
-    print("CRON: done")
+    print("CRON: done updating certificates")
 
 
 def create_app():
