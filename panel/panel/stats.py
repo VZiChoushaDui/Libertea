@@ -8,6 +8,15 @@ from datetime import datetime, timedelta
 
 ___json_cache = {}
 
+def cleanup_json_cache():
+    global ___json_cache
+    try:
+        for key in list(___json_cache.keys()):
+            if ___json_cache[key][0] < datetime.now():
+                del ___json_cache[key]
+    except Exception as e:
+        print(e)
+
 def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=True, domain=None, db=None):
     global ___json_cache
     try:
@@ -52,6 +61,8 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
             with open(config.get_root_dir() + file_name, 'r') as f:
                 data = json.load(f)
             ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
+
+        cleanup_json_cache()
 
         for user in data['users']:
             entry_name = list(user.keys())[0]
@@ -127,6 +138,8 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
                 data = json.load(f)
             ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
             
+        cleanup_json_cache()
+
         for user in data['users']:
             entry_name = list(user.keys())[0]
             if entry_name == conn_url:
