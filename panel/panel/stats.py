@@ -8,8 +8,13 @@ from datetime import datetime, timedelta
 
 ___json_cache = {}
 
-def cleanup_json_cache():
+def cleanup_json_cache(force=False):
     global ___json_cache
+
+    if force:
+        # clear all
+        ___json_cache = {}
+        return
 
     if '___LAST_CLEANUP' not in ___json_cache:
         ___json_cache['___LAST_CLEANUP'] = datetime.now()
@@ -18,7 +23,7 @@ def cleanup_json_cache():
         return
 
     ___json_cache['___LAST_CLEANUP'] = datetime.now()
-    
+
     try:
         for key in list(___json_cache.keys()):
             if ___json_cache[key][0] < datetime.now():

@@ -29,9 +29,11 @@ def periodic_update_domains(signal):
 @uwsgidecorators.timer(10 * 60)
 def periodic_update_users_stats(signal):
     print("CRON: Updating users stats cache")
+    stats.cleanup_json_cache(force=True)
     users = utils.get_users()
     for user in users:
         utils.update_user_stats_cache(user['panel_id'])
+    stats.cleanup_json_cache(force=True)
     print("CRON: done updating users stats cache")
 
 @uwsgidecorators.timer(33 * 60)
