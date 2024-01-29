@@ -63,16 +63,15 @@ def create_app():
     sysops.haproxy_update_domains_list()
     sysops.haproxy_update_camouflage_list()
 
-    if settings.get_migration_counter() <= 0:
-        print("Migration 1")
-        if sysops.regenerate_camouflage_cert():
-            settings.set_migration_counter(1)
-            
     if settings.get_migration_counter() <= 1:
-        print("Migration 2")
         for domain in utils.get_domains():
             settings.all_domains_ever_push(domain)
         settings.set_migration_counter(2)
+    
+    if settings.get_migration_counter() <= 2:
+        if sysops.regenerate_camouflage_cert():
+            settings.set_migration_counter(3)
+            
 
     domains_count = len(utils.get_domains())
     users_count = len(utils.get_users())
