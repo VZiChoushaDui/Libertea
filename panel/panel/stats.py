@@ -10,6 +10,13 @@ ___json_cache = {}
 
 def cleanup_json_cache():
     global ___json_cache
+
+    if '___LAST_CLEANUP' not in ___json_cache:
+        ___json_cache['___LAST_CLEANUP'] = datetime.now()
+
+    if (datetime.now() - ___json_cache['___LAST_CLEANUP']).total_seconds() < 30:
+        return
+
     try:
         for key in list(___json_cache.keys()):
             if ___json_cache[key][0] < datetime.now():
