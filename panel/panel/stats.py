@@ -46,7 +46,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                     gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
         
-        if file_name in ___json_cache and ___json_cache[file_name][0] < datetime.now():
+        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
             data = ___json_cache[file_name][1]
         else:
             with open(config.get_root_dir() + file_name, 'r') as f:
@@ -120,7 +120,7 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
             if cached is not None:
                 return cached['ips']
             
-        if file_name in ___json_cache and ___json_cache[file_name][0] < datetime.now():
+        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
             data = ___json_cache[file_name][1]
         else:
             with open(config.get_root_dir() + file_name, 'r') as f:

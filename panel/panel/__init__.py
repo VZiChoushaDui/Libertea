@@ -26,7 +26,7 @@ def periodic_update_domains(signal):
         utils.update_domain_cache(domain)
     print("CRON: done updating domains cache")
 
-@uwsgidecorators.timer(15 * 60)
+@uwsgidecorators.timer(5 * 60)
 def periodic_update_users_stats(signal):
     print("CRON: Updating users stats cache")
     users = utils.get_users()
@@ -34,7 +34,7 @@ def periodic_update_users_stats(signal):
         utils.update_user_stats_cache(user['panel_id'])
     print("CRON: done updating users stats cache")
 
-@uwsgidecorators.timer(34 * 60)
+@uwsgidecorators.timer(33 * 60)
 def periodic_health_check_parse(signal):
     print("CRON: Health check parse")
     health_check.parse()
@@ -89,6 +89,11 @@ def create_app():
 
     try:
         update_certificates(None)
+    except:
+        pass
+
+    try:
+        periodic_update_users_stats(None)
     except:
         pass
 
