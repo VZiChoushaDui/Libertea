@@ -1,3 +1,4 @@
+import re
 import uuid
 import socket
 import pymongo
@@ -120,6 +121,14 @@ def get_user_tiers_enabled_for_subscription(panel_id):
 
     return user['tier_enabled_for_subscription']
 
+def reset_all_user_tiers_enabled_for_subscription():
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+    users = db.users
+
+    # delete all tier_enabled_for_subscription fields
+    users.update_many({}, {"$unset": {"tier_enabled_for_subscription": ""}})
+
 def get_panel_id_from_note(note):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
@@ -187,6 +196,8 @@ def add_domain(domain, dns_domain=None, sni=None):
     if not sysops.haproxy_update_domains_list():
         remove_domain(domain)
         return 500
+
+    settings.all_domains_ever_push(domain)
     
     # try issuing a cert for the new domain in the background
     # this is not critical, so we don't care if it fails
@@ -420,6 +431,58 @@ def online_route_get_all(max_age_secs=300, db=None):
             # print("online_route_get_all: ip", ip, "last seen", last_seen, "now", now, "diff", (now - last_seen).total_seconds())
 
     return ips
+
+def validate_ip(ip):
+    # validate ip as ipv4 or ipv6 using regex
+    try:
+        if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) is not None:
+            return True
+        if re.match(r"^[0-9a-fA-F:]+$", ip) is not None:
+            return True
+    except:
+        pass
+    return False
+
+def secondary_route_get_all(db=None):
+    # get all secondary routes
+    now = datetime.now()
+
+    ips = []
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    online_routes = db.online_routes
+    for secondary_route in online_routes.find():
+        if 'deleted' in secondary_route and secondary_route['deleted']:
+            continue
+        ip = secondary_route["_id"]
+        if not validate_ip(ip):
+            continue
+        online = False
+        last_seen = secondary_route["last_seen"]
+        if (now - last_seen).total_seconds() < 300:
+            online = True
+        ips.append({
+            "ip": ip,
+            "online": online,
+            "last_seen": last_seen,
+            "tier": get_domain_or_online_route_tier(ip, db=db, return_default_if_none=True),
+            "update_available": online_route_update_available(ip, db=db),
+        })
+
+    return ips
+
+def mark_route_as_deleted(ip, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+
+    online_routes = db.online_routes
+    route = online_routes.find_one({"_id": ip})
+    if route is None:
+        return False
+
+    online_routes.update_one({"_id": ip}, {"$set": {"deleted": True}})
 
 def online_route_update_traffic(ip, traffic_data, db=None):
     if db is None:

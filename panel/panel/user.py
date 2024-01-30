@@ -92,9 +92,15 @@ def user_config(id, file_name):
     is_meta = ('Clash' in ua and ('Meta' in ua or 'Stash' in ua)) or 'Shadowrocket' in ua
     is_premium = 'premium' in ua
 
+    enabled_tiers_items = utils.get_user_tiers_enabled_for_subscription(user['_id'])
+    enabled_tiers = []
+    for i in ['1','2','3','4']:
+        if enabled_tiers_items[i]:
+            enabled_tiers.append(i)
+
     if file_name == 'mconfig':
         conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
-            meta=is_meta, premium=is_premium)
+            meta=is_meta, premium=is_premium, enabled_tiers=enabled_tiers)
 
         # don't show in browser, use a header to force download
         return conf, 200, {
@@ -104,13 +110,13 @@ def user_config(id, file_name):
 
     if settings.get_single_clash_file_configuration() and file_name == 'config':
         conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
-            meta=is_meta, premium=is_premium)
+            meta=is_meta, premium=is_premium, enabled_tiers=enabled_tiers)
     else:
         if file_name == 'config':
             file_name = 'main'
 
         conf = clash_conf_generator.generate_conf(file_name + '.yaml', user['_id'], user['connect_url'], 
-            meta=is_meta, premium=is_premium)
+            meta=is_meta, premium=is_premium, enabled_tiers=enabled_tiers)
         
         if conf == "":
             return "", 404

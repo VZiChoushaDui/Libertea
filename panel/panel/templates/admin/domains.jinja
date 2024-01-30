@@ -69,10 +69,12 @@
                     {{ proxy.ip }}
                     <span class="secondary-proxy-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
                     {% if proxy.tier != None %}<div class="list-item-badge">{{ proxy.tier }}</div>{% endif %}
-                    {% if proxy.update_available %}⚠️{% endif %}
+                    {% if proxy.online %}{% if proxy.update_available %}⚠️{% endif %}{% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle">
-                    {% if proxy.update_available %}
+                    {% if not proxy.online %}
+                    ❌ Inactive, click for details
+                    {% elif proxy.update_available %}
                     ✅ Active, update available
                     {% else %}
                     ✅ Active

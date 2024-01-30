@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from . import config
+from . import settings
 import threading
 
 ___health_checks = []
@@ -45,6 +46,9 @@ def register_data(user_id, domain, domain_dns, protocol, group):
     
 
 def parse():
+    if settings.get_periodic_health_check() == False:
+        return
+
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     health_checks_raw = db.health_checks_raw

@@ -120,13 +120,13 @@
     <div class="advanced-settings" style="display: none">
         <div class="form-group">
             <label class="form-check-label fw-bold">
-                Default available servers in V2ray/Shadowsocks clients<br />
+                Default available servers<br />
                 <span style="opacity: 0.75; font-size: 12px;">
-                    Select which priority groups should be visible to each user by default in V2Ray/Shadowsocks clients.
+                    Select which priority groups should be visible to each user by default. This affects Clash, V2Ray and Shadowsocks connections.
                 </span>
             </label>
         </div>
-        <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+        <div class="mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
             {% for tier in ['1','2','3','4'] %}
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_{{ tier }}" id="tier_enabled_for_subscription_{{ tier }}" {% if tier_enabled_for_subscription[tier] %}checked{% endif %}>
@@ -135,6 +135,25 @@
                     </label>
                 </div>
             {% endfor %}
+        </div>
+        <div class="mt-1 mb-4">
+            <a href="#" class="btn btn-link btn-sm px-0 reset-priority-config">Reset priority configuration for all users</a>
+            <script>
+                document.querySelector(".reset-priority-config").addEventListener("click", function(e) {
+                    e.preventDefault();
+                    if (confirm("Are you sure you want to reset priority configuration for all users?")) {
+                        fetch("/{{ admin_uuid }}/settings/reset_tiers/", {
+                            method: "POST",
+                        }).then(function(response) {
+                            if (response.ok) {
+                                alert("Priority configuration reset successfully");
+                            } else {
+                                alert("Error resetting priority configuration");
+                            }
+                        });
+                    }
+                });
+            </script>
         </div>
         <div class="form-group">
             <label class="form-check-label fw-bold">

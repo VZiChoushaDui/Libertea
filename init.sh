@@ -64,6 +64,15 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
         # Fix dependencies
         pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
     fi
+    pip3 --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "    - Applying pip openssl fix 2..."
+        wget https://files.pythonhosted.org/packages/3f/0e/c6656e62d9424d9c9f14b27be27220602f4af1e64b77f2c86340b671d439/pyOpenSSL-24.0.0-py3-none-any.whl -O /tmp/pyOpenSSL-24.0.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install /tmp/pyOpenSSL-24.0.0-py3-none-any.whl | sed 's/^/        /'
+
+        # Fix dependencies
+        pip3 install pyopenssl==24.0.0 | sed 's/^/        /'
+    fi
 fi
 set -e
 
@@ -289,15 +298,21 @@ set +a
 # ./haproxy/certbot-init.sh >/dev/null
 
 # Generate self-signed certificate to a single file
-echo " ** Generating self-signed certificate..."
-mkdir -p data/certs/selfsigned
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout data/certs/selfsigned/privkey.pem \
-    -out data/certs/selfsigned/cert.pem \
-    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.google.com" 2>/dev/null
-cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/certs/selfsigned/fullchain.pem
+
 mkdir -p /etc/ssl/ha-certs
-cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
+chmod +x haproxy/cert-camouflage.sh
+
+# if /etc/ssl/ha-certs/selfsigned.pem does not exist
+if [ ! -f /etc/ssl/ha-certs/selfsigned.pem ]; then
+    echo " ** Generating self-signed certificate..."
+    mkdir -p data/certs/selfsigned
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout data/certs/selfsigned/privkey.pem \
+        -out data/certs/selfsigned/cert.pem \
+        -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" 2>/dev/null
+    cat data/certs/selfsigned/privkey.pem data/certs/selfsigned/cert.pem > data/certs/selfsigned/fullchain.pem
+    cp data/certs/selfsigned/fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
+fi
 
 echo " ** Initializing ssh tunnel..."
 # create a user for ssh tunnel named "libertea" if not exists
@@ -334,6 +349,7 @@ echo "    - vmess-grpc..."
 
 
 echo " ** Installing web panel..."
+touch ./data/all-domains-ever.lst
 cp panel/libertea-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project
 sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-panel.service
@@ -447,12 +463,12 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
         PANEL_LISTENING="True"
         PANEL_ROOT_STATUS_CODE=""
         PANEL_ADMIN_STATUS_CODE=""
-        if [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)" == "000" ]; then
+        if [ "$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)" == "000" ]; then
             # check if localhost:1000 is open at all or it's refusing connections
             PANEL_LISTENING="False"
         fi
-        PANEL_ROOT_STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)"
-        PANEL_ADMIN_STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+        PANEL_ROOT_STATUS_CODE="$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)"
+        PANEL_ADMIN_STATUS_CODE="$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
 
         echo "       - component name: libertea-panel"
         echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"

@@ -20,8 +20,8 @@ socket.getaddrinfo = new_getaddrinfo
 def get_libertea_branch():
     return os.environ.get('LIBERTEA_BRANCH_NAME')
 
-LIBERTEA_VERSION = 1037
-LIBERTEA_PROXY_VERSION = 1004
+LIBERTEA_VERSION = 1039
+LIBERTEA_PROXY_VERSION = 1005
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
 
 HAPROXY_CONTAINER_NAME = 'libertea-haproxy'
@@ -117,6 +117,9 @@ def get_admin_uuid():
 
 def get_proxy_connect_uuid():
     return os.environ.get('PANEL_PROXY_CONNECT_UUID')
+
+def get_proxy_configuration_uuid():
+    return os.environ.get('PANEL_PROXY_CONFIGURATION_UUID')
 
 def get_panel_domain():
     return os.environ.get('PANEL_DOMAIN')

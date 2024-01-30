@@ -37,6 +37,7 @@ services:
       - "./data/logs:/data/logs"
       - "./data/usages:/data/usages"
       - "./data/parsed-logs:/data/parsed-logs"
+      - "./data/all-domains-ever.lst:/data/all-domains-ever.lst:ro"
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     restart: always

@@ -2,9 +2,20 @@ import os
 import re
 import sys
 import json
+import traceback
 
 logs_path = '/data/logs/'
 output_path = '/data/parsed-logs/'
+
+all_domains_ever = set(['google.com'])
+try:
+    with open('/data/all-domains-ever.lst', 'r') as f:
+        for line in f:
+            all_domains_ever.add(line.strip())
+except:
+    traceback.print_exc()
+    pass
+print("all_domains_ever:", all_domains_ever)
 
 pattern = re.compile(r"(?P<log_date>[0-9\-T\:\+]+) (?P<server_addr>[a-zA-Z0-9\.\-]*) haproxy\[[0-9\-]+\]\: (?P<remote_conn_addr>[0-9\.\:]+) \[(?P<request_date>[^\]]*)\] (?P<frontend_name>[^\s]*) (?P<backend_name>[^\s\/]*)\/(?P<server_name>[^\s\/]*) (?P<ms_wait>[0-9\-]+)\/(?P<ms_queue>[0-9\-]+)\/(?P<ms_backend_connect_wait>[0-9\-]+)\/(?P<ms_backend_wait>[0-9\-]+)\/(?P<ms_active>[0-9\-]+) (?P<http_status_code>[0-9\-]+) (?P<bytes_server_to_client>[0-9\-]+) [^\s]* [^\s]* [^\s]* [^\s]*\/[^\s]*\/[^\s]*\/[^\s]*\/[^\s]* [^\s]*\/[^\s]* \{((?P<cdn_server_type>[0-9a-zA-Z\.\-]+)\|)?(?P<remote_fwd_ip>[0-9.]*)(\|(?P<domain_name>[0-9a-zA-Z\.\-]+))?(\:)?\} \"(?P<http_req_type>[A-Z]*) (?P<endpoint>[a-zA-Z0-9\-\.\/\:]*) [a-zA-Z0-9\.\/]*\" (?P<bytes_client_to_server>[0-9\-]+)")
 
@@ -61,7 +72,8 @@ for file in os.listdir(logs_path):
                             item_key = '/'
                     
                     if items['domain_name'] is not None:
-                        if items['domain_name'] == 'google.com':
+                        # if items['domain_name'] == 'google.com':
+                        if items['domain_name'] not in all_domains_ever:
                             # this is a Libertea secondary proxy, will use remote_conn_addr (without port) instead of google.com
                             item_key = items['remote_conn_addr'].split(':')[0] + item_key
                         else:

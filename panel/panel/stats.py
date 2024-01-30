@@ -6,7 +6,33 @@ from . import config
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 
+___json_cache = {}
+
+def cleanup_json_cache(force=False):
+    global ___json_cache
+
+    if force:
+        # clear all
+        ___json_cache = {}
+        return
+
+    if '___LAST_CLEANUP' not in ___json_cache:
+        ___json_cache['___LAST_CLEANUP'] = datetime.now()
+
+    if (datetime.now() - ___json_cache['___LAST_CLEANUP']).total_seconds() < 30:
+        return
+
+    ___json_cache['___LAST_CLEANUP'] = datetime.now()
+
+    try:
+        for key in list(___json_cache.keys()):
+            if ___json_cache[key][0] < datetime.now():
+                del ___json_cache[key]
+    except Exception as e:
+        print(e)
+
 def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=True, domain=None, db=None):
+    global ___json_cache
     try:
         # cache if not for today
         cache_result = False
@@ -43,8 +69,14 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                     gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
         
-        with open(config.get_root_dir() + file_name, 'r') as f:
-            data = json.load(f)
+        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
+            data = ___json_cache[file_name][1]
+        else:
+            with open(config.get_root_dir() + file_name, 'r') as f:
+                data = json.load(f)
+            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
+
+        cleanup_json_cache()
 
         for user in data['users']:
             entry_name = list(user.keys())[0]
@@ -83,6 +115,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
         return None
 
 def ___get_total_ips(date, date_resolution, conn_url, db=None):
+    global ___json_cache
     try:
         # cache if not for today
         cache_result = False
@@ -112,9 +145,14 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
             if cached is not None:
                 return cached['ips']
             
-
-        with open(config.get_root_dir() + file_name, 'r') as f:
-            data = json.load(f)
+        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
+            data = ___json_cache[file_name][1]
+        else:
+            with open(config.get_root_dir() + file_name, 'r') as f:
+                data = json.load(f)
+            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
+            
+        cleanup_json_cache()
 
         for user in data['users']:
             entry_name = list(user.keys())[0]
