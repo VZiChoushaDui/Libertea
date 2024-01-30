@@ -27,6 +27,9 @@ def haproxy_reload():
     return True
     
 def regenerate_camouflage_cert():
+    if settings.get_camouflage_domain_without_protocol() is None:
+        return False
+    
     if run_command('./haproxy/cert-camouflage.sh ' + settings.get_camouflage_domain_without_protocol()) == 0:
         haproxy_reload()
         return True

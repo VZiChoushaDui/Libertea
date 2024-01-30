@@ -468,7 +468,7 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
         echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
         echo "       and include the following information:"
         echo ""
-        
+        set +e
         PANEL_LISTENING="True"
         PANEL_ROOT_STATUS_CODE=""
         PANEL_ADMIN_STATUS_CODE=""

@@ -72,8 +72,11 @@ def create_app():
         settings.set_migration_counter(2)
     
     if settings.get_migration_counter() <= 2:
-        if sysops.regenerate_camouflage_cert():
-            settings.set_migration_counter(3)
+        try:
+            sysops.regenerate_camouflage_cert()
+        except Exception as e:
+            print("Failed to regenerate camouflage cert: " + str(e))
+        settings.set_migration_counter(3)
             
 
     domains_count = len(utils.get_domains())
