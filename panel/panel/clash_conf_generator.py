@@ -44,35 +44,52 @@ def init_provider_info(type, name, group_name, host, port, password, path, meta_
         'tier': tier,
     }
 
-def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None):
+def get_all_servers(db):
     servers = []
-
     ports = settings.get_secondary_proxy_ports(db=db)
     try:
-        ports = [int(x) for x in ports.split(',')]
+        ports = [int(x) for x in ports.replace('and', ',').split(',')]
     except:
         ports = [443]
 
+    secondary_proxy_domains_all = set()
     for secondary_route in utils.online_route_get_all(db=db):
+        server_entry_type = utils.get_route_entry_type(secondary_route, db=db)
+        tier = utils.get_domain_or_online_route_tier(secondary_route, db=db)
+        if tier is None:
+            tier = utils.get_default_tier(server_entry_type)
         for port in ports:
-            servers.append((secondary_route, port))
+            secondary_proxy_domain = utils.get_domain_for_ip(secondary_route, db=db)
+            if secondary_proxy_domain is not None:
+                servers.append((secondary_proxy_domain, port, tier, server_entry_type))
+                secondary_proxy_domains_all.add(secondary_proxy_domain)
+            else:
+                servers.append((secondary_route, port, tier, server_entry_type))
+
     for server in utils.get_domains(db=db):
+        if server in secondary_proxy_domains_all:
+            continue
         if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) in ['active', 'cdn-disabled']:
-            servers.append((server, 443))
+            server_entry_type = utils.get_route_entry_type(server, db=db)
+            tier = utils.get_domain_or_online_route_tier(server, db=db)
+            if tier is None:
+                tier = utils.get_default_tier(server_entry_type)
+
+            servers.append((server, 443, tier, server_entry_type))
+
+    return servers
+
+def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None):
+    servers = get_all_servers(db=db)
     
     # # DEBUG ONLY
     # servers.append((config.SERVER_MAIN_IP, 443))
 
     providers = []
     idx = 0
-    for server, port in servers:      
-        server_entry_type = utils.get_route_entry_type(server, db=db)
-        tier = utils.get_domain_or_online_route_tier(server, db=db)
-        if tier is None:
-            tier = utils.get_default_tier(server_entry_type)
-
+    for server, port, tier, server_entry_type in servers:
         if enabled_tiers is not None and str(tier) not in enabled_tiers:
-            continue
+            continue            
 
         server_ips_str = utils.get_domain_dns_domain(server, db=db)
         server_ips = [server_ips_str]

@@ -24,7 +24,7 @@
 <div style="clear: both"></div>
 {% if no_domain_warning %}
 <div class="w-100 mt-4 px-3">
-    ⚠️ Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
+    <i class="fa-solid fa-circle-exclamation warning-icon"></i> Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
 </div>
 {% endif %}
 <div class="list-group list-group-flush mt-2 users-list">
@@ -37,17 +37,24 @@
             data-ips-today="{{ user.ips_today }}"
             data-traffic-today="{{ user.traffic_today }}">
             <div class="row">
-                <div class="col-7 list-item-title">
-                    {{ user.note }}
+                <div style="width: calc(100% - 24px)">
+                    <div class="row">
+                        <div class="col-7 list-item-title">
+                            {{ user.note }}
+                        </div>
+                        <div class="col-5 list-item-subtitle" style="text-align: right;">
+                            {{ user.traffic_this_month }} GB @ {{ month_name }}
+                        </div>
+                        <div class="col-7 list-item-subtitle">
+                            {{ user.id }}
+                        </div>
+                        <div class="col-5 list-item-subtitle" style="text-align: right;">
+                            {{ user.traffic_today }} GB today
+                        </div>
+                    </div>
                 </div>
-                <div class="col-5 list-item-subtitle" style="text-align: right;">
-                    {{ user.traffic_this_month }} GB @ {{ month_name }}
-                </div>
-                <div class="col-7 list-item-subtitle">
-                    {{ user.id }}
-                </div>
-                <div class="col-5 list-item-subtitle" style="text-align: right;">
-                    {{ user.traffic_today }} GB today
+                <div style="width: 24px;">
+                    <i class="list-item-arrow fa-solid fa-chevron-right"></i>
                 </div>
             </div>
         </a>

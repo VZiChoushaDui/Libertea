@@ -55,7 +55,7 @@
                 </label>
             </div>
         </div>
-        <div class="form-group mt-3 mb-4">
+        <div class="form-group mt-3 mb-3">
             <strong>To begin, copy and paste the following command into the SSH shell of your secondary server:</strong><br /><br />
             <code id="codeToCopy"></code>
             <br />
@@ -64,6 +64,43 @@
                 Copy code to clipboard
             </button>
         </div>
+        <div class="form-group mb-4 text-center" style="margin-top: 72px;">
+            <div class="spinner"></div><br>
+            <div class="mt-2">
+                Waiting for your server to connect...
+            </div>
+        </div>
+
+        <script>
+            function getProxies() {
+                return fetch("/{{ admin_uuid }}/api/proxies/online")
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Active proxies:", data.length);
+                        var ips = [];
+                        data.forEach(function(proxy) {
+                            ips.push(proxy['ip']);
+                        });
+                        return new Promise(function(resolve, reject) {
+                            resolve(ips);
+                        });
+                    });
+            }
+
+            getProxies().then(initialList => {
+                setInterval(function() {
+                    getProxies().then(newList => {
+                        newList.forEach(function(proxy) {
+                            if (!initialList.includes(proxy)) {
+                                console.log("New proxy:", proxy)
+                                window.location.href = "/{{ admin_uuid }}/domains/" + proxy + "/?new=true";
+                            }
+                        });
+                    });
+                }, 8000);
+            })
+
+        </script>
     </div>
 </div>
 
