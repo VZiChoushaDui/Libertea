@@ -234,8 +234,14 @@ else
     cp proxy-register/libertea-proxy-register.service /etc/systemd/system/libertea-proxy-register.service
     sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-proxy-register.service
     systemctl daemon-reload
-    systemctl enable libertea-proxy-register.service
-    systemctl restart libertea-proxy-register.service
+
+    if [ "$LIBERTEA_PROXY_DISABLE_REGISTER" == "1" ]; then
+        echo "       proxy-register is disabled"
+        systemctl disable libertea-proxy-register.service
+    else
+        systemctl enable libertea-proxy-register.service
+        systemctl restart libertea-proxy-register.service
+    fi
 
     if [ "$PROXY_TYPE" == "ssh" ]; then
         echo "     - proxy-ssh-tunnel-tls"
