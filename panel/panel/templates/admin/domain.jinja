@@ -338,7 +338,8 @@
 
 {% if health_check %}
         <script>
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=72')
+            var healthCheckDomain = "{% if proxy_domain != None and proxy_domain != '' %}{{ proxy_domain }}{% else %}{{ domain }}{% endif %}";
+            fetch('/{{ admin_uuid }}/health/' + healthCheckDomain + '?hours=72')
                 .then(r => r.json())
                 .then(data => {
                     var elem = document.querySelector('.health-percent');
@@ -383,7 +384,7 @@
                     elem.innerText = avg_percent + '%';
                     elem.classList.remove('spinner');
                 });
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=336')
+            fetch('/{{ admin_uuid }}/health/' + healthCheckDomain + '?hours=336')
                 .then(r => r.json())
                 .then(data => {
                     var times = [];
