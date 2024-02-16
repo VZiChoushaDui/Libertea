@@ -107,7 +107,7 @@
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
-                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ proxy.ip }}">⌛</span>
+                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{% if proxy.domains | length > 0 %}{{ proxy.domains[0] }}{% else %}{{ proxy.ip }}{% endif %}">⌛</span>
                     {% endif %}
                 </div>
             </div>
