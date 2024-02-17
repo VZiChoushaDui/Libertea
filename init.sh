@@ -57,7 +57,7 @@ fi
 # fi
 
 echo "    - Installing core dependencies..."
-apt-get install -q -y ufw dnsutils uuid-runtime openssl jq coreutils build-essential | sed 's/^/        /'
+apt-get install -q -y ufw dnsutils uuid-runtime openssl jq coreutils build-essential cron | sed 's/^/        /'
 
 echo "    - Installing python..."
 apt-get install -q -y python3 python3-dev python3-pip | sed 's/^/        /'
