@@ -354,7 +354,8 @@ def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, fake_traffi
         "latest_cpu_usage": cpu_usage,
         "latest_ram_usage": ram_usage,
         "fake_traffic_enabled": fake_traffic_enabled,
-        "fake_traffic_avg_gb_per_day": fake_traffic_avg_gb_per_day
+        "fake_traffic_avg_gb_per_day": fake_traffic_avg_gb_per_day,
+        "deleted": False,
     }}, upsert=True)
 
 
