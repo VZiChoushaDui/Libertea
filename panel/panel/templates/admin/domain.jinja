@@ -338,7 +338,7 @@
 
 {% if health_check %}
         <script>
-            var healthCheckDomain = "{% if proxy_domain != None and proxy_domain != '' %}{{ proxy_domain }}{% else %}{{ domain }}{% endif %}";
+            var healthCheckDomain = "{% if secondary_proxy and proxy_domain != None and proxy_domain != '' %}{{ proxy_domain }}{% else %}{{ domain }}{% endif %}";
             fetch('/{{ admin_uuid }}/health/' + healthCheckDomain + '?hours=72')
                 .then(r => r.json())
                 .then(data => {
