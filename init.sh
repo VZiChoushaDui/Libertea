@@ -375,6 +375,7 @@ echo "    - vmess-grpc..."
 
 
 echo " ** Installing web panel..."
+mkdir -p ./data
 touch ./data/all-domains-ever.lst
 cp panel/libertea-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project
@@ -409,6 +410,7 @@ else
     docker compose up -d
 fi
 
+mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
 touch ./data/haproxy-lists/domains.lst
 touch ./data/haproxy-lists/valid-panel-endpoints.lst
