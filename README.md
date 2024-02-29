@@ -74,8 +74,7 @@ Yes. You can set a priority for each domain and secondary proxy; users' devices 
 ### v1040
 
 - ✨ Added domain support for secondary proxies
-- ✨ Updated panel icons
-- 🐛 Fixed secondary proxy re-adding after removal
+- ✨ Updated panel icons 
 
 ### v1039
 
