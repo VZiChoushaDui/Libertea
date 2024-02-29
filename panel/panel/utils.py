@@ -354,7 +354,8 @@ def online_route_ping(ip, version, proxy_type, cpu_usage, ram_usage, fake_traffi
         "latest_cpu_usage": cpu_usage,
         "latest_ram_usage": ram_usage,
         "fake_traffic_enabled": fake_traffic_enabled,
-        "fake_traffic_avg_gb_per_day": fake_traffic_avg_gb_per_day
+        "fake_traffic_avg_gb_per_day": fake_traffic_avg_gb_per_day,
+        "deleted": False,
     }}, upsert=True)
 
 
@@ -531,7 +532,7 @@ def online_route_get_traffic(ip, year, month, day, db=None):
 
 check_domain_set_properly_cache_max_time = 60
 
-def domain_cache_update_db(domain, status=None, cdn=None, db=None):
+def domain_cache_update_db(domain, status=None, cdn=None, ip=None, db=None):
     if db is None:
         client = config.get_mongo_client()
         db = client[config.MONGODB_DB_NAME]
@@ -540,9 +541,19 @@ def domain_cache_update_db(domain, status=None, cdn=None, db=None):
         domains.update_one({"_id": domain}, {"$set": {"__cache_domain_timestamp": datetime.utcnow(), "__cache_domain_status": status}}, upsert=False)
     if cdn is not None:
         domains.update_one({"_id": domain}, {"$set": {"__cache_domain_cdn": cdn}}, upsert=False)
+    if ip is not None:
+        domains.update_one({"_id": domain}, {"$set": {"__cache_domain_ip": ip}}, upsert=False)
 
 
 def update_domain_cache(domain, try_count=3, db=None):       
+    ip = None
+    try:
+        # get ip for domain
+        ip = socket.gethostbyname(domain)
+        domain_cache_update_db(domain, ip=ip, db=db)
+    except:
+        print("Failed to resolve domain", domain)
+
     # send a request to https://[domain]/[get_admin_uuid]/. It should return 401 unauthorized
     try:
         r = requests.get("https://{}/{}/".format(domain, config.get_admin_uuid()), verify=False, timeout=5)
@@ -557,7 +568,6 @@ def update_domain_cache(domain, try_count=3, db=None):
 
             # make sure domain does not resolve to config.SERVER_MAIN_IP
             try:
-                ip = socket.gethostbyname(domain)
                 if ip == config.SERVER_MAIN_IP:
                     domain_cache_update_db(domain, status='cdn-disabled', db=db)
                     return
@@ -604,6 +614,50 @@ def check_domain_cdn_provider(domain, db=None):
         if "__cache_domain_cdn" in domain_entry:
             return domain_entry["__cache_domain_cdn"]
     return '-'
+
+def get_domain_ip(domain, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+    domain_entry = domains.find_one({"_id": domain})
+    if domain_entry is not None:
+        if "__cache_domain_ip" in domain_entry:
+            return domain_entry["__cache_domain_ip"]
+    return None
+
+def is_domain_connected_to_secondary_route(domain, db=None):
+    # check if domain is active
+    if check_domain_set_properly(domain, db=db) != 'active':
+        return False
+
+    # check if domain is connected to a secondary route
+    ip = get_domain_ip(domain, db=db)
+    if ip is None:
+        return False
+
+    if ip in online_route_get_all(db=db):
+        return True
+
+    return False
+
+def get_domains_for_ip(ip, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    domains = db.domains
+
+    all_domains = [domain["_id"] for domain in domains.find({"__cache_domain_ip": ip})]
+    return all_domains
+
+def get_domain_for_ip(ip, db=None):
+    domains = get_domains_for_ip(ip, db=db)
+    if len(domains) == 0:
+        return None
+
+    domains.sort()
+    return domains[0]
+
 
 def update_user_stats_cache(user_id, db=None):
     if db is None:

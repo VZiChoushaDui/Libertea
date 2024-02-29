@@ -156,8 +156,8 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
         service docker restart
     fi
 else
-    echo "    - Installing python, haproxy, autossh, build-essential..."
-    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh build-essential | sed 's/^/        /'
+    echo "    - Installing python, haproxy, autossh, build-essential, cron..."
+    apt-get install -q -y python3 python3-dev python3-pip haproxy autossh build-essential cron | sed 's/^/        /'
     
     echo "    - Installing python dependencies..."
     export PIP_BREAK_SYSTEM_PACKAGES=1
@@ -234,8 +234,14 @@ else
     cp proxy-register/libertea-proxy-register.service /etc/systemd/system/libertea-proxy-register.service
     sed -i "s|{rootpath}|$DIR|g" /etc/systemd/system/libertea-proxy-register.service
     systemctl daemon-reload
-    systemctl enable libertea-proxy-register.service
-    systemctl restart libertea-proxy-register.service
+
+    if [ "$LIBERTEA_PROXY_DISABLE_REGISTER" == "1" ]; then
+        echo "       proxy-register is disabled"
+        systemctl disable libertea-proxy-register.service
+    else
+        systemctl enable libertea-proxy-register.service
+        systemctl restart libertea-proxy-register.service
+    fi
 
     if [ "$PROXY_TYPE" == "ssh" ]; then
         echo "     - proxy-ssh-tunnel-tls"

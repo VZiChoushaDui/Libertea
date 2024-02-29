@@ -15,9 +15,28 @@
 </div>
 <div style="clear: both"></div>
 
-<div style="clear: both"></div>
 <div class="mx-3">
-    <h6 class="bordered">Domains</h6>
+    <h6 class="bordered">Panel Domain</h6>
+</div>
+<div class="list-group list-group-flush mt-2">
+    <a href="#" class="list-group-item list-group-item-action">
+        <div class="row">
+            <div class="col-12 list-item-title">
+                {{ panel_domain }}
+            </div>
+            <div class="col-6 list-item-subtitle">
+                <i class="fa-solid fa-check check-icon"></i> Active
+            </div>
+        </div>
+    </a>
+</div>
+
+<div style="clear: both"></div>
+<div class="mx-3 mt-5">
+    <h6 class="bordered">Primary Domains</h6>
+</div>
+<div class="route-section-text mt-2 mx-3">
+    Primary domains are connected to your main Libertea server IP. You're advised to use a CDN to improve availability and performance, but you can also use a primary domain without a CDN.
 </div>
 <div class="list-group list-group-flush mt-2">
     {% for domain in domains %}
@@ -26,22 +45,24 @@
                 <div class="col-12 list-item-title">
                     {{ domain.id }}
                     {% if domain.tier != None %}<div class="list-item-badge">{{ domain.tier }}</div>{% endif %}
-                    {% if domain.warning %} ⚠️ {% endif %}
+                    {% if domain.warning %} <i class="fa-solid fa-circle-exclamation warning-icon"></i> {% endif %}
+                    <i class="list-item-arrow fa-solid fa-chevron-right"></i>
                 </div>
-                <div class="col-6 list-item-subtitle">
+                <div class="col-7 list-item-subtitle">
                     {% if domain.status == 'active' %}
-                    ✅ Active
+                    <i class="fa-solid fa-check check-icon"></i> Active <i class="fa-solid fa-cloud-bolt cloud-icon"></i>
                     {% elif domain.status == 'inactive' %}
-                    ❌ Inactive, click for details
+                    <i class="fa-solid fa-xmark error-icon"></i> Inactive, click for details
                     {% elif domain.status == 'cdn-disabled' %}
-                    ✅ Active (No CDN)
+                    <i class="fa-solid fa-check check-icon"></i> Active
+                    <span class="ip-flag fi fis mx-1" data-ip="{{ domain.ip }}" style="border-radius: 50%;"></span>
                     {% elif domain.status == 'redirect-loop' %}
-                    ❌ CDN Misconfigured
+                    <i class="fa-solid fa-xmark error-icon"></i> CDN Misconfigured
                     {% else %}
-                    ⚠️ Unknown status
+                    <i class="fa-solid fa-circle-exclamation warning-icon"></i> Unknown status
                     {% endif %}
                 </div>
-                <div class="col-6 list-item-subtitle" style="text-align: right;">
+                <div class="col-5 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
                     Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ domain.id }}">⌛</span>
                     {% endif %}
@@ -54,11 +75,9 @@
     <h6 class="bordered">Secondary Proxies</h6>
 </div>
 
-<div class="proxy-intro mt-2 mx-3">
-    <div class="mb-2" style="font-size: 14px;">
-        Secondary proxies allow users to connect to your Libertea via direct IP routes, bypassing the CDN for 
-        more reliable connections for when the ISPs are blocking the CDN.
-    </div>
+<div class="route-section-text mt-2 mx-3">
+    Secondary proxies allow users to connect to your Libertea via other routes (including servers in other countries),
+    to increase availability and reliability. You can add as many secondary proxies as you want. 
 </div>
 
 <div class="list-group list-group-flush mt-2">
@@ -67,34 +86,33 @@
             <div class="row">
                 <div class="col-12 list-item-title">
                     {{ proxy.ip }}
-                    <span class="secondary-proxy-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
+                    {% if proxy.domains | length > 0 %}
+                    | {% for domain in proxy.domains %}{{ domain }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    {% endif %}
                     {% if proxy.tier != None %}<div class="list-item-badge">{{ proxy.tier }}</div>{% endif %}
-                    {% if proxy.online %}{% if proxy.update_available %}⚠️{% endif %}{% endif %}
+                    {% if proxy.online and (proxy.update_available or proxy.domains | length == 0) %}<i class="fa-solid fa-circle-exclamation warning-icon"></i>{% endif %}
+                    <i class="list-item-arrow fa-solid fa-chevron-right"></i>
                 </div>
                 <div class="col-6 list-item-subtitle">
                     {% if not proxy.online %}
-                    ❌ Inactive, click for details
+                    <i class="fa-solid fa-xmark error-icon"></i> Inactive, click for details
+                    <span class="ip-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
                     {% elif proxy.update_available %}
-                    ✅ Active, update available
+                    <i class="fa-solid fa-check check-icon"></i> Active, update available
+                    <span class="ip-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
                     {% else %}
-                    ✅ Active
+                    <i class="fa-solid fa-check check-icon"></i> Active
+                    <span class="ip-flag fi fis mx-1" data-ip="{{ proxy.ip }}" style="border-radius: 50%;"></span>
                     {% endif %}
                 </div>
                 <div class="col-6 list-item-subtitle" style="text-align: right;">
                     {% if health_check %}
-                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{{ proxy.ip }}">⌛</span>
+                    Availability: <span class="health-percent spinner text-spinner small-spinner" data-domainid="{% if proxy.domains | length > 0 %}{{ proxy.domains[0] }}{% else %}{{ proxy.ip }}{% endif %}">⌛</span>
                     {% endif %}
                 </div>
             </div>
         </a>
     {% endfor %}
-</div>
-
-<div class="proxy-intro mt-4 mx-3">    
-    <div class="mb-2" style="opacity: 0.75; font-size: 12px;">
-        The IPs for secondary proxies might get blocked after a while, in which case you can simply delete
-        the old secondary proxy server and add a new one, without disrupting your service and main server.
-    </div>
 </div>
 
 {% if health_check %}
@@ -148,7 +166,7 @@
 {% endif %}
 
 <script>
-    document.querySelectorAll('.secondary-proxy-flag').forEach(elem => {
+    document.querySelectorAll('.ip-flag').forEach(elem => {
         var country = localStorage.getItem('ip-country-' + elem.dataset.ip);
         if (country) {
             country = JSON.parse(country);

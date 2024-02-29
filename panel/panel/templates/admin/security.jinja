@@ -22,7 +22,7 @@
 
 {% if health_warnings.no_camouflage.status %}
 <div class="section security-card">
-    <h5>⚠️ Camouflage website</h5>
+    <h5><i class="fa-solid fa-circle-exclamation warning-icon"></i> Camouflage website</h5>
     <p>Your domains will show the content from camouflage website so that it looks like a normal website and the chance of being blocked is much lower.</p>
     <a href="/{{ admin_uuid }}/welcome/camouflage/?next_page=security">Set up camouflage website</a>
 </div>
@@ -66,6 +66,14 @@
     <h5>Secondary proxies</h5>
     <p>Consider adding a <strong>secondary proxy</strong> for better availability across various networks.</p>
     <a href="/{{ admin_uuid }}/proxies/new/">Add a secondary proxy</a>
+</div>
+{% endif %}
+
+{% if health_warnings.secondary_route_without_domain.status %}
+<div class="section security-card">
+    <h5>Domains for Secondary proxies</h5>
+    <p>Some of your Secondary proxies does not have a connected domain. It's recommended to connect a domain or subdomain to each of your secondary proxies.</p>
+    <a href="/{{ admin_uuid }}/domains/">Go to Routes</a>
 </div>
 {% endif %}
 

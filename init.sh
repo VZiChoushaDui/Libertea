@@ -13,6 +13,17 @@ COMMAND="$1"
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
+echo ""
+echo " _      _ _               _              "
+echo "| |    (_) |             | |             "
+echo "| |     _| |__   ___ _ __| |_ ___  __ _  "
+echo "| |    | | '_ \ / _ \ '__| __/ _ \/ _\` | "
+echo "| |____| | |_) |  __/ |  | ||  __/ (_| | "
+echo "|______|_|_.__/ \___|_|   \__\___|\__,_| "
+echo ""
+echo ""
+echo ""
+
 # if .libertea.proxy file exists, then this is a proxy server. don't install main
 if [ -f .libertea.proxy ]; then
     echo "This is a Libertea proxy server. You can't install both main and proxy on the same server."
@@ -46,7 +57,7 @@ fi
 # fi
 
 echo "    - Installing core dependencies..."
-apt-get install -q -y ufw dnsutils uuid-runtime openssl jq coreutils build-essential | sed 's/^/        /'
+apt-get install -q -y ufw dnsutils uuid-runtime openssl jq coreutils build-essential cron | sed 's/^/        /'
 
 echo "    - Installing python..."
 apt-get install -q -y python3 python3-dev python3-pip | sed 's/^/        /'
@@ -118,16 +129,22 @@ fi
 
 echo "    - Initializing firewall..."
 set +e
-yes | /usr/share/ufw/check-requirements >/dev/null
-if [ $? -ne 0 ]; then
-    echo "       WARNING: UFW requirements not met. Disabling UFW."
-    yes | ufw disable >/dev/null
+SSH_PORT=$(netstat -tulpn | grep sshd | cut -d ":" -f 2 | cut -d " " -f 1 | head -n 1)
+# check if SSH_PORT is a number
+if [[ ! $SSH_PORT =~ ^[0-9]+$ ]]; then
+    echo "       WARNING: Could not detect ssh port. Will not touch firewall."
 else
-    ufw allow ssh >/dev/null
-    ufw allow http >/dev/null
-    ufw allow https >/dev/null
-    ufw allow 8443 >/dev/null
-    yes | ufw enable >/dev/null
+    yes | /usr/share/ufw/check-requirements >/dev/null
+    if [ $? -ne 0 ]; then
+        echo "       WARNING: UFW requirements not met. Disabling UFW."
+        yes | ufw disable >/dev/null
+    else
+        ufw allow "$SSH_PORT" >/dev/null
+        ufw allow http >/dev/null
+        ufw allow https >/dev/null
+        ufw allow 8443 >/dev/null
+        yes | ufw enable >/dev/null
+    fi
 fi
 set -e
 
@@ -358,6 +375,7 @@ echo "    - vmess-grpc..."
 
 
 echo " ** Installing web panel..."
+mkdir -p ./data
 touch ./data/all-domains-ever.lst
 cp panel/libertea-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project
@@ -392,6 +410,7 @@ else
     docker compose up -d
 fi
 
+mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
 touch ./data/haproxy-lists/domains.lst
 touch ./data/haproxy-lists/valid-panel-endpoints.lst

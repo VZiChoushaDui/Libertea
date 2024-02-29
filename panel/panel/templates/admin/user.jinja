@@ -9,7 +9,7 @@
 <h1 class="mt-4 mb-5">User "{{ user.note }}"</h1>
 {% if no_domain_warning %}
 <div class="w-100 mt-4 px-3">
-    ⚠️ Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
+    <i class="fa-solid fa-circle-exclamation warning-icon"></i> Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
 </div>
 {% endif %}
 <div class="section">

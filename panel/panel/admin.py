@@ -1,6 +1,7 @@
 import re
 import json
 import urllib
+import socket
 import requests
 import threading
 from . import utils
@@ -67,6 +68,11 @@ def get_health_warnings():
         },
         'no_secondary_route': {
             'status': len(utils.online_route_get_all()) == 0,
+            'score_penalty': 0.1,
+            'severity': 1,
+        },
+        'secondary_route_without_domain': {
+            'status': any([x for x in utils.online_route_get_all() if utils.get_domain_for_ip(x) is None]),
             'score_penalty': 0.1,
             'severity': 1,
         }
@@ -393,6 +399,7 @@ def domains():
 
     all_domains = [{
         "id": domain["_id"],
+        "ip": utils.get_domain_ip(domain["_id"]),
         "status": utils.check_domain_set_properly(domain["_id"], db=db),
         "warning": utils.top_level_domain_equivalent(domain["_id"], config.get_panel_domain()),
         "tier": utils.get_domain_or_online_route_tier(domain["_id"], db=db, return_default_if_none=True),
@@ -404,14 +411,24 @@ def domains():
         "tier": x['tier'],
         "update_available": x['update_available'],
         "online": x['online'],
+        "domains": [utils.get_domain_for_ip(x['ip'])] if utils.get_domain_for_ip(x['ip']) is not None else [],
     } for x in proxy_ips]
 
+    proxy_domains = []
+    for proxy in proxies:
+        proxy_domains += proxy['domains']
+    all_domains = [x for x in all_domains if x['id'] not in proxy_domains]
+
+    all_domains = sorted([x for x in all_domains if x['status'] in ['active', 'cdn-disabled']], key=lambda k: int(k['tier'])) + \
+        sorted([x for x in all_domains if x['status'] not in ['active', 'cdn-disabled']], key=lambda k: int(k['tier']))
+    
     proxies = sorted([x for x in proxies if x['online']], key=lambda k: int(k['tier'])) + \
         sorted([x for x in proxies if not x['online']], key=lambda k: int(k['tier']))
 
     return render_template('admin/domains.jinja', 
         page='domains',
         libertea_version=config.LIBERTEA_VERSION,
+        panel_domain=config.get_panel_domain(),
         admin_uuid=config.get_admin_uuid(),
         domains=all_domains,
         proxies=proxies,
@@ -434,9 +451,9 @@ def new_proxy():
         proxy_register_endpoint=f"https://{config.SERVER_MAIN_IP}/{config.get_proxy_connect_uuid()}/route",
     )
 
-@blueprint.route(root_url + 'domains/<domain>/', methods=['GET'])
-def domain(domain):
-    if domain == 'new':
+@blueprint.route(root_url + 'domains/<id>/', methods=['GET'])
+def domain(id):
+    if id == 'new':
         return render_template('admin/new_domain.jinja',
             back_to='domains',
             libertea_version=config.LIBERTEA_VERSION,
@@ -446,16 +463,16 @@ def domain(domain):
 
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
-    domain_entry = db.domains.find_one({"_id": domain})
+    domain_entry = db.domains.find_one({"_id": id})
 
-    tier = utils.get_domain_or_online_route_tier(domain)
+    tier = utils.get_domain_or_online_route_tier(id)
     if tier is None:
-        tier = utils.get_default_tier_for_route(domain)
+        tier = utils.get_default_tier_for_route(id)
     tier = str(tier)
 
     if domain_entry is None:
         proxy_ips = utils.secondary_route_get_all()
-        entry = [x for x in proxy_ips if x['ip'] == domain]
+        entry = [x for x in proxy_ips if x['ip'] == id]
         if len(entry) == 0:
             return '', 404
 
@@ -466,9 +483,11 @@ def domain(domain):
             status='active' if entry['online'] else 'inactive',
             admin_uuid=config.get_admin_uuid(),
             server_ip=config.SERVER_MAIN_IP,
-            domain=domain,
+            domain=id,
             secondary_proxy=True,
-            secondary_proxy_update_available=utils.online_route_update_available(domain),
+            proxy_domain=request.args.get('proxy_domain', utils.get_domain_for_ip(id)),
+            proxy_domain_error=request.args.get('proxy_domain_error', None),
+            secondary_proxy_update_available=utils.online_route_update_available(id),
             bootstrap_script_url=config.get_bootstrap_script_url(),
             bootstrap_env=get_bootstrap_env(),
             panel_secret_key=config.get_panel_secret_key(),
@@ -513,12 +532,13 @@ def domain_save(domain):
                 return redirect(url_for('admin.dashboard'))
             
             utils.add_domain(domain)
-            threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
+            utils.update_domain_cache(domain, 1)
+            threading.Thread(target=utils.update_domain_cache, args=(domain, 3)).start()
 
         if request.form.get('next', None) == 'dashboard':
             return redirect(url_for('admin.dashboard'))
         
-        return redirect(url_for('admin.domain', domain=domain))
+        return redirect(url_for('admin.domain', id=domain))
 
     ip_override = request.form.get('ip_override', None)
     if ip_override is not None:
@@ -533,7 +553,33 @@ def domain_save(domain):
         priority = int(priority)
         utils.set_domain_or_online_route_tier(domain, priority)
     
-    return redirect(url_for('admin.domain', domain=domain))
+    return redirect(url_for('admin.domain', id=domain))
+
+@blueprint.route(root_url + 'domains/<id>/proxydomain', methods=['POST'])
+def proxydomain_save(id):
+    proxy_domain = request.form.get('proxy_domain', None)
+    if proxy_domain is not None:
+        proxy_domain = proxy_domain.strip()
+        if proxy_domain == '':
+            proxy_domain = None
+
+        if proxy_domain is not None:
+            proxy_domain_ip = socket.gethostbyname(proxy_domain)
+            print(id, ":", "domain", proxy_domain, "points to ip", proxy_domain_ip)
+            if proxy_domain_ip != id:
+                return redirect(root_url + 'domains/' + id + '/?proxy_domain_error=domain_does_not_point_to_ip&proxy_domain=' + urllib.parse.quote(proxy_domain))
+
+            prev_proxy_domain = utils.get_domain_for_ip(id)
+            if prev_proxy_domain is not None and prev_proxy_domain != proxy_domain:
+                utils.remove_domain(prev_proxy_domain)
+
+            utils.add_domain(proxy_domain)
+            utils.update_domain_cache(proxy_domain, 1)
+            threading.Thread(target=utils.update_domain_cache, args=(proxy_domain, 3)).start()
+
+            return redirect(root_url + 'domains/' + id + '/?proxy_domain=' + urllib.parse.quote(proxy_domain))
+
+    return redirect(root_url + 'domains/' + id + '/')
 
 @blueprint.route(root_url + 'domains/<domain>/', methods=['DELETE'])
 def domain_delete(domain):
@@ -665,3 +711,14 @@ def app_settings_save():
 def app_settings_reset_tiers():
     utils.reset_all_user_tiers_enabled_for_subscription()
     return "ok", 200
+
+@blueprint.route(root_url + 'api/proxies/online', methods=['GET'])
+def get_proxies_json():
+    proxy_ips = utils.secondary_route_get_all()
+    proxies = [{
+        "ip": x['ip'],
+        "tier": x['tier'],
+        "update_available": x['update_available'],
+    } for x in proxy_ips if x['online']]
+
+    return json.dumps(proxies)

@@ -10,15 +10,15 @@
         <div class="col-12">
             <strong>
                 {% if status == 'active' %}
-                ✅ Active
+                <i class="fa-solid fa-check check-icon"></i> Active
                 {% elif status == 'inactive' %}
-                ❌ Inactive
+                <i class="fa-solid fa-xmark error-icon"></i> Inactive
                 {% elif status == 'cdn-disabled' %}
-                ✅ Active (No CDN)
+                <i class="fa-solid fa-check check-icon"></i> Active
                 {% elif status == 'redirect-loop' %}
-                ❌ CDN Misconfigured
+                <i class="fa-solid fa-xmark error-icon"></i> CDN Misconfigured
                 {% else %}
-                ⚠️ Unknown status
+                <i class="fa-solid fa-circle-exclamation warning-icon"></i> Unknown status
                 {% endif %}
             </strong>
         </div>
@@ -71,17 +71,45 @@
 </div>
 
 {% if secondary_proxy %}
+    {% if status == 'active' %}
+        {% if proxy_domain == None or proxy_domain == '' %}
+        <div class="row mt-5 mx-1" style="margin-bottom: -24px;">
+            <div class="col-12">
+                <i class="fa-solid fa-circle-exclamation warning-icon"></i> This Secondary Proxy is active via IP address, but it's recommended to connect a domain to this server as well.
+            </div>
+        </div>
+        {% endif %}
+
+        <form action="/{{ admin_uuid }}/domains/{{ domain }}/proxydomain" method="post">
+            <div class="form-group mb-5 mt-5 mx-3">
+                <label for="proxy_domain">Connected domain</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="proxy_domain" name="proxy_domain" value="{% if proxy_domain != None %}{{ proxy_domain }}{% endif %}" placeholder="example.com" style="max-width: 350px">
+                    <button class="btn btn-primary" type="submit" id="proxy_domain_save">Save</button>
+                </div>
+                {% if proxy_domain_error != None %}
+                    {% if proxy_domain_error == "domain_does_not_point_to_ip" %}
+                    <small class="form-text text-danger fw-bold">This domain does not point to {{ domain }}. Please check DNS settings.</small><br>
+                    {% else %}
+                    <small class="form-text text-danger fw-bold">{{ camouflage_error }}</small><br>
+                    {% endif %}
+                {% endif %}
+
+                <small class="form-text text-muted">This domain or subdomain should be pointed to the IP address {{ domain }}</small>
+            </div>
+        </form>
+    {% endif %}
 
     <div class="row mt-5 fake-traffic px-2" style="display: none;">
-        <div class="mb-2"><strong>🛡️ Fake traffic protection is enabled</strong></div>
+        <div class="mb-2"><strong><i class="fa-solid fa-shield-halved shield-icon"></i> Fake traffic protection is enabled</strong></div>
         <div class="mb-1">Due to the physical location of this server, Libertea will create fake asymmetric traffic to reduce the chance of detection.</div>
         <div style="opacity: 0.7">Libertea creates approximately <span class="fake-traffic-gb-per-day spinner text-spinner">⌛</span> GB of fake traffic every day.</div>
     </div>
 
     {% if status == 'inactive' %}
-    <div class="row mt-5">
+    <div class="row mt-5 mx-1">
         <div class="col-12">
-            ⚠️ This server is not reachable. Check if the server is turned on and is configured properly, and check if Libertea main IP is accessible from this server.
+            <i class="fa-solid fa-circle-exclamation warning-icon"></i> This server is not reachable. Check if the server is turned on and is configured properly, and check if Libertea main IP is accessible from this server.
         </div>
         <div class="col-12 mt-3">
             If you've removed this server from your Libertea, you can delete it by clicking the button below.<br />
@@ -91,9 +119,9 @@
         </div>
     </div>
     {% elif secondary_proxy_update_available %}
-    <div class="row mt-5">
+    <div class="row mt-5 mx-1">
         <div class="col-12">
-            ⚠️ There's a new update available for this secondary proxy server.<br />
+            <i class="fa-solid fa-circle-exclamation warning-icon"></i> There's a new update available for this secondary proxy server.<br />
             <div style="font-size: 14px; margin-left: 26px; margin-top: 8px;">
                 To update, run this command in the SSH shell of this server:<br />
                 <code id="codeToCopy">{{ bootstrap_env }}curl -s {{ bootstrap_script_url }} -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install-proxy https://{{ panel_domain }}/{{ proxy_configuration_uuid }} update</code>
@@ -137,9 +165,9 @@
 
 {% if not secondary_proxy %}
     {% if status == 'redirect-loop' %}
-    <div class="row mt-5">
+    <div class="row mt-4 mx-1">
         <div class="col-12">
-            ⚠️ Your domain is redirecting to itself. This is usually caused by misconfigured CloudFlare (or any CDN) settings.<br />
+            <i class="fa-solid fa-circle-exclamation warning-icon mx-1"></i> Your domain is redirecting to itself. This is usually caused by misconfigured Cloudflare (or any CDN) settings.<br />
             Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
             And SSL/TLS encryption mode is set to <strong>Full</strong>.<br />
             <br />
@@ -148,17 +176,10 @@
     </div>
     {% endif %}
 
-    {% if status == 'cdn-disabled' %}
-    <div class="row mt-5">
-        <div class="col-12">
-            ⚠️ If you want to route traffic through CDN, make sure you enable it (Orange cloud icon in CloudFlare)<br />
-        </div>
-    </div>
-    {% endif %}
     {% if status == 'inactive' %}
-    <div class="row mt-5">
+    <div class="row mt-4 mx-1">
         <div class="col-12">
-            ⚠️ Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
+            <i class="fa-solid fa-circle-exclamation warning-icon mx-1"></i> Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
             And SSL/TLS encryption mode is set to <strong>Full</strong>.<br />
             <br />
             <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png" />
@@ -166,15 +187,22 @@
     </div>
     {% endif %}
     {% if same_domain_as_panel_warning %}
-    <div class="row mt-5">
+    <div class="row mt-4 mx-1">
         <div class="col-12">
             <div class="mb-2">
-                ⚠️ This domain is the same as panel domains, which means if it's blocked, user's won't be able to fetch the
+                <i class="fa-solid fa-circle-exclamation warning-icon mx-1"></i> This domain is the same as panel domains, which means if it's blocked, user's won't be able to fetch the
                 updated list, unless you give them new links.
             </div>
             <div class="mb-2">
                 We recommend using separate domains for panel and VPN connections.
             </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if status == 'cdn-disabled' %}
+    <div class="row mt-4 mx-1">
+        <div class="col-12">
+            <i class="fa-solid fa-circle-info info-icon mx-1"></i> If you want to route traffic through CDN, make sure you enable it (Orange cloud icon in Cloudflare)<br />
         </div>
     </div>
     {% endif %}
@@ -310,7 +338,8 @@
 
 {% if health_check %}
         <script>
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=72')
+            var healthCheckDomain = "{% if secondary_proxy and proxy_domain != None and proxy_domain != '' %}{{ proxy_domain }}{% else %}{{ domain }}{% endif %}";
+            fetch('/{{ admin_uuid }}/health/' + healthCheckDomain + '?hours=72')
                 .then(r => r.json())
                 .then(data => {
                     var elem = document.querySelector('.health-percent');
@@ -355,7 +384,7 @@
                     elem.innerText = avg_percent + '%';
                     elem.classList.remove('spinner');
                 });
-            fetch('/{{ admin_uuid }}/health/{{ domain }}?hours=336')
+            fetch('/{{ admin_uuid }}/health/' + healthCheckDomain + '?hours=336')
                 .then(r => r.json())
                 .then(data => {
                     var times = [];
