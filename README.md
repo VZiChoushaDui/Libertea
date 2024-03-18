@@ -87,6 +87,24 @@ When you want to restore it on another server, after copying the folder, just ru
 
 Libertea uses port 80 and 443 for its own purposes and needs to listen to ports 80/443, but you can configure Libertea as a *reverse proxy* for your website or services. To do this, configure your website/services on http on a different port (e.g. `8080`), and then go to the *Settings* tab in the Libertea admin panel, and set `127.0.0.1:8080` as the Camouflage domain. This way, Libertea will forward all requests to your website.
 
+### Can I use Libertea with a custom reverse proxy?
+
+Libertea's HAProxy needs to be the process listening to ports 80 and 443. If you want more customization (than the one available in the question above), you can use Libertea's HAProxy as your reverse proxy by modifying Libertea's HAProxy configuration located at `/root/libertea/haproxy/haproxy.cfg` and then run the following command to apply the changes:
+
+    docker restart libertea-haproxy
+
+You can check the HAProxy logs to see if the changes are applied correctly:
+
+    docker logs -f --tail=100 libertea-haproxy
+
+### Can I use the beta version of Libertea?
+
+Yes, you can use the beta version of Libertea by running the following command on your server:
+
+    export LIBERTEA_BRANCH=beta && curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install
+
+Please note that the beta version may have bugs and issues, and it not guaranteed to be stable.
+
 ## Changelog
 
 #### v1041
