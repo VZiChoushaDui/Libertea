@@ -692,9 +692,6 @@ def app_settings_save():
         if camouflage_domain == '' or camouflage_domain == 'https://':
             settings.set_camouflage_domain("")
         else:
-            if not camouflage_domain.startswith('http'):
-                camouflage_domain = 'https://' + camouflage_domain
-
             # check if domain is reachable
             camouflage_domain_status, camouflage_domain = utils.check_camouflage_domain(camouflage_domain)
             if camouflage_domain_status == "":

@@ -68,6 +68,7 @@ services:
     volumes:
       - ./haproxy:/usr/local/etc/haproxy/
       - ./haproxy/script.lua:/haproxy-files/script.lua
+      - ./haproxy/camouflage-fallback.html:/haproxy-files/camouflage-fallback.html
       - ./data/haproxy-lists:/haproxy-files/lists
       - /etc/ssl/ha-certs:/etc/ssl/ha-certs
       # - /var/lib/haproxy:/home/haproxy_stats

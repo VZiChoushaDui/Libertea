@@ -16,6 +16,8 @@
         {% if camouflage_error != None %}
             {% if camouflage_error == "camouflage_domain_not_https" %}
             <small class="form-text text-danger fw-bold">Camouflage website must start with https://</small>
+            {% elif camouflage_error == "camouflage_domain_not_http_https" %}
+            <small class="form-text text-danger fw-bold">Camouflage website must start with http:// or https://</small>
             {% elif camouflage_error == "camouflage_domain_not_reachable" %}
             <small class="form-text text-danger fw-bold">Camouflage website is not reachable. Please check the domain name, or use another one.</small>
             {% elif camouflage_error == "camouflage_domain_not_supported" %}

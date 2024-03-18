@@ -57,27 +57,50 @@ Contributions are welcome! Please feel free to open an issue for any bugs, impro
 
 ## Frequently Asked Questions
 
-##### Does Libertea keep my domains and IPs safe from being blocked?
+### Does Libertea keep my domains and IPs safe from being blocked?
 
 Libertea uses SSL-based protocols, so the traffic is not distinguishable from normal HTTPS traffic. Also by setting a Camouflage domain to your Libertea installation, the risk of active probing gets reduced. However, GFW may still block your domains and IPs based on usage after a period of time. It is recommended to use *multiple* domains and secondary proxies, and periodically change your secondary proxy IPs.
 
-##### Can I route regional traffic directly (without going through VPN)?
+### Can I route regional traffic directly (without going through VPN)?
 
 Yes. In the admin panel, go to the *Settings* tab, and in the *Route regional IPs directly* section, select the countries you want to go through directly.
 
-##### Some of my servers or CDN plans have limited traffic. Can I prioritize servers?
+### Some of my servers or CDN plans have limited traffic. Can I prioritize servers?
 
 Yes. You can set a priority for each domain and secondary proxy; users' devices will try higher priority routes first, and use the lower priority ones only if those are not available. This way, you can optimize your traffic usage per server/domain according to your needs.
 
+### How can I backup my Libertea installation, or move it to another server?
+
+To create a backup from your Libertea, just copy the whole folder `/root/libertea`.
+
+For example, to move Libertea to your new server, run the following commands on your *first* server to copy the Libertea folder to your new server:
+
+    # Run this on your first server
+    rsync -avz /root/libertea [new-server-ip]:/root/
+
+When you want to restore it on another server, after copying the folder, just run the Libertea update command on the *new* server:
+
+    # Run this on your new server
+    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
+
+### I want to have my own website on the same server running on port 80/443. Can I still use Libertea?
+
+Libertea uses port 80 and 443 for its own purposes and needs to listen to ports 80/443, but you can configure Libertea as a *reverse proxy* for your website or services. To do this, configure your website/services on http on a different port (e.g. `8080`), and then go to the *Settings* tab in the Libertea admin panel, and set `127.0.0.1:8080` as the Camouflage domain. This way, Libertea will forward all requests to your website.
+
 ## Changelog
 
-### v1040
+#### v1041
+
+- ✨ Improve camouflage mechanism
+- ✨ Added support for custom reverse proxy (see FAQ) 
+
+#### v1040
 
 - ✨ Added domain support for secondary proxies
 - ✨ Updated panel icons
 - 🐛 Fixed secondary proxy re-adding after removal
 
-### v1039
+#### v1039
 
 - 🚨 New Camouflage mechanism to avoid being blocked
 - ⚡️ CPU usage optimization
