@@ -54,7 +54,7 @@ def update_certificates(signal):
     domains = utils.get_domains()
     domains.append(config.get_panel_domain())
     for domain in domains:
-        certbot.generate_certificate(domain)
+        certbot.generate_certificate(domain, retry=False)
     print("CRON: done updating certificates")
 
 

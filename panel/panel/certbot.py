@@ -20,7 +20,7 @@ def cert_exists(domain):
     cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
     return os.path.isfile(cert_file)
 
-def generate_certificate(domain):
+def generate_certificate(domain, retry=True):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domain_certificates = db.domain_certificates
@@ -45,7 +45,7 @@ def generate_certificate(domain):
 
     result = sysops.run_command('certbot certonly --standalone -d ' + domain + ' --agree-tos --email ' +
                                 email_address + ' --non-interactive' + ' --http-01-port 9999')
-    if result == 256:
+    if result == 256 and retry:
         # try again after 10 seconds
         print('  - Certificate generation failed (256). Retrying in 10 seconds.')
         time.sleep(10)
