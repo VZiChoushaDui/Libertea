@@ -94,6 +94,7 @@ def create_app():
 
     try:
         update_certificates(None)
+        sysops.regenerate_camouflage_cert()
     except:
         pass
 

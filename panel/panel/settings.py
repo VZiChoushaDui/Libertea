@@ -147,7 +147,9 @@ def get_camouflage_domain_without_protocol(db=None):
     if domain is None or domain == "":
         return None
     if '://' in domain:
-        return domain.split('://')[1]
+        domain = domain.split('://')[1]
+    if ':' in domain:
+        domain = domain.split(':')[0]
     return domain
 
 def set_camouflage_domain(val, db=None):
