@@ -15,7 +15,7 @@ export CAMOUFLAGE_IP="127.0.0.1"
 if [[ $CAMOUFLAGE_HOST =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     export CAMOUFLAGE_IP=$CAMOUFLAGE_HOST
 else
-    ip=$(dig +short $CAMOUFLAGE_HOST A)
+    ip=$(dig +short $CAMOUFLAGE_HOST A | head -n 1)
     if [ -z "$ip" ]; then
         echo "Could not resolve $CAMOUFLAGE_HOST"
         export CAMOUFLAGE_IP="127.0.0.1"
@@ -47,7 +47,7 @@ function reload
     if [[ $CAMOUFLAGE_HOST =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         export CAMOUFLAGE_IP=$CAMOUFLAGE_HOST
     else
-        ip=$(dig +short $CAMOUFLAGE_HOST A)
+        ip=$(dig +short $CAMOUFLAGE_HOST A | head -n 1)
         if [ -z "$ip" ]; then
             echo "Could not resolve $CAMOUFLAGE_HOST"
             export CAMOUFLAGE_IP="127.0.0.1"
