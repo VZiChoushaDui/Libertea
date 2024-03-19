@@ -61,13 +61,19 @@ Contributions are welcome! Please feel free to open an issue for any bugs, impro
 
 Libertea uses SSL-based protocols, so the traffic is not distinguishable from normal HTTPS traffic. Also by setting a Camouflage domain to your Libertea installation, the risk of active probing gets reduced. However, GFW may still block your domains and IPs based on usage after a period of time. It is recommended to use *multiple* domains and secondary proxies, and periodically change your secondary proxy IPs.
 
+
+
 ### Can I route regional traffic directly (without going through VPN)?
 
 Yes. In the admin panel, go to the *Settings* tab, and in the *Route regional IPs directly* section, select the countries you want to go through directly.
 
+
+
 ### Some of my servers or CDN plans have limited traffic. Can I prioritize servers?
 
 Yes. You can set a priority for each domain and secondary proxy; users' devices will try higher priority routes first, and use the lower priority ones only if those are not available. This way, you can optimize your traffic usage per server/domain according to your needs.
+
+
 
 ### How can I backup my Libertea installation, or move it to another server?
 
@@ -83,9 +89,13 @@ When you want to restore it on another server, after copying the folder, just ru
     # Run this on your new server
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh update
 
+
+
 ### I want to have my own website on the same server running on port 80/443. Can I still use Libertea?
 
 Libertea uses port 80 and 443 for its own purposes and needs to listen to ports 80/443, but you can configure Libertea as a *reverse proxy* for your website or services. To do this, configure your website/services on http on a different port (e.g. `8080`), and then go to the *Settings* tab in the Libertea admin panel, and set `127.0.0.1:8080` as the Camouflage domain. This way, Libertea will forward all requests to your website.
+
+
 
 ### Can I use Libertea with a custom reverse proxy?
 
@@ -97,6 +107,8 @@ You can check the HAProxy logs to see if the changes are applied correctly:
 
     docker logs -f --tail=100 libertea-haproxy
 
+
+
 ### Can I use the beta version of Libertea?
 
 Yes, you can use the beta version of Libertea by running the following command on your server:
@@ -105,6 +117,8 @@ Yes, you can use the beta version of Libertea by running the following command o
 
 Please note that the beta version may have bugs and issues, and it not guaranteed to be stable.
 
+
+
 ### How can I change the Libertea panel password or panel domain?
 
 To change the Libertea panel password, run the install command again on your server:
@@ -112,6 +126,8 @@ To change the Libertea panel password, run the install command again on your ser
     curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install    
 
 Follow the instructions and enter a new domain and/or password when prompted.
+
+
 
 ### I want to modify Libertea/contribute to Libertea. How can I configure Libertea for development?
 
