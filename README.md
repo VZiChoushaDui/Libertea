@@ -107,7 +107,7 @@ Please note that the beta version may have bugs and issues, and it not guarantee
 
 ## Changelog
 
-#### v1041
+#### v1042
 
 - ✨ Improve camouflage mechanism
 - ✨ Added support for custom reverse proxy (see FAQ) 
