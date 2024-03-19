@@ -2,7 +2,7 @@
 
 # Libertea
 
-Easily install and manage a multi-protocol, multi-route V2ray VPN server; with user management, domain camouflage (fallback), and route auto update for users.
+Easily install and manage a multi-protocol, multi-route V2ray VPN server; with user management, automatic routing, domain camouflage, and auto update for users.
 
 [Chinese 中文](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
 
