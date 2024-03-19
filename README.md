@@ -137,6 +137,14 @@ You can install Libertea normally, and modify the files in the `/root/libertea` 
 
 This will rebuild the Libertea Docker containers from scratch to apply your changes.
 
+You can check the Libertea panel logs by running the following command:
+
+    tail -f -n 100 /tmp/libertea-panel.log
+
+and also you can check the Libertea docker logs by running the following command:
+
+    cd /root/libertea && docker compose logs -f --tail=100
+
 ## Changelog
 
 #### v1042
