@@ -23,14 +23,17 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 def log_cron(cron_uid, *args):
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " - CRON " + cron_uid + " - ", *args)
 
-@uwsgidecorators.timer(2 * 60)
-def periodic_update_domains(signal):
+def periodic_update_domains():
     cron_uid = 'periodic_update_domains_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Updating domains cache")
     domains = utils.get_domains()
     for domain in domains:
         utils.update_domain_cache(domain)
     log_cron(cron_uid, "DONE updating domains cache")
+
+@uwsgidecorators.timer(2 * 60)
+def periodic_update_domains_cron(signal):
+    periodic_update_domains()
 
 @uwsgidecorators.timer(10 * 60)
 def periodic_update_users_stats(signal):
@@ -57,15 +60,20 @@ def save_connected_ips(signal):
     stats.save_connected_ips_count()
     log_cron(cron_uid, "DONE saving connected IPs")
 
-@uwsgidecorators.cron(-5, -1, -1, -1, -1)
-def update_certificates(signal):
+@uwsgidecorators.lock
+def update_certificates():
     cron_uid = 'update_certificates_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Updating certificates")
     domains = utils.get_domains()
     domains.append(config.get_panel_domain())
     for domain in domains:
+        log_cron(cron_uid, "Updating certificate for " + domain)
         certbot.generate_certificate(domain, retry=False)
     log_cron(cron_uid, "DONE updating certificates")
+
+@uwsgidecorators.cron(-5, -1, -1, -1, -1)
+def update_certificates_cron(signal):
+    update_certificates()
 
 def create_app():
     app = Flask(__name__)
@@ -102,13 +110,12 @@ def create_app():
         threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
     try:
+        update_certificates()
         sysops.regenerate_camouflage_cert()
-    
-        # run update_certificates in another thread to avoid blocking the app startup
-        threading.Thread(target=update_certificates, args=(None,)).start()
     except:
         pass
 
+    print("Starting the app")
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(user.blueprint)
     app.register_blueprint(api.blueprint)
