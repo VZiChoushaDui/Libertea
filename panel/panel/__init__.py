@@ -1,3 +1,4 @@
+import random
 import requests
 import threading
 from . import stats
@@ -13,50 +14,58 @@ from . import user
 from . import api
 import uwsgidecorators
 from flask import Flask
+from datetime import datetime
 from pymongo import MongoClient
 from urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+def log_cron(cron_uid, *args):
+    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "CRON " + cron_uid, *args)
+
 @uwsgidecorators.timer(30)
 def periodic_update_domains(signal):
-    print("CRON: Updating domains cache")
+    cron_uid = 'periodic_update_domains_' + str(random.randint(0, 1000000))
+    log_cron(cron_uid, "Updating domains cache")
     domains = utils.get_domains()
     for domain in domains:
         utils.update_domain_cache(domain)
-    print("CRON: done updating domains cache")
+    log_cron(cron_uid, "DONE updating domains cache")
 
 @uwsgidecorators.timer(10 * 60)
 def periodic_update_users_stats(signal):
-    print("CRON: Updating users stats cache")
+    cron_uid = 'periodic_update_users_stats_' + str(random.randint(0, 1000000))
+    log_cron(cron_uid, "Updating users stats cache")
     stats.cleanup_json_cache(force=True)
     users = utils.get_users()
     for user in users:
         utils.update_user_stats_cache(user['panel_id'])
     stats.cleanup_json_cache(force=True)
-    print("CRON: done updating users stats cache")
+    log_cron(cron_uid, "DONE updating users stats cache")
 
 @uwsgidecorators.timer(33 * 60)
 def periodic_health_check_parse(signal):
-    print("CRON: Health check parse")
+    cron_uid = 'periodic_health_check_parse_' + str(random.randint(0, 1000000))
+    log_cron(cron_uid, "Health check parse")
     health_check.parse()
-    print("CRON: done health check parse")
+    log_cron(cron_uid, "DONE health check parse")
 
 @uwsgidecorators.cron(-10, -1, -1, -1, -1)
 def save_connected_ips(signal):
-    print("CRON: Saving connected IPs")
+    cron_uid = 'save_connected_ips_' + str(random.randint(0, 1000000))
+    log_cron(cron_uid, "Saving connected IPs")
     stats.save_connected_ips_count()
-    print("CRON: done saving connected IPs")
+    log_cron(cron_uid, "DONE saving connected IPs")
 
 @uwsgidecorators.cron(-5, -1, -1, -1, -1)
 def update_certificates(signal):
-    print("CRON: Updating certificates")
+    cron_uid = 'update_certificates_' + str(random.randint(0, 1000000))
+    log_cron(cron_uid, "Updating certificates")
     domains = utils.get_domains()
     domains.append(config.get_panel_domain())
     for domain in domains:
         certbot.generate_certificate(domain, retry=False)
-    print("CRON: done updating certificates")
-
+    log_cron(cron_uid, "DONE updating certificates")
 
 def create_app():
     app = Flask(__name__)
@@ -93,8 +102,10 @@ def create_app():
         threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
     try:
-        update_certificates(None)
         sysops.regenerate_camouflage_cert()
+    
+        # run update_certificates in another thread to avoid blocking the app startup
+        threading.Thread(target=update_certificates, args=(None,)).start()
     except:
         pass
 
