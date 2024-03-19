@@ -1,5 +1,6 @@
 import random
 import requests
+import traceback
 import threading
 from . import stats
 from . import utils
@@ -35,7 +36,7 @@ def periodic_update_domains():
 def periodic_update_domains_cron(signal):
     periodic_update_domains()
 
-@uwsgidecorators.timer(10 * 60)
+@uwsgidecorators.timer(5 * 60)
 def periodic_update_users_stats(signal):
     cron_uid = 'periodic_update_users_stats_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Updating users stats cache")
@@ -111,9 +112,10 @@ def create_app():
         threading.Thread(target=utils.update_domain_cache, args=(domain, 2)).start()
 
     try:
-        update_certificates()
         sysops.regenerate_camouflage_cert()
+        # update_certificates()
     except:
+        traceback.print_exc()
         pass
 
     print("Starting the app")
