@@ -61,6 +61,7 @@ def save_connected_ips(signal):
     log_cron(cron_uid, "DONE saving connected IPs")
 
 @uwsgidecorators.lock
+@uwsgidecorators.thread
 def update_certificates():
     cron_uid = 'update_certificates_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Updating certificates")
