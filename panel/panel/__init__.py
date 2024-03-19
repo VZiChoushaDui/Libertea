@@ -21,7 +21,7 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 def log_cron(cron_uid, *args):
-    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "CRON " + cron_uid, *args)
+    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " - CRON " + cron_uid + " - ", *args)
 
 @uwsgidecorators.timer(30)
 def periodic_update_domains(signal):
