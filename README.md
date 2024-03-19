@@ -135,6 +135,8 @@ You can install Libertea normally, and modify the files in the `/root/libertea` 
 
     cd /root/libertea && export ENVIRONMENT="dev" && ./init.sh update
 
+This will rebuild the Libertea Docker containers from scratch to apply your changes.
+
 ## Changelog
 
 #### v1042
