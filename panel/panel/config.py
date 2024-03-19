@@ -21,7 +21,7 @@ def get_libertea_branch():
     return os.environ.get('LIBERTEA_BRANCH_NAME')
 
 LIBERTEA_VERSION = 1041
-LIBERTEA_PROXY_VERSION = 1006
+LIBERTEA_PROXY_VERSION = 1007
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
 
 HAPROXY_CONTAINER_NAME = 'libertea-haproxy'

@@ -28,7 +28,7 @@ PROXY_CONNECT_UUID=$(curl --fail -s "$CONFIGURATION_URL/proxy-connect-uuid")
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
-if [ "$PROXY_TYPE" == "update" ]; then
+if [ "$CONFIGURATION_URL" == "update" ]; then
     . .env
     IS_UPDATING="1"
 fi

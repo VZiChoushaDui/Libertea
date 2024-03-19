@@ -14,7 +14,7 @@ from urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-LIBERTEA_PROXY_VERSION = 1006
+LIBERTEA_PROXY_VERSION = 1007
 
 PROXY_CONNECT_UUID = os.environ.get('PROXY_CONNECT_UUID')
 MAIN_IP = os.environ.get('MAIN_IP')
