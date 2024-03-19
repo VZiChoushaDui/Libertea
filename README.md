@@ -41,7 +41,7 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with u
 ## <a name='Requirements'></a>Requirements
 
 - A server running Ubuntu 20.04+ or Debian 11+ (Ubuntu 22.04 recommended)
-- At least 1 GB of RAM
+- At least 1 GB of RAM (2 GB if serving more than just a few users)
 - One domain/subdomain pointed to a CDN (such as Cloudflare), and the CDN set to `Full` SSL mode
 
 ## <a name='Recommendedconfiguration'></a>Recommended configuration
