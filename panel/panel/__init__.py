@@ -23,7 +23,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 def log_cron(cron_uid, *args):
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " - CRON " + cron_uid + " - ", *args)
 
-@uwsgidecorators.timer(30)
+@uwsgidecorators.timer(2 * 60)
 def periodic_update_domains(signal):
     cron_uid = 'periodic_update_domains_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Updating domains cache")
