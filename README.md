@@ -53,7 +53,7 @@ If you want to uninstall Liberta or Liberta-secondary-proxy from your server for
 
 ## Contribution
 
-Contributions are welcome! Please feel free to open an issue for any bugs, improvements and ideas; or open a pull request if you want to contribute code. If you're opening a pull request, make sure to send it to the `development` branch of this repository.
+Contributions are welcome! Please feel free to open an issue for any bugs, improvements and ideas; or open a pull request if you want to contribute code. If you're opening a pull request, make sure to send it to the `devel` branch of this repository.
 
 ## Frequently Asked Questions
 
@@ -105,12 +105,27 @@ Yes, you can use the beta version of Libertea by running the following command o
 
 Please note that the beta version may have bugs and issues, and it not guaranteed to be stable.
 
+### How can I change the Libertea panel password or panel domain?
+
+To change the Libertea panel password, run the install command again on your server:
+
+    curl -s https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/bootstrap.sh -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh install    
+
+Follow the instructions and enter a new domain and/or password when prompted.
+
+### I want to modify Libertea/contribute to Libertea. How can I configure Libertea for development?
+
+You can install Libertea normally, and modify the files in the `/root/libertea` folder. After modifying the files, you can run the following command to apply the changes:
+
+    cd /root/libertea && export ENVIRONMENT="dev" && ./init.sh update
+
 ## Changelog
 
 #### v1042
 
 - ✨ Improve camouflage mechanism
-- ✨ Added support for custom reverse proxy (see FAQ) 
+- ✨ Added support for custom reverse proxy (see FAQ)
+- 🐛 Minor bugfixes in secondary route registration
 
 #### v1040
 
