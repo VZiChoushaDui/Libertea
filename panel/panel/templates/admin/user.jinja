@@ -130,7 +130,7 @@
         <div style="clear: both;"></div>
         <div class="form-group mb-4">
             <label for="max_ips">Max concurrent IPs to connect</label>
-            <div class="input-group mb-3">  
+            <div class="input-group">  
                 <div class="input-group-text">
                     <input class="form-check-input mt-0" type="checkbox" value="on" id="max_ips_default" name="max_ips_default" {% if max_ips_default %}checked{% endif %}>
                     <label class="form-check-label mx-2" for="max_ips_default">
@@ -139,12 +139,16 @@
                 </div>
                 <input type="number" class="form-control" id="max_ips" name="max_ips" value="{{ user.max_ips }}">
             </div>
+            <div style="opacity: 0.9; font-size: 14px; float: right;" class="mb-3 monthly-traffic-hint">
+                Currently connected: <span class="ips-connected-right-now spinner text-spinner text-spinner-xs">0</span> IPs
+            </div>
         </div>
-        <div class="form-group mt-5">
+        <div style="clear: both;"></div>
+        <div class="form-group mt-4">
             <label class="form-check-label">
                 Default available servers<br />
                 <span style="opacity: 0.75; font-size: 12px;">
-                    Select which priority groups should be visible to each user. This affects Clash, V2Ray and Shadowsocks connections.
+                    Select which priority groups should be visible to this user. This affects Clash, V2Ray and Shadowsocks connections.
                 </span>
             </label>
         </div>
@@ -304,7 +308,7 @@
                 document.querySelector('.user-active-hint').style.color = 'orange';
             } else {
                 document.querySelector('.user-active-hint').innerHTML = 'Expires in ' + days + ' days';
-                document.querySelector('.user-active-hint').style.color = 'green';
+                document.querySelector('.user-active-hint').style.color = '';
             }
         }
         setTimeout(updateUserActiveUntilHint, 200);
@@ -314,6 +318,7 @@
             if (this.checked) {
                 setTimeout(function() {
                     document.getElementById('user_active_until').value = '';
+                    updateUserActiveUntilHint();
                 }, 100);
             } else {
                 document.getElementById('user_active_until').value = getUserActiveDefaultDate();
@@ -335,11 +340,17 @@
                 })
                 .then(function(data) {
                     if (Number.isInteger(parseInt(data))) {
-                        document.querySelector('.ips-connected-right-now').innerHTML = data;
+                        document.querySelectorAll('.ips-connected-right-now').forEach(function (el) {
+                            el.innerHTML = data;
+                        });
                     } else {
-                        document.querySelector('.ips-connected-right-now').innerHTML = '-';
+                        document.querySelectorAll('.ips-connected-right-now').forEach(function (el) {
+                            el.innerHTML = '-';
+                        });
                     }
-                    document.querySelector('.ips-connected-right-now').classList.remove('spinner');
+                    document.querySelectorAll('.ips-connected-right-now').forEach(function (el) {
+                        el.classList.remove('spinner');
+                    });
                 });
         }
 
