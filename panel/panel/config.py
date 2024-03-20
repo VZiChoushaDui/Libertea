@@ -20,7 +20,7 @@ socket.getaddrinfo = new_getaddrinfo
 def get_libertea_branch():
     return os.environ.get('LIBERTEA_BRANCH_NAME')
 
-LIBERTEA_VERSION = 1042
+LIBERTEA_VERSION = 1043
 LIBERTEA_PROXY_VERSION = 1007
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
 
