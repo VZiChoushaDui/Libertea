@@ -240,6 +240,8 @@ else
     if [ "$LIBERTEA_PROXY_DISABLE_REGISTER" == "1" ]; then
         echo "       proxy-register is disabled"
         systemctl disable libertea-proxy-register.service
+        systemctl stop libertea-proxy-register.service
+        echo "LIBERTEA_PROXY_DISABLE_REGISTER=1" >> .env
     else
         systemctl enable libertea-proxy-register.service
         systemctl restart libertea-proxy-register.service
