@@ -2,7 +2,7 @@ FROM haproxy:2.7
 
 USER root
 
-RUN apt-get update && apt-get install libcap2-bin -y && apt-get install lua-socket -y && apt-get install psmisc
+RUN apt-get update && apt-get install libcap2-bin -y && apt-get install lua-socket -y && apt-get install psmisc -y && apt-get install dnsutils -y
 RUN setcap 'cap_net_bind_service=+ep' /usr/local/sbin/haproxy
 
 # RUN mkdir -p /home/haproxy_stats

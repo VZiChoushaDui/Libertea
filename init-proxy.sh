@@ -20,15 +20,17 @@ if [ ! -z "$OTHER_PARAM" ]; then
     exit
 fi
 
+set +e
 MAIN_IP=$(curl --fail -s "$CONFIGURATION_URL/main-ip")
 PANEL_DOMAIN=$(curl --fail -s "$CONFIGURATION_URL/panel-domain")
 PANEL_SECRET_KEY=$(curl --fail -s "$CONFIGURATION_URL/panel-secret-key")
 PROXY_CONNECT_UUID=$(curl --fail -s "$CONFIGURATION_URL/proxy-connect-uuid")
+set -e
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
 
-if [ "$PROXY_TYPE" == "update" ]; then
+if [ "$CONFIGURATION_URL" == "update" ]; then
     . .env
     IS_UPDATING="1"
 fi
@@ -238,6 +240,8 @@ else
     if [ "$LIBERTEA_PROXY_DISABLE_REGISTER" == "1" ]; then
         echo "       proxy-register is disabled"
         systemctl disable libertea-proxy-register.service
+        systemctl stop libertea-proxy-register.service
+        echo "LIBERTEA_PROXY_DISABLE_REGISTER=1" >> .env
     else
         systemctl enable libertea-proxy-register.service
         systemctl restart libertea-proxy-register.service

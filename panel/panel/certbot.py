@@ -5,7 +5,22 @@ from . import sysops
 from . import config
 from datetime import datetime, timedelta
 
-def generate_certificate(domain):
+def save_cert(domain):
+    fullchain_file = '/etc/letsencrypt/live/' + domain + '/fullchain.pem'
+    privkey_file = '/etc/letsencrypt/live/' + domain + '/privkey.pem'
+    cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
+    with open(cert_file, 'w') as f:
+        f.write(open(fullchain_file).read())
+        f.write(open(privkey_file).read())
+
+    print('  - Reloading HAProxy')
+    sysops.haproxy_reload()
+
+def cert_exists(domain):
+    cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
+    return os.path.isfile(cert_file)
+
+def generate_certificate(domain, retry=True):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domain_certificates = db.domain_certificates
@@ -13,8 +28,11 @@ def generate_certificate(domain):
     if domain_entry is not None:
         try:
             if domain_entry['updated_at'] > datetime.now() - timedelta(days=1):
-                print('Certificate for ' + domain + ' is still valid. Skipping.')
-                return True
+                if not cert_exists(domain):
+                    print('Certificate for ' + domain + ' does not exist. Regenerating.')
+                else:
+                    print('Certificate for ' + domain + ' is still valid. Skipping.')
+                    return True
             if domain_entry['skip_until'] > datetime.now():
                 print('Certificate for ' + domain + ' is skipped due to multiple failures. Skipping.')
                 return False
@@ -27,7 +45,7 @@ def generate_certificate(domain):
 
     result = sysops.run_command('certbot certonly --standalone -d ' + domain + ' --agree-tos --email ' +
                                 email_address + ' --non-interactive' + ' --http-01-port 9999')
-    if result == 256:
+    if result == 256 and retry:
         # try again after 10 seconds
         print('  - Certificate generation failed (256). Retrying in 10 seconds.')
         time.sleep(10)
@@ -36,15 +54,7 @@ def generate_certificate(domain):
 
     if result == 0:
         print('  - Certificate generated successfully')
-        fullchain_file = '/etc/letsencrypt/live/' + domain + '/fullchain.pem'
-        privkey_file = '/etc/letsencrypt/live/' + domain + '/privkey.pem'
-        cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
-        with open(cert_file, 'w') as f:
-            f.write(open(fullchain_file).read())
-            f.write(open(privkey_file).read())
-
-        print('  - Reloading HAProxy')
-        sysops.haproxy_reload()
+        save_cert(domain)
 
         print('  - Finalizing')
         domain_certificates.update_one({'_id': domain}, {'$set': {

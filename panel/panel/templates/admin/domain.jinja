@@ -5,28 +5,30 @@
   href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
 />
 <h1 class="mt-5">{{ domain }}</h1>
-<div class="section text-center mt-1">
-    <div class="row">
-        <div class="col-12">
-            <strong>
-                {% if status == 'active' %}
-                <i class="fa-solid fa-check check-icon"></i> Active
-                {% elif status == 'inactive' %}
-                <i class="fa-solid fa-xmark error-icon"></i> Inactive
-                {% elif status == 'cdn-disabled' %}
-                <i class="fa-solid fa-check check-icon"></i> Active
-                {% elif status == 'redirect-loop' %}
-                <i class="fa-solid fa-xmark error-icon"></i> CDN Misconfigured
-                {% else %}
-                <i class="fa-solid fa-circle-exclamation warning-icon"></i> Unknown status
-                {% endif %}
-            </strong>
-        </div>
-    </div>
+{% if secondary_proxy %}
+<div class="section text-center mt-1" style="font-size: 16px; font-weight: 400;">
+    <span class="server-provider-name spinner text-spinner">⌛</span>
 </div>
+{% endif %}
 
 <div class="section stats">
     <div class="row">
+        <div class="col-6 col-sm-4 stats-item">
+            <div class="stats-item-value">
+                {% if status == 'active' %}
+                Active <i class="fa-solid fa-check check-icon"></i>
+                {% elif status == 'inactive' %}
+                Inactive <i class="fa-solid fa-xmark error-icon"></i>
+                {% elif status == 'cdn-disabled' %}
+                Active <i class="fa-solid fa-check check-icon"></i>
+                {% elif status == 'redirect-loop' %}
+                CDN Misconfigured <i class="fa-solid fa-xmark error-icon"></i>
+                {% else %}
+                Unknown <i class="fa-solid fa-circle-exclamation warning-icon"></i>
+                {% endif %}
+            </div>
+            <div class="stats-item-desc">Route Status</div>
+        </div>
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value"><span class="traffic-month-value spinner text-spinner">⌛</span></div>
             <div class="stats-item-desc">Traffic in <span class="traffic-month-name"></span></div>
@@ -38,11 +40,11 @@
         </div>
         {% endif %}
         
-        {% if secondary_proxy %}       
+        {% if secondary_proxy %}
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value"><span class="server-country-flag-name spinner text-spinner">⌛</span><span class="fi fis server-country-flag mx-1" style="font-size: 16px; padding-top: 5px;"></span></div>
             <div class="stats-item-desc">Location</div>
-        </div>
+        </div>       
         <div class="col-6 col-sm-4 stats-item">
             <div class="stats-item-value"><span class="server-tunnel-type spinner text-spinner">⌛</span></div>
             <div class="stats-item-desc">Tunnel type</div>
@@ -283,6 +285,8 @@
                 document.querySelector('.server-country-flag').innerText = '';
                 document.querySelector('.server-country-flag-name').innerText = data.country_name;
                 document.querySelector('.server-country-flag-name').classList.remove('spinner');
+                document.querySelector('.server-provider-name').innerText = data.org;
+                document.querySelector('.server-provider-name').classList.remove('spinner');
             } else {
                 fetch('https://ipapi.co/{{ domain }}/json/')
                     .then(r => r.json())
@@ -291,6 +295,8 @@
                         document.querySelector('.server-country-flag').innerText = '';
                         document.querySelector('.server-country-flag-name').innerText = data.country_name;
                         document.querySelector('.server-country-flag-name').classList.remove('spinner');
+                        document.querySelector('.server-provider-name').innerText = data.org;
+                        document.querySelector('.server-provider-name').classList.remove('spinner');
 
                         localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
                     });
@@ -376,7 +382,8 @@
                     }
 
                     if (count == 0) {
-                        elem.innerText = 'N/A';
+                        elem.innerText = '-';
+                        elem.classList.remove('spinner');
                         return;
                     }
 

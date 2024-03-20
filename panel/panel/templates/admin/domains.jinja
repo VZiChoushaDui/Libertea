@@ -153,7 +153,8 @@
                 }
 
                 if (count == 0) {
-                    elem.innerText = 'N/A';
+                    elem.innerText = '-';
+                    elem.classList.remove('spinner');
                     return;
                 }
 
@@ -171,16 +172,32 @@
         if (country) {
             country = JSON.parse(country);
             elem.classList.add('fi-' + country.country_code.toLowerCase());
+            elem.classList.add('has-flag');
             return;
         }
+    });
 
-        fetch('https://ipapi.co/' + elem.dataset.ip + '/json/')
-            .then(r => r.json())
-            .then(data => {
+    async function fetchCountries() {
+        var items = document.querySelectorAll('.ip-flag');
+
+        for (var i = 0; i < items.length; i++) {
+            var elem = items[i];
+            if (elem.classList.contains('has-flag')) {
+                continue;
+            }
+
+            try {
+                var response = await fetch('https://ipapi.co/' + elem.dataset.ip + '/json/');
+                var data = await response.json();
                 elem.classList.add('fi-' + data.country_code.toLowerCase());
                 localStorage.setItem('ip-country-' + elem.dataset.ip, JSON.stringify(data));
-            });
-    });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
+
+    fetchCountries();
 </script>
 
 {% endblock %}

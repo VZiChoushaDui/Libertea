@@ -9,12 +9,12 @@ import requests
 import threading
 import socketserver
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-LIBERTEA_PROXY_VERSION = 1005
+LIBERTEA_PROXY_VERSION = 1007
 
 PROXY_CONNECT_UUID = os.environ.get('PROXY_CONNECT_UUID')
 MAIN_IP = os.environ.get('MAIN_IP')
@@ -151,9 +151,13 @@ def register_periodically():
 
     # Fallback to main server is used for the initial registration on ssh proxy type
     use_fallback = False
-    fallback_used_count = 0
+    last_used_fallback = datetime.now()
+    fallback_used_count_recent = 0
     while True:
         try:
+            if last_used_fallback < datetime.now() - timedelta(hours=3):
+                fallback_used_count_recent = 0
+
             bytes_data = {}
             for listenport in last_bytes_received:
                 if not listenport in bytes_data:
@@ -185,8 +189,9 @@ def register_periodically():
             endpoint = REGISTER_ENDPOINT
             if use_fallback:
                 endpoint = FALLBACK_REGISTER_ENDPOINT
-                fallback_used_count += 1
+                fallback_used_count_recent += 1
                 use_fallback = False
+                last_used_fallback = datetime.now()
 
             result = requests.post(endpoint,
                 verify=False, timeout=5,
@@ -201,7 +206,7 @@ def register_periodically():
             time.sleep(random.randint(15, 45))
         except Exception as e:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), e)
-            if fallback_used_count < 3:
+            if fallback_used_count_recent < 3:
                 use_fallback = True
                 time.sleep(3)
                 continue

@@ -39,6 +39,13 @@ else
     SOMAXCONN=$(($SOMAXCONN - 1))
 fi
 
+log "Checking total memory"
+TOTAL_MEM=$(free -m | grep Mem | awk '{print $2}')
+if [ $TOTAL_MEM -gt 3000 ]; then
+    log "Total memory is greater than 3000 MB, setting uwsgi threads to 10"
+    UWSGI_THREADS=10
+fi
+
 log "Starting Libertea panel via uwsgi on port $PORT with $UWSGI_THREADS threads, and listen queue size of $SOMAXCONN"
 uwsgi --disable-logging --master -p $UWSGI_THREADS --need-app --http 127.0.0.1:$PORT --listen $SOMAXCONN -w serve:app --post-buffering 1 >> /tmp/libertea-panel.log 2>&1
 

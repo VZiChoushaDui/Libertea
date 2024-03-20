@@ -98,16 +98,42 @@ def haproxy_update_domains_list():
     return haproxy_reload()
 
 def haproxy_update_camouflage_list():
-    count = 0
     haproxy_ensure_folder()
+    camouflage_domain = settings.get_camouflage_domain()
     with open(config.get_root_dir() + 'data/haproxy-lists/camouflage-hosts.lst', 'w') as f:
-        camouflage_domain = settings.get_camouflage_domain()
-        if camouflage_domain and camouflage_domain.startswith('https://'):
-            camouflage_domain = camouflage_domain[8:]
-        f.write(camouflage_domain + '\n')
-        count += 1
+        camouflage_domain_name = camouflage_domain
+        if camouflage_domain_name:
+            if camouflage_domain_name.startswith('https://'):
+                camouflage_domain_name = camouflage_domain_name[8:]
+            elif camouflage_domain_name.startswith('http://'):
+                camouflage_domain_name = camouflage_domain_name[7:]
 
-    print("Wrote " + str(count) + " domains to haproxy-lists/camouflage-hosts.lst")
+            if '/' in camouflage_domain_name:
+                camouflage_domain_name = camouflage_domain_name.split('/')[0]
+            if ':' in camouflage_domain_name:
+                camouflage_domain_name = camouflage_domain_name.split(':')[0]
+
+        f.write(camouflage_domain_name + '\n')
+    print("Wrote " + camouflage_domain_name + " to haproxy-lists/camouflage-hosts.lst")
+    
+    camouflage_port = 443
+    try:
+        if camouflage_domain:
+            camouflage_domain_name = camouflage_domain.split('/')[2]
+            if ':' in camouflage_domain_name:
+                camouflage_port = int(camouflage_domain_name.split(':')[1])
+            elif camouflage_domain.startswith('http://'):
+                camouflage_port = 80
+            else:
+                camouflage_port = 443
+    except:
+        print("Error parsing port from " + camouflage_domain)
+
+    with open(config.get_root_dir() + 'data/haproxy-lists/camouflage-port.lst', 'w') as f:
+        f.write(str(camouflage_port) + '\n')
+
+    print("Wrote " + str(camouflage_port) + " to haproxy-lists/camouflage-port.lst")
+
     return haproxy_reload()
 
 def add_ssh_key(ssh_key):
