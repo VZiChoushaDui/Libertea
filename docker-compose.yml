@@ -68,7 +68,6 @@ services:
     volumes:
       - ./haproxy:/usr/local/etc/haproxy/
       - ./haproxy/script.lua:/haproxy-files/script.lua
-      - ./haproxy/camouflage-fallback.html:/haproxy-files/camouflage-fallback.html
       - ./data/haproxy-lists:/haproxy-files/lists
       - /etc/ssl/ha-certs:/etc/ssl/ha-certs
       # - /var/lib/haproxy:/home/haproxy_stats
@@ -80,6 +79,11 @@ services:
     depends_on:
       # - panel
       - log-parser
+  camouflage-nginx-fallback:
+    image: nginx:latest
+    container_name: libertea-camouflage-nginx-fallback
+    ports:
+      - "127.0.0.1:25898:80"
   provider-trojan-ws:
     environment:
       - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
