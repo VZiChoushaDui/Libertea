@@ -71,8 +71,12 @@ def user_dashboard(id):
     ss_subscription_url = request.url_root.replace('http://', 'https://') + str(id) + '/subscribe/ss'
     ss_server_links = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=False, trojan=False, shadowsocks=True, enabled_tiers=enabled_tiers)
 
-    traffic_this_month = round(stats.get_gigabytes_this_month(user['_id']), 2)
-    traffic_limit = user['monthly_traffic']
+    traffic_limit = -1
+    try:
+        traffic_this_month = round(stats.get_gigabytes_this_month(user['_id']), 2)
+        traffic_limit = user['monthly_traffic']
+    except:
+        pass
 
     days_remaining = None
     try:
