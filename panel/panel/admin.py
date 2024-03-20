@@ -155,6 +155,12 @@ def user_stats():
     users_today = stats.get_connected_users_today()
 
     try:
+        traffic_today = str(round(traffic_today, 2)) + " GB"
+        traffic_this_month = str(round(traffic_this_month, 2)) + " GB"
+        traffic_past_30_days = str(round(traffic_past_30_days, 2)) + " GB"
+    except:
+        pass
+    try:
         if int(users_now) > int(users_today):
             users_today = users_now
     except:
