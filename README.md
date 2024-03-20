@@ -188,6 +188,7 @@ Feel free to submit your changes as a pull request to the `devel` branch of this
 
 - ✨ Traffic usage limit for users
 - ✨ Expire date for users
+- ✨ Updated custom reverse proxy to allow for multiple websites
 
 #### <a name='v1042'></a>v1042
 
