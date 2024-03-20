@@ -2,6 +2,7 @@ import json
 import base64
 import urllib.parse
 from . import utils
+from . import stats
 from . import config
 from . import settings
 from . import health_check
@@ -70,6 +71,19 @@ def user_dashboard(id):
     ss_subscription_url = request.url_root.replace('http://', 'https://') + str(id) + '/subscribe/ss'
     ss_server_links = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=False, trojan=False, shadowsocks=True, enabled_tiers=enabled_tiers)
 
+    traffic_this_month = round(stats.get_gigabytes_this_month(user['_id']), 2)
+    traffic_limit = user['monthly_traffic']
+
+    days_remaining = None
+    try:
+        if 'user_active_until' in user and user['user_active_until'] is not None and user['user_active_until'] != '':
+            user_active_until = datetime.strptime(user['user_active_until'], '%Y-%m-%d %H:%M')
+            days_remaining = (user_active_until - datetime.now()).days
+            if days_remaining < 0:
+                days_remaining = 0
+    except:
+        pass
+
     return render_template('user.jinja', 
         user=user, 
         clash_conf_url=clash_conf_url,
@@ -79,6 +93,10 @@ def user_dashboard(id):
         v2ray_subscription_url=v2ray_subscription_url,
         ss_server_links=ss_server_links,
         ss_subscription_url=ss_subscription_url,
+        month_name=datetime.now().strftime('%B'),
+        traffic_this_month=traffic_this_month,
+        traffic_limit=traffic_limit,
+        days_remaining=days_remaining,
     )
 
 @blueprint.route('/<id>/<file_name>.yaml')

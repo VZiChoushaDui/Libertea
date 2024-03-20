@@ -227,14 +227,14 @@
 <form method="post" class="mt-5 mx-2">
     <h6 class="mb-2 bordered">Advanced options</h6>
     <div class="form-group mb-4">
-        <label for="priority">Priority</label>
+        <label for="priority">Server Group</label>
         <select class="form-select" aria-label="Route priority" id="priority" name="priority">
             <option value="1" {% if tier == '1' %}selected{% endif %}>1 (Highest priority)</option>
             <option value="2" {% if tier == '2' %}selected{% endif %}>2</option>
             <option value="3" {% if tier == '3' %}selected{% endif %}>3</option>
             <option value="4" {% if tier == '4' %}selected{% endif %}>4 (Lowest priority)</option>
         </select>
-        <small class="form-text text-muted">Users will try to connect to the higher priority routes first, and only connect to lower priority ones if those are not reachable.</small>
+        <small class="form-text text-muted">Users will try to connect to the higher priority routes first, and only connect to lower priority ones if those are not reachable. Group 1 has the highest priority.</small>
     </div>
     {% if not secondary_proxy %}
         <div class="form-group mb-4">

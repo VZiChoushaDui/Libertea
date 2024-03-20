@@ -31,7 +31,7 @@ def cleanup_json_cache(force=False):
     except Exception as e:
         print(e)
 
-def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=True, domain=None, db=None):
+def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None):
     global ___json_cache
     try:
         # cache if not for today
@@ -52,9 +52,9 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                 db = client[config.MONGODB_DB_NAME]
             
             if date_resolution == 'day':
-                cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGb-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGbV2-' + conn_url
             elif date_resolution == 'month':
-                cache_entry_name = date.strftime("%Y-%m") + '-trafficGb-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m") + '-trafficGbV2-' + conn_url
 
             if domain is not None:
                 cache_entry_name += '-' + domain
@@ -64,9 +64,6 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
             cached = stats_cache.find_one({'_id': cache_entry_name})
             if cached is not None:
                 gigabytes = cached['gigabytes']
-                if return_as_string:
-                    gigabytes = round(cached['gigabytes'] * 100) / 100
-                    gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
         
         if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
@@ -100,18 +97,11 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                         upsert=True
                     )
 
-                if return_as_string:
-                    gigabytes = round(gigabytes * 100) / 100
-                    gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
                 
-        if return_as_string:
-            return '0 GB'
         return 0
     except Exception as e:
         print(e)
-        if return_as_string:
-            return '-'
         return None
 
 def ___get_total_ips(date, date_resolution, conn_url, db=None):
@@ -228,7 +218,7 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
         date = date_obj.strftime('%Y-%m-%d')
         xs.append(date)
         try:
-            traffic = ___get_total_gigabytes(date_obj, 'day', conn_url, return_as_string=False, domain=domain, db=db)
+            traffic = ___get_total_gigabytes(date_obj, 'day', conn_url, domain=domain, db=db)
             if traffic is None:
                 traffic = 0
 
@@ -256,7 +246,7 @@ def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_r
         date = date_obj.strftime('%Y-%m-%d')
         xs.append(date)
         try:
-            traffic = ___get_total_gigabytes(date_obj, 'day', '[total]', return_as_string=False, domain=domain, db=db)
+            traffic = ___get_total_gigabytes(date_obj, 'day', '[total]', domain=domain, db=db)
             if traffic is None:
                 traffic = 0
 
@@ -283,12 +273,12 @@ def get_gigabytes_past_30_days(user_id, db=None):
     end_date = datetime.now()
     sum_gigabytes = 0
     while start_date <= end_date:
-        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', conn_url, db=db)
         if cur_gigabytes is not None:
             sum_gigabytes += cur_gigabytes
         start_date += timedelta(days=1)
 
-    return str(round(sum_gigabytes * 100) / 100) + ' GB'
+    return sum_gigabytes
 
 def get_gigabytes_past_30_days_all(db=None):
     if db is None:
@@ -299,12 +289,12 @@ def get_gigabytes_past_30_days_all(db=None):
     end_date = datetime.now()
     sum_gigabytes = 0
     while start_date <= end_date:
-        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', '[total]', db=db)
         if cur_gigabytes is not None:
             sum_gigabytes += cur_gigabytes
         start_date += timedelta(days=1)
 
-    return str(round(sum_gigabytes * 100) / 100) + ' GB'
+    return sum_gigabytes
 
 
 def get_gigabytes_this_month_all():

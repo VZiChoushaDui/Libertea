@@ -133,7 +133,7 @@
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_{{ tier }}" id="tier_enabled_for_subscription_{{ tier }}" {% if tier_enabled_for_subscription[tier] %}checked{% endif %}>
                     <label class="form-check-label" for="tier_enabled_for_subscription_{{ tier }}">
-                        Priority {{ tier }}
+                        Group {{ tier }}
                     </label>
                 </div>
             {% endfor %}
@@ -148,7 +148,7 @@
                             method: "POST",
                         }).then(function(response) {
                             if (response.ok) {
-                                alert("Priority configuration reset successfully");
+                                alert("Group configuration reset successfully");
                             } else {
                                 alert("Error resetting priority configuration");
                             }
@@ -165,7 +165,7 @@
         <div class="mb-5 mx-2 pt-2 tier-proxygroup-types-list row" style="border-left: 2px solid #aaa;">
             {% for tier in ['1', '2', '3', '4'] %}
             <div class="form-group mb-2 col-12 col-sm-6 col-md-3">
-                <label for="tier_{{tier}}_proxygroup_type">Priority {{ tier }}</label>
+                <label for="tier_{{tier}}_proxygroup_type">Group {{ tier }}</label>
                 <select class="form-select" aria-label="Tier {{ tier }} server selection method" id="tier_{{tier}}_proxygroup_type" name="tier_{{tier}}_proxygroup_type">
                     <option value="urltest" {% if proxygroup_type_selected[tier] == 'urltest' %}selected{% endif %}>Ping</option>
                     <option value="loadbalance" {% if proxygroup_type_selected[tier] == 'loadbalance' %}selected{% endif %}>Load balance (round-robin)</option>

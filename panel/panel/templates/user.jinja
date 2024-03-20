@@ -23,6 +23,28 @@
                 margin: 0 auto;
             }
 
+            .stats-step {
+                max-width: 500px;
+                margin-top: 48px;
+                margin-bottom: 64px;
+            }
+
+            .gb {
+                font-size: 0.7em;
+                margin-left: 3px;
+            }
+ 
+            .stats-value {
+                font-weight: 300;
+                font-size: 32px;
+                margin-top: 8px;
+            }
+
+            .stats-title {
+                font-weight: 700;
+                font-size: 14px;
+            }
+
             .link-button {
                 max-width: 300px;
             }
@@ -252,8 +274,36 @@
             </div>
         </div>
 
+        {% if traffic_limit > 0 or days_remaining is not none %}
+        <div class="step stats-step">
+            <div class="row justify-content-center">
+                {% if traffic_limit > 0 %}
+                <div class="col-6">
+                    <div class="stats-value">
+                        {{ traffic_this_month }}<span class="gb">GB</span> / {{ traffic_limit }}<span class="gb">GB</span>
+                        {% if traffic_limit < traffic_this_month %}
+                        <i class="fa-solid fa-triangle-exclamation" style="color: orange; font-size: 0.8em;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="stats-title">Traffic in {{ month_name }}</div>
+                </div>
+                {% endif %}
+                {% if days_remaining is not none %}
+                <div class="col-6">
+                    <div class="stats-value">
+                        {{ days_remaining }}
+                        {% if days_remaining < 1 %}
+                        <i class="fa-solid fa-triangle-exclamation" style="color: orange; font-size: 0.8em;"></i>
+                        {% endif %}
+                    </div>  
+                    <div class="stats-title">Days remaining</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
 
-        <div class="step mt-3" {% if not subscription_enabled %}style="display: none"{% endif %}>
+        <div class="step mt-4" {% if not subscription_enabled %}style="display: none"{% endif %}>
             <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" class="btn-check instruction-group" name="configuration" id="clash" autocomplete="off" checked>
                 <label class="btn btn-outline-primary" for="clash">Clash</label>

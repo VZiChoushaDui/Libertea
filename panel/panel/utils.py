@@ -3,52 +3,84 @@ import uuid
 import socket
 import pymongo
 import requests
+import traceback
 import threading
 from . import stats
 from . import config
 from . import sysops
 from . import certbot
 from . import settings
-from datetime import datetime
 from pymongo import MongoClient
+from datetime import datetime, timedelta
 
-___max_ips = {}
-___max_ips_updated_at = None
+___user_configuration_cache = {}
+___user_configuration_updated_at = None
 ___default_max_ips = None
 
-def ___update_max_ips_cache(db=None):
-    global ___max_ips
-    global ___max_ips_updated_at
+def ___update_user_configuration_cache(db=None):
+    global ___user_configuration_cache
+    global ___user_configuration_updated_at
     global ___default_max_ips
 
-    if ___max_ips_updated_at is None or (datetime.utcnow() - ___max_ips_updated_at).total_seconds() > 60:
+    if ___user_configuration_updated_at is None or (datetime.utcnow() - ___user_configuration_updated_at).total_seconds() > 60:
         print("Updating max_ips cache")
 
         if db is None:
             client = config.get_mongo_client()
             db = client[config.MONGODB_DB_NAME]
 
-        ___max_ips = {}
-        default_max_ips = int(settings.get_default_max_ips(db))
-        for user in db.users.find():
-            ___max_ips[user["_id"]] = int(user.get("max_ips", default_max_ips))
-            ___max_ips[user["connect_url"]] = int(user.get("max_ips", default_max_ips))
-        ___max_ips_updated_at = datetime.utcnow()
-
         ___default_max_ips = settings.get_default_max_ips(db)
 
-    return ___max_ips
+        ___user_configuration_cache = {}
+        default_max_ips = int(settings.get_default_max_ips(db))
+        for user in list(db.users.find()):
+            user_active_until = user.get("user_active_until", '')
+            if user_active_until == '':
+                user_active_until = datetime.now() + timedelta(days=365)
+            else:
+                try:
+                    user_active_until = datetime.strptime(user_active_until, '%Y-%m-%d %H:%M')
+                except:
+                    user_active_until = datetime.now() + timedelta(days=365)
+
+            user_max_ips = int(user.get("max_ips", default_max_ips))
+            user_monthly_traffic = float(user.get("monthly_traffic", -1))
+            user_traffic_this_month = float(user.get("__cache_traffic_this_month", '0'))
+            user_has_traffic_remaining = user_monthly_traffic < 0 or user_traffic_this_month < user_monthly_traffic
+            user_active = user_active_until > datetime.now()
+
+            cur_user_config = {
+                'max_ips': user_max_ips,
+                'monthly_traffic': user_monthly_traffic,
+                'active_until': user_active_until,
+                'active': user_active,
+                'has_traffic_remaining': user_has_traffic_remaining,
+            } 
+            ___user_configuration_cache[user["_id"]] = cur_user_config
+            ___user_configuration_cache[user["connect_url"]] = cur_user_config
+        ___user_configuration_updated_at = datetime.utcnow()
+
+    return ___user_configuration_cache
 
 def ___get_max_ips(panel_id_or_connect_url, db=None):
-    global ___max_ips
+    global ___user_configuration_cache
 
     try:
-        ___update_max_ips_cache(db)
-        user_max_ips = int(___max_ips.get(panel_id_or_connect_url, ___default_max_ips))
+        print("Getting max_ips for", panel_id_or_connect_url)
+        ___update_user_configuration_cache(db)
+        user = ___user_configuration_cache.get(panel_id_or_connect_url, None)
+        if user is None:
+            return ___default_max_ips
+        if user['active'] == False:
+            return 0
+        if user['has_traffic_remaining'] == False:
+            return 0
+        user_max_ips = user['max_ips']
         if user_max_ips <= 0:
             return ___default_max_ips
         return user_max_ips
     except:
+        traceback.print_exc()
         return ___default_max_ips
 
 def create_user(note, referrer=None, max_ips=None):
@@ -86,7 +118,7 @@ def create_user(note, referrer=None, max_ips=None):
 
     raise Exception("Failed to update HAProxy users list")
 
-def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_for_subscription=None):
+def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_for_subscription=None, monthly_traffic=-1, user_active_until=''):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
@@ -99,6 +131,18 @@ def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_f
         users.update_one({"_id": panel_id}, {"$set": {"referrer": referrer}})
     if tier_enabled_for_subscription is not None:
         users.update_one({"_id": panel_id}, {"$set": {"tier_enabled_for_subscription": tier_enabled_for_subscription}})
+    if monthly_traffic is not None:
+        if isinstance(monthly_traffic, int) or isinstance(monthly_traffic, float):
+            users.update_one({"_id": panel_id}, {"$set": {"monthly_traffic": monthly_traffic}})
+    if user_active_until is not None:
+        try:
+            if user_active_until != '':
+                # make sure it's a valid date
+                datetime.strptime(user_active_until, '%Y-%m-%d %H:%M')
+            users.update_one({"_id": panel_id}, {"$set": {"user_active_until": user_active_until}})
+        except:
+            print("Invalid date format for user_active_until", user_active_until)
+            pass
 
     return sysops.haproxy_update_users_list()
 
@@ -672,6 +716,10 @@ def update_user_stats_cache(user_id, db=None):
     traffic_this_month = stats.get_gigabytes_this_month(user['_id'], db=db)
     ips_today = stats.get_ips_today(user['_id'], db=db)
     traffic_past_30_days = stats.get_gigabytes_past_30_days(user['_id'], db=db)
+
+    traffic_today = round(traffic_today, 2)
+    traffic_this_month = round(traffic_this_month, 2)
+    traffic_past_30_days = round(traffic_past_30_days, 2)
 
     users.update_one({"_id": user_id}, {"$set": {
         "__cache_traffic_today": traffic_today, 

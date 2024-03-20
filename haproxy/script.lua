@@ -9,7 +9,7 @@ local path_ips_list_count = 10
 local ip_user_connected_list_items = 2
 local flush_interval = 30 -- seconds
 local connected_ip_log_interval = 10 * 60 -- seconds
-local max_ips_cache_duration = 15 * 60 -- seconds
+local max_ips_cache_duration = 5 * 60 -- seconds
 
 local function getTimestamp()
     return os.time(os.date("!*t"))
