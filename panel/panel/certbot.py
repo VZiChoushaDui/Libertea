@@ -95,7 +95,7 @@ def generate_certificate(domain, retry=True, reload_haproxy=True):
                 print('  - Saving certificate')
                 result = save_cert(domain, reload_haproxy=False)
         except Exception as e:
-            print(e)
+            print("  - Error saving certificate:", e)
 
         domain_certificates.update_one({'_id': domain}, {'$set': {
             '_id': domain,

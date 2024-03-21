@@ -29,7 +29,7 @@ def cleanup_json_cache(force=False):
             if ___json_cache[key][0] < datetime.now():
                 del ___json_cache[key]
     except Exception as e:
-        print(e)
+        print("Error cleaning up json cache:", e)
 
 def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None):
     global ___json_cache
@@ -101,7 +101,7 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None
                 
         return 0
     except Exception as e:
-        print(e)
+        print("Error getting total gigabytes:", e)
         return None
 
 def ___get_total_ips(date, date_resolution, conn_url, db=None):
