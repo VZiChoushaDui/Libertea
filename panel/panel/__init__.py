@@ -68,9 +68,17 @@ def update_certificates():
     log_cron(cron_uid, "Updating certificates")
     domains = utils.get_domains()
     domains.append(config.get_panel_domain())
+
+    needs_reload = False
     for domain in domains:
         log_cron(cron_uid, "Updating certificate for " + domain)
-        certbot.generate_certificate(domain, retry=False)
+        result = certbot.generate_certificate(domain, retry=False, reload_haproxy=False)
+        if result in ['success', 'failed_but_changed']:
+            needs_reload = True
+    
+    if needs_reload:
+        sysops.haproxy_reload()
+
     log_cron(cron_uid, "DONE updating certificates")
 
 @uwsgidecorators.cron(-5, -1, -1, -1, -1)
