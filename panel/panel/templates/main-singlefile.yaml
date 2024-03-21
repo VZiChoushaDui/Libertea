@@ -94,6 +94,14 @@ script:
     udpnetwork: network == 'udp'
 
 rules:
+  - IP-CIDR,127.0.0.1/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+
+{% for domain_suffix in domain_direct_suffixes %}
+  - DOMAIN-SUFFIX,{{ domain_suffix }},DIRECT
+{% endfor %}
+
 {% for country in ips_direct_countries %}
 {% include "rules/" + country + "-direct.yaml" %}
 {% endfor %}

@@ -252,6 +252,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, en
         country_id = country['id']
         if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
+    domain_direct_suffixes = config.get_regional_domain_suffixes(ips_direct_countries)
     
     udp_exists = settings.get_provider_enabled('trojanws', db=db)
 
@@ -300,6 +301,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, en
         tiers=tiers,
         groups=groups,
         manual_tier_select_clash=settings.get_manual_tier_select_clash(),
+        domain_direct_suffixes=domain_direct_suffixes,
         custom_info_entries=custom_info_entries if custom_info_entries is not None else [],
     )
 
@@ -326,6 +328,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False, en
         country_id = country['id']
         if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
+    domain_direct_suffixes = config.get_regional_domain_suffixes(ips_direct_countries)
 
     domains = set([config.get_panel_domain()])
     if settings.get_providers_from_all_endpoints(db=db):
@@ -346,6 +349,7 @@ def generate_conf(file_name, user_id, connect_url, meta=False, premium=False, en
             meta=meta,
             premium=premium,
             ips_direct_countries=ips_direct_countries,
+            domain_direct_suffixes=domain_direct_suffixes,
             user_id=user_id,
             panel_domain=config.get_panel_domain(),
             domains=list(domains),

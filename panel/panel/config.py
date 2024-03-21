@@ -167,4 +167,26 @@ def get_root_dir():
     return "/root/libertea/"
 
 
+def get_regional_domain_suffixes(countries):
+    suffixes = ['local', 'lan']
+    if 'cn' in countries: # china
+        suffixes.append('cn')
+    elif 'cu' in countries: # cuba
+        suffixes.append('cu')
+    elif 'ir' in countries: # iran
+        suffixes.append('ir')
+    elif 'ru' in countries: # russia
+        suffixes.append('ru')
+    elif 'sa' in countries: # saudi arabia
+        suffixes.append('sa')
+    elif 'sy' in countries: # syria
+        suffixes.append('sy')
+    elif 'th' in countries: # thailand
+        suffixes.append('th')
+    elif 'tm' in countries: # turkmenistan
+        suffixes.append('tm')
+    elif 'tr' in countries:
+        suffixes.append('tr')
+    return suffixes
+
 SIGNAL_INVALIDATE_CACHE = 18
