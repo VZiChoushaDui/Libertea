@@ -39,6 +39,32 @@ def check_user_exists(id):
     return True
     
 
+def get_user_limitations_info(id):
+    user = get_user(id)
+    if user is None:
+        return None, None, None, None
+
+    traffic_limit = -1
+    traffic_this_month = 0,
+    try:
+        traffic_limit = user['monthly_traffic']
+        traffic_this_month = round(stats.get_gigabytes_this_month(user['_id']), 2)
+    except:
+        pass
+
+    days_remaining = None
+    user_active_until = None
+    try:
+        if 'user_active_until' in user and user['user_active_until'] is not None and user['user_active_until'] != '':
+            user_active_until = datetime.strptime(user['user_active_until'], '%Y-%m-%d %H:%M')
+            days_remaining = (user_active_until - datetime.now()).days
+            if days_remaining < 0:
+                days_remaining = 0
+    except:
+        pass
+
+    return traffic_this_month, traffic_limit, days_remaining, user_active_until
+
 @blueprint.route('/<id>/')
 def user_dashboard(id):
     user = get_user(id)
@@ -71,22 +97,7 @@ def user_dashboard(id):
     ss_subscription_url = request.url_root.replace('http://', 'https://') + str(id) + '/subscribe/ss'
     ss_server_links = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=False, trojan=False, shadowsocks=True, enabled_tiers=enabled_tiers)
 
-    traffic_limit = -1
-    try:
-        traffic_this_month = round(stats.get_gigabytes_this_month(user['_id']), 2)
-        traffic_limit = user['monthly_traffic']
-    except:
-        pass
-
-    days_remaining = None
-    try:
-        if 'user_active_until' in user and user['user_active_until'] is not None and user['user_active_until'] != '':
-            user_active_until = datetime.strptime(user['user_active_until'], '%Y-%m-%d %H:%M')
-            days_remaining = (user_active_until - datetime.now()).days
-            if days_remaining < 0:
-                days_remaining = 0
-    except:
-        pass
+    traffic_this_month, traffic_limit, days_remaining, _ = get_user_limitations_info(id)
 
     return render_template('user.jinja', 
         user=user, 
@@ -120,6 +131,19 @@ def user_config(id, file_name):
         if enabled_tiers_items[i]:
             enabled_tiers.append(i)
 
+    main_info_entries = []
+    main_info_entries.append(f"Updated @ {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    traffic_this_month, traffic_limit, days_remaining, user_active_until = get_user_limitations_info(id)
+    if days_remaining is not None:
+        if days_remaining <= 0:
+            main_info_entries.append(f"🚨 0 days remaining")
+        elif days_remaining == 1:
+            main_info_entries.append(f"⚠️ 1 day remaining")
+        else:
+            main_info_entries.append(f"⏰ {days_remaining} days remaining")
+    if traffic_limit > 0:
+        main_info_entries.append(f"📊 {traffic_this_month} GB / {traffic_limit} GB")
+
     if file_name == 'mconfig':
         conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
             meta=is_meta, premium=is_premium, enabled_tiers=enabled_tiers)
@@ -132,7 +156,7 @@ def user_config(id, file_name):
 
     if settings.get_single_clash_file_configuration() and file_name == 'config':
         conf = clash_conf_generator.generate_conf_singlefile(user['_id'], user['connect_url'], 
-            meta=is_meta, premium=is_premium, enabled_tiers=enabled_tiers)
+            meta=is_meta, premium=is_premium, enabled_tiers=enabled_tiers, custom_info_entries=main_info_entries)
     else:
         if file_name == 'config':
             file_name = 'main'
@@ -143,9 +167,18 @@ def user_config(id, file_name):
         if conf == "":
             return "", 404
 
+    userinfo = ''
+    if traffic_limit > 0:
+        userinfo = f'download={int(traffic_this_month*1024*1024*1024)}; upload=0;'
+        userinfo += f' total={traffic_limit*1024*1024*1024};'
+    if days_remaining is not None: # as linux timestamp
+        userinfo += f' expire={int(user_active_until.timestamp())};'
+    userinfo = userinfo.strip()
+
     return conf, 200, {
         'Content-Type': 'text/plain; charset=utf-8',
         'Content-Disposition': 'inline; filename="' + config.get_panel_domain() + "-" + str(id) + '.yaml"',
+        'Subscription-Userinfo': userinfo,
     }
 
     

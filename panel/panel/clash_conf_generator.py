@@ -238,7 +238,7 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
 
     return providers
 
-def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, enabled_tiers=None):
+def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, enabled_tiers=None, custom_info_entries=None):
     if not utils.has_active_endpoints():
         raise Exception('No active domains found')
 
@@ -300,6 +300,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, en
         tiers=tiers,
         groups=groups,
         manual_tier_select_clash=settings.get_manual_tier_select_clash(),
+        custom_info_entries=custom_info_entries if custom_info_entries is not None else [],
     )
 
     return result
