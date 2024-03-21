@@ -26,10 +26,29 @@ if [ -f /tmp/libertea-panel.log ]; then
     fi
 fi
 
+log "Checking total memory"
+TOTAL_MEM=$(free -m | grep Mem | awk '{print $2}')
+if [ $TOTAL_MEM -gt 6000 ]; then
+    log "Total memory is greater than 6000 MB, setting uwsgi threads to 10"
+    UWSGI_THREADS=10
+fi
+
+log "Tuning kernel parameters"
+ulimit -n 10000
+ulimit -n 100000
+log "   - ulimit: $(ulimit -n)"
+sysctl -w net.core.somaxconn=65534
+log "   - net.core.somaxconn: $(sysctl -n net.core.somaxconn)"
+sysctl -w net.ipv4.ip_local_port_range="16384 65535"
+log "   - net.ipv4.ip_local_port_range: $(sysctl -n net.ipv4.ip_local_port_range)"
+sysctl -w net.netfilter.nf_conntrack_max=262144
+log "   - net.netfilter.nf_conntrack_max: $(sysctl -n net.netfilter.nf_conntrack_max)"
+sysctl -w net.ipv4.tcp_fin_timeout=15
+log "   - net.ipv4.tcp_fin_timeout: $(sysctl -n net.ipv4.tcp_fin_timeout)"
+
 log "Checking net.core.somaxconn value" 
 SOMAXCONN=100
 SOMAXCONN=$(sysctl -n net.core.somaxconn)
-log "  net.core.somaxconn value is $SOMAXCONN"
 if ! [[ $SOMAXCONN =~ ^[0-9]+$ ]]; then
     SOMAXCONN=100
 fi
@@ -37,13 +56,6 @@ if [ $SOMAXCONN -gt 512 ]; then
     SOMAXCONN=512
 else
     SOMAXCONN=$(($SOMAXCONN - 1))
-fi
-
-log "Checking total memory"
-TOTAL_MEM=$(free -m | grep Mem | awk '{print $2}')
-if [ $TOTAL_MEM -gt 6000 ]; then
-    log "Total memory is greater than 6000 MB, setting uwsgi threads to 10"
-    UWSGI_THREADS=10
 fi
 
 log "Starting Libertea panel via uwsgi on port $PORT with $UWSGI_THREADS threads, and listen queue size of $SOMAXCONN"
