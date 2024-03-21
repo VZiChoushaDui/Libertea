@@ -7,4 +7,3 @@ uwsgi
 requests
 psutil
 certbot
-orjson

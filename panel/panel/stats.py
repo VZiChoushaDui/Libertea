@@ -1,16 +1,10 @@
+import json
 import psutil
 import requests
 from . import utils
 from . import config
 from pymongo import MongoClient
 from datetime import datetime, timedelta
-
-try:
-    import orjson as json
-except:
-    print("orjson not found, falling back to json")
-    import json
-    
 
 ___json_cache = {}
 ___json_cache_last_cleanup = datetime.now()
