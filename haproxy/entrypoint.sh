@@ -70,9 +70,9 @@ function reload
 
     # haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile -sf $(cat $pidfile) &
 
-    echo "  Killing haproxy..."
+    date
+    echo "Killing haproxy..."
     killall haproxy
-    echo "  Starting haproxy..."
 
     echo "Starting haproxy..."
     echo "  CAMOUFLAGE_HOST: $CAMOUFLAGE_HOST"
@@ -85,6 +85,7 @@ function reload
     wait
 }
 
+date
 echo "Starting haproxy..."
 echo "  CAMOUFLAGE_HOST: $CAMOUFLAGE_HOST"
 echo "  CAMOUFLAGE_IP: $CAMOUFLAGE_IP"

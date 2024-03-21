@@ -165,3 +165,6 @@ def get_root_dir():
             path += '/'
         return path
     return "/root/libertea/"
+
+
+SIGNAL_INVALIDATE_CACHE = 18

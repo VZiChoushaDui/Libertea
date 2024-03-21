@@ -1,5 +1,6 @@
 import re
 import uuid
+import uwsgi
 import socket
 import pymongo
 import requests
@@ -16,6 +17,15 @@ from datetime import datetime, timedelta
 ___user_configuration_cache = {}
 ___user_configuration_updated_at = None
 ___default_max_ips = None
+
+def invalidate_user_configuration_cache():
+    global ___user_configuration_cache
+    global ___user_configuration_updated_at
+    global ___default_max_ips
+
+    ___user_configuration_cache = {}
+    ___user_configuration_updated_at = None
+    ___default_max_ips = None
 
 def ___update_user_configuration_cache(db=None):
     global ___user_configuration_cache
@@ -66,7 +76,7 @@ def ___get_max_ips(panel_id_or_connect_url, db=None):
     global ___user_configuration_cache
 
     try:
-        print("Getting max_ips for", panel_id_or_connect_url)
+        # print("Getting max_ips for", panel_id_or_connect_url)
         ___update_user_configuration_cache(db)
         user = ___user_configuration_cache.get(panel_id_or_connect_url, None)
         if user is None:
@@ -143,6 +153,12 @@ def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_f
         except:
             print("Invalid date format for user_active_until", user_active_until)
             pass
+
+    try:
+        uwsgi.signal(config.SIGNAL_INVALIDATE_CACHE)
+    except:
+        print("Failed to send signal to invalidate cache")
+        traceback.print_exc()
 
     return sysops.haproxy_update_users_list()
 

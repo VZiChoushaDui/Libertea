@@ -89,6 +89,13 @@ def update_certificates():
 def update_certificates_cron(signal):
     update_certificates()
 
+@uwsgidecorators.signal(config.SIGNAL_INVALIDATE_CACHE, target='workers')
+def invalidate_caches(signum):
+    log_cron('invalidate_caches', "Invalidating caches")
+    utils.invalidate_user_configuration_cache()
+    stats.cleanup_json_cache(force=True)
+    log_cron('invalidate_caches', "DONE invalidating caches")
+
 def create_app():
     app = Flask(__name__)
 
