@@ -123,6 +123,12 @@ def create_user(note, referrer=None, max_ips=None):
 
     users.create_index('connect_url')
 
+    try:
+        uwsgi.signal(config.SIGNAL_INVALIDATE_CACHE)
+    except:
+        print("Failed to send signal to invalidate cache")
+        traceback.print_exc()
+
     if sysops.haproxy_update_users_list():
         return panel_id, connect_url
 
