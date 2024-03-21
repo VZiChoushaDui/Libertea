@@ -73,11 +73,15 @@ def update_certificates():
     for domain in domains:
         log_cron(cron_uid, "Updating certificate for " + domain)
         result = certbot.generate_certificate(domain, retry=False, reload_haproxy=False)
+        log_cron(cron_uid, "Result for " + domain + ": " + result)
         if result in ['success', 'failed_but_changed']:
             needs_reload = True
     
     if needs_reload:
+        log_cron(cron_uid, "Reloading HAProxy")
         sysops.haproxy_reload()
+    else:
+        log_cron(cron_uid, "No need to reload HAProxy")
 
     log_cron(cron_uid, "DONE updating certificates")
 
