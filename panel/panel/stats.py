@@ -30,6 +30,27 @@ def cleanup_json_cache(force=False):
     except Exception as e:
         print("Error cleaning up json cache:", e)
 
+def populate_json_cache(file_name):
+    global ___json_cache
+    with open(config.get_root_dir() + file_name, 'r') as f:
+        temp_data = json.load(f)
+        data = {}
+        for user in temp_data['users']:
+            key = list(user.keys())[0]
+            domains = user[key]['domains']
+            # remove domains with ~0 usage from [total] (ip scans)
+            if key == '[total]':
+                for domain in list(domains.keys()):
+                    if domains[domain]['megabytes'] < 0.1:
+                        del domains[domain]
+            data[key] = {
+                'megabytes': user[key]['megabytes'],
+                'ips': user[key]['ips'],
+                'domains': domains
+            }
+    ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
+
+
 def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None):
     global ___json_cache
     try:
@@ -64,41 +85,37 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None
             if cached is not None:
                 gigabytes = cached['gigabytes']
                 return gigabytes
-        
-        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
-            data = ___json_cache[file_name][1]
-        else:
-            with open(config.get_root_dir() + file_name, 'r') as f:
-                data = json.load(f)
-            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
 
+        if file_name not in ___json_cache or ___json_cache[file_name][0] < datetime.now():
+            populate_json_cache(file_name)
+        data = ___json_cache[file_name][1]
         cleanup_json_cache()
 
-        for user in data['users']:
-            entry_name = list(user.keys())[0]
-            if entry_name == conn_url:
+        if conn_url not in data:
+            return 0
+
+        entry = data[conn_url]
+        gigabytes = 0
+        if domain is None:
+            gigabytes = entry['megabytes'] / 1024
+        else:
+            if domain in entry['domains']:
+                gigabytes = entry['domains'][domain]['megabytes'] / 1024
+            else:
                 gigabytes = 0
-                if domain is None:
-                    gigabytes = user[entry_name]['megabytes'] / 1024
-                else:
-                    if domain in user[entry_name]['domains']:
-                        gigabytes = user[entry_name]['domains'][domain]['megabytes'] / 1024
-                    else:
-                        gigabytes = 0
 
-                if cache_result:
-                    stats_cache = db.stats_cache
-                    stats_cache.update_one(
-                        {'_id': cache_entry_name},
-                        {'$set': {
-                            'gigabytes': gigabytes,
-                        }},
-                        upsert=True
-                    )
+        if cache_result:
+            stats_cache = db.stats_cache
+            stats_cache.update_one(
+                {'_id': cache_entry_name},
+                {'$set': {
+                    'gigabytes': gigabytes,
+                }},
+                upsert=True
+            )
 
-                return gigabytes
+        return gigabytes
                 
-        return 0
     except Exception as e:
         print("Error getting total gigabytes:", e)
         return None
@@ -134,32 +151,28 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
             if cached is not None:
                 return cached['ips']
             
-        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
-            data = ___json_cache[file_name][1]
-        else:
-            with open(config.get_root_dir() + file_name, 'r') as f:
-                data = json.load(f)
-            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
-            
+        if file_name not in ___json_cache or ___json_cache[file_name][0] < datetime.now():
+            populate_json_cache(file_name)
+        data = ___json_cache[file_name][1]
         cleanup_json_cache()
 
-        for user in data['users']:
-            entry_name = list(user.keys())[0]
-            if entry_name == conn_url:
-                connections = user[entry_name]['ips']
-                if cache_result:
-                    stats_cache = db.stats_cache
-                    stats_cache.update_one(
-                        {'_id': cache_entry_name},
-                        {'$set': {
-                            'ips': connections,
-                        }},
-                        upsert=True
-                    )
-                connections = str(connections)
-                return connections
+        if conn_url not in data:
+            return '0'
 
-        return '0'
+        entry = data[conn_url]
+        connections = entry['ips']
+        if cache_result:
+            stats_cache = db.stats_cache
+            stats_cache.update_one(
+                {'_id': cache_entry_name},
+                {'$set': {
+                    'ips': connections,
+                }},
+                upsert=True
+            )
+        connections = str(connections)
+        return connections
+
     except:
         return '-'
 
