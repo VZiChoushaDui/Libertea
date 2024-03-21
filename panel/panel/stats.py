@@ -37,18 +37,18 @@ def populate_json_cache(file_name):
         data = {}
         for user in temp_data['users']:
             key = list(user.keys())[0]
-            domains = user[key]['domains']
+            domains = []
             # remove domains with ~0 usage from [total] (ip scans)
             if key == '[total]':
-                for domain in list(domains.keys()):
-                    if domains[domain]['megabytes'] < 0.1:
-                        del domains[domain]
+                for domain in list(user[key]['domains'].keys()):
+                    if user[key]['domains'][domain]['megabytes'] > 0.1:
+                        domains.append(domain)
             data[key] = {
                 'megabytes': user[key]['megabytes'],
                 'ips': user[key]['ips'],
                 'domains': domains
             }
-    ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
+    ___json_cache[file_name] = (datetime.now() + timedelta(seconds=60), data)
 
 
 def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None):
