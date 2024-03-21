@@ -1,10 +1,16 @@
-import json
 import psutil
 import requests
 from . import utils
 from . import config
 from pymongo import MongoClient
 from datetime import datetime, timedelta
+
+try:
+    import orjson as json
+except:
+    print("orjson not found, falling back to json")
+    import json
+    
 
 ___json_cache = {}
 ___json_cache_last_cleanup = datetime.now()
@@ -33,7 +39,7 @@ def cleanup_json_cache(force=False):
 def populate_json_cache(file_name):
     global ___json_cache
     with open(config.get_root_dir() + file_name, 'r') as f:
-        temp_data = json.load(f)
+        temp_data = json.loads(f.read())
         data = {}
         for user in temp_data['users']:
             key = list(user.keys())[0]
@@ -91,18 +97,16 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None
         data = ___json_cache[file_name][1]
         cleanup_json_cache()
 
-        if conn_url not in data:
-            return 0
-
-        entry = data[conn_url]
         gigabytes = 0
-        if domain is None:
-            gigabytes = entry['megabytes'] / 1024
-        else:
-            if domain in entry['domains']:
-                gigabytes = entry['domains'][domain]['megabytes'] / 1024
+        if conn_url in data:
+            entry = data[conn_url]
+            if domain is None:
+                gigabytes = entry['megabytes'] / 1024
             else:
-                gigabytes = 0
+                if domain in entry['domains']:
+                    gigabytes = entry['domains'][domain]['megabytes'] / 1024
+                else:
+                    gigabytes = 0
 
         if cache_result:
             stats_cache = db.stats_cache
@@ -156,11 +160,11 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
         data = ___json_cache[file_name][1]
         cleanup_json_cache()
 
-        if conn_url not in data:
-            return '0'
-
-        entry = data[conn_url]
-        connections = entry['ips']
+        connections = 0
+        if conn_url in data:
+            entry = data[conn_url]
+            connections = entry['ips']
+        
         if cache_result:
             stats_cache = db.stats_cache
             stats_cache.update_one(
@@ -172,7 +176,6 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
             )
         connections = str(connections)
         return connections
-
     except:
         return '-'
 
