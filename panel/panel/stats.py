@@ -7,22 +7,21 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 
 ___json_cache = {}
+___json_cache_last_cleanup = datetime.now()
 
 def cleanup_json_cache(force=False):
     global ___json_cache
+    global ___json_cache_last_cleanup
 
     if force:
         # clear all
         ___json_cache = {}
         return
 
-    if '___LAST_CLEANUP' not in ___json_cache:
-        ___json_cache['___LAST_CLEANUP'] = datetime.now()
-
-    if (datetime.now() - ___json_cache['___LAST_CLEANUP']).total_seconds() < 30:
+    if (datetime.now() - ___json_cache_last_cleanup).total_seconds() < 30:
         return
 
-    ___json_cache['___LAST_CLEANUP'] = datetime.now()
+    ___json_cache_last_cleanup = datetime.now()
 
     try:
         for key in list(___json_cache.keys()):
