@@ -41,8 +41,8 @@ fi
 
 log "Checking total memory"
 TOTAL_MEM=$(free -m | grep Mem | awk '{print $2}')
-if [ $TOTAL_MEM -gt 3000 ]; then
-    log "Total memory is greater than 3000 MB, setting uwsgi threads to 10"
+if [ $TOTAL_MEM -gt 6000 ]; then
+    log "Total memory is greater than 6000 MB, setting uwsgi threads to 10"
     UWSGI_THREADS=10
 fi
 
