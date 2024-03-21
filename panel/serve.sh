@@ -46,7 +46,6 @@ log "   - net.netfilter.nf_conntrack_max: $(sysctl -n net.netfilter.nf_conntrack
 sysctl -w net.ipv4.tcp_fin_timeout=15
 log "   - net.ipv4.tcp_fin_timeout: $(sysctl -n net.ipv4.tcp_fin_timeout)"
 
-log "Checking net.core.somaxconn value" 
 SOMAXCONN=100
 SOMAXCONN=$(sysctl -n net.core.somaxconn)
 if ! [[ $SOMAXCONN =~ ^[0-9]+$ ]]; then
