@@ -37,12 +37,12 @@ def populate_json_cache(file_name):
         data = {}
         for user in temp_data['users']:
             key = list(user.keys())[0]
-            domains = []
+            domains = {}
             # remove domains with ~0 usage from [total] (ip scans)
             if key == '[total]':
                 for domain in list(user[key]['domains'].keys()):
                     if user[key]['domains'][domain]['megabytes'] > 0.1:
-                        domains.append(domain)
+                        domains[domain] = user[key]['domains'][domain]
             data[key] = {
                 'megabytes': user[key]['megabytes'],
                 'ips': user[key]['ips'],
