@@ -3,7 +3,8 @@ import re
 import random
 import socket
 import requests
-from datetime import timedelta
+from pytz import timezone
+from datetime import datetime, timedelta
 from pymongo import MongoClient
 
 print("Initializing...")
@@ -188,5 +189,29 @@ def get_regional_domain_suffixes(countries):
     elif 'tr' in countries:
         suffixes.append('tr')
     return suffixes
+
+def get_timezone(country):
+    if country == 'cn':
+        return 'Asia/Shanghai'
+    elif country == 'ru':
+        return 'Europe/Moscow'
+    elif country == 'cu':
+        return 'America/Havana'
+    elif country == 'th':
+        return 'Asia/Bangkok'
+    elif country == 'tm':
+        return 'Asia/Ashgabat'
+    elif country == 'ir':
+        return 'Asia/Tehran'
+    elif country == 'sy':
+        return 'Asia/Damascus'
+    elif country == 'sa':
+        return 'Asia/Riyadh'
+    elif country == 'tr':
+        return 'Europe/Istanbul'
+    return 'UTC'
+
+def current_time_in_timezone(country):
+    return datetime.now(timezone(get_timezone(country)))
 
 SIGNAL_INVALIDATE_CACHE = 18

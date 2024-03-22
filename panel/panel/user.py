@@ -132,7 +132,6 @@ def user_config(id, file_name):
             enabled_tiers.append(i)
 
     main_info_entries = []
-    main_info_entries.append(f"Updated @ {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     traffic_this_month, traffic_limit, days_remaining, user_active_until = get_user_limitations_info(id)
     if days_remaining is not None:
         if days_remaining <= 0:

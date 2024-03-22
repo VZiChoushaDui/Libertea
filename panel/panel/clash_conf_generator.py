@@ -253,6 +253,12 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, en
         if settings.get_route_direct_country_enabled(country_id, db=db):
             ips_direct_countries.append(country_id)
     domain_direct_suffixes = config.get_regional_domain_suffixes(ips_direct_countries)
+
+    if custom_info_entries is not None and isinstance(custom_info_entries, list):
+        current_time = datetime.now()
+        if len(ips_direct_countries) == 1:
+            current_time = config.current_time_in_timezone(ips_direct_countries[0])
+        custom_info_entries = [f"Updated @ {current_time.strftime('%Y-%m-%d %H:%M')}"] + custom_info_entries
     
     udp_exists = settings.get_provider_enabled('trojanws', db=db)
 
