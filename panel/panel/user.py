@@ -122,7 +122,7 @@ def user_config(id, file_name):
 
     ua = request.headers.get('User-Agent')
     print(f"Requested {file_name} with User Agent '{ua}'")
-    is_meta = ('Clash' in ua and ('Meta' in ua or 'Stash' in ua)) or 'Shadowrocket' in ua
+    is_meta = ('Clash' in ua and ('Meta' in ua or 'Stash' in ua)) or 'Shadowrocket' in ua or request.args.get('meta', 'false') == 'true'
     is_premium = 'premium' in ua
 
     enabled_tiers_items = utils.get_user_tiers_enabled_for_subscription(user['_id'])
