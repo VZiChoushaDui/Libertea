@@ -169,7 +169,7 @@
                 <select class="form-select" aria-label="Tier {{ tier }} server selection method" id="tier_{{tier}}_proxygroup_type" name="tier_{{tier}}_proxygroup_type">
                     <option value="urltest" {% if proxygroup_type_selected[tier] == 'urltest' %}selected{% endif %}>Ping</option>
                     <option value="loadbalance" {% if proxygroup_type_selected[tier] == 'loadbalance' %}selected{% endif %}>Load balance (round-robin)</option>
-                    <option value="fallback" disabled {% if proxygroup_type_selected[tier] == 'fallback' %}selected{% endif %}>Fallback (best availability score first)</option>
+                    <option value="fallback" {% if proxygroup_type_selected[tier] == 'fallback' %}selected{% endif %}>Fallback (best availability score first)</option>
                 </select>
             </div>
             {% endfor %}
