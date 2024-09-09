@@ -134,6 +134,9 @@ def dashboard():
 
 @blueprint.route(root_url + "health/<domain>", methods=['GET'])
 def health_domain(domain):
+    if domain == 'cache':
+        return health_check.get_health_cache()
+
     hours = int(str(request.args.get('hours', '24')))
     return health_check.get_health_data(domain, hours=hours)
 

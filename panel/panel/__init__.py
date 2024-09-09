@@ -52,6 +52,7 @@ def periodic_health_check_parse(signal):
     cron_uid = 'periodic_health_check_parse_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Health check parse")
     health_check.parse()
+    health_check.update_health_cache()
     log_cron(cron_uid, "DONE health check parse")
 
 @uwsgidecorators.cron(-10, -1, -1, -1, -1)
@@ -133,6 +134,7 @@ def create_app():
     try:
         sysops.regenerate_camouflage_cert()
         # update_certificates()
+        health_check.update_health_cache()
     except:
         traceback.print_exc()
         pass
