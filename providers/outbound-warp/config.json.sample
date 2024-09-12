@@ -2,17 +2,39 @@
     "log": {
         "loglevel": "warning"
     },
+    "observatory": {
+        "subjectSelector": [
+            "web1",
+            "web2"
+        ],
+        "probeUrl": "https://cp.cloudflare.com/generate_204",
+        "probeInterval": "60s",
+        "enableConcurrency": false
+    },
     "routing": {
+        "balancers": [
+            {
+                "tag": "b1",
+                "selector": [
+                    "web1",
+                    "web2"
+                ],
+                "strategy": {
+                    "type": "leastPing"
+                },
+                "fallbackTag": "web0"
+            }
+        ],
         "rules": [
             {
                 "port": "80,443",
                 "network": "tcp",
-                "outboundTag": "web"
+                "balancerTag": "b1"
             },
             {
                 "port": "80,443",
                 "network": "udp",
-                "outboundTag": "web"
+                "balancerTag": "b1"
             },
             {
                 "network": "bittorrent",
@@ -54,7 +76,33 @@
                     }
                 ]
             },
-            "tag": "web"
+            "tag": "web1"
+        },
+        {
+            "protocol": "wireguard",
+            "settings": {
+                "mtu": {mtu},
+                "reserved":{reserved},
+                "secretKey": "{private_key}",
+                "address": [
+                    {addresses}
+                ],
+                "peers": [
+                    {
+                        "publicKey": "{public_key}",
+                        "allowedIPs": [
+                            "0.0.0.0/0",
+                            "::/0"
+                        ],
+                        "endpoint": "{endpoint}"
+                    }
+                ]
+            },
+            "tag": "web2"
+        },
+        {
+            "protocol": "freedom",
+            "tag": "web0"
         }
     ]
 }

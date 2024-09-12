@@ -270,29 +270,29 @@ fi
 #     chmod +x tools/flarectl
 # fi
 
-mkdir -p tools
-if [ ! -f tools/wgcf ]; then
-    echo " ** Installing wgcf..."
-    set +e
-    if [[ $(uname -m) == *"x86"* ]]; then
-        wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64 -O tools/wgcf >/dev/null 2>&1
-    else
-        wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_arm64 -O tools/wgcf >/dev/null 2>&1
-    fi
+# mkdir -p tools
+# if [ ! -f tools/wgcf ]; then
+#     echo " ** Installing wgcf..."
+#     set +e
+#     if [[ $(uname -m) == *"x86"* ]]; then
+#         wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64 -O tools/wgcf >/dev/null 2>&1
+#     else
+#         wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_arm64 -O tools/wgcf >/dev/null 2>&1
+#     fi
 
-    chmod +x tools/wgcf
-    set -e
-fi
+#     chmod +x tools/wgcf
+#     set -e
+# fi
 
-if [ ! -f tools/wgcf-account.toml ] || [ ! -f tools/wgcf-profile.conf ]; then
-    set +e
-    echo " ** Configuring Cloudflare WARP..."
-    yes | tools/wgcf register >/dev/null 2>&1
-    tools/wgcf generate >/dev/null 2>&1
-    mv wgcf-account.toml tools/wgcf-account.toml
-    mv wgcf-profile.conf tools/wgcf-profile.conf
-    set -e
-fi
+# if [ ! -f tools/wgcf-account.toml ] || [ ! -f tools/wgcf-profile.conf ]; then
+#     set +e
+#     echo " ** Configuring Cloudflare WARP..."
+#     yes | tools/wgcf register >/dev/null 2>&1
+#     tools/wgcf generate >/dev/null 2>&1
+#     mv wgcf-account.toml tools/wgcf-account.toml
+#     mv wgcf-profile.conf tools/wgcf-profile.conf
+#     set -e
+# fi
 
 # if command is update, then skip the following steps
 if [ "$COMMAND" != "update" ]; then
@@ -401,16 +401,20 @@ echo "    - vmess-grpc..."
 ./providers/vmess-grpc/init.sh 2007 "$CONN_VMESS_GRPC_URL" "$CONN_VMESS_GRPC_AUTH_UUID"
 
 
-if [ -f tools/wgcf-profile.conf ]; then
-    echo "    - outbound-warp..."
-    private_key=$(cat tools/wgcf-profile.conf | grep "PrivateKey" | sed 's/^[^=]*=//' | tr -d '[:space:]')
-    mtu=$(cat tools/wgcf-profile.conf | grep "MTU" | sed 's/^[^=]*=//' | tr -d '[:space:]')
-    public_key=$(cat tools/wgcf-profile.conf | grep "PublicKey" | sed 's/^[^=]*=//' | tr -d '[:space:]')
-    endpoint=$(cat tools/wgcf-profile.conf | grep "Endpoint" | sed 's/^[^=]*=//' | tr -d '[:space:]')
-    addresses=$(cat tools/wgcf-profile.conf | grep "Address" | sed 's/^[^=]*=//' | tr '\n' ',' | tr -d '[:space:]' | sed 's/,$//' | sed 's/,/\",\"/g')
-    addresses="\"$addresses\""
-    ./providers/outbound-warp/init.sh 2997 "$endpoint" "$private_key" "$addresses" "$public_key" "$mtu"
-fi
+echo "    - outbound-warp..."
+set +e
+bash ./warp-reg.sh >/tmp/warp.json
+private_key=$(jq -r '.private_key' /tmp/warp.json)
+public_key=$(jq -r '.public_key' /tmp/warp.json)
+endpoint=$(jq -r '.endpoint.host' /tmp/warp.json)
+address_v4=$(jq -r '.v4' /tmp/warp.json)
+address_v6=$(jq -r '.v6' /tmp/warp.json)
+addresses="\"$address_v4/32\",\"$address_v6/128\""
+reserved_array=$(jq -rc '.reserved_dec' /tmp/warp.json)
+mtu="1280"
+./providers/outbound-warp/init.sh 2997 "$endpoint" "$private_key" "$addresses" "$public_key" "$mtu" "$reserved_array"
+set -e
+
 echo "    - outbound-direct..."
 ./providers/outbound-direct/init.sh 2998
 

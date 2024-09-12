@@ -13,10 +13,15 @@ PRIVATE_KEY="$3"
 ADDRESSES="$4"
 PUBLIC_KEY="$5"
 MTU="$6"
+RESERVED="$7"
 
 if [ -z "$PORT" ] || [ -z "$ENDPOINT" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$ADDRESSES" ] || [ -z "$PUBLIC_KEY" ] || [ -z "$MTU" ]; then
     echo "Usage: $0 <port> <endpoint> <private_key> <addresses> <public_key> <mtu>"
     exit 1
+fi
+
+if [ -z "$RESERVED" ]; then
+    RESERVED="[0,0,0]"
 fi
 
 # Create config.json from config.json.sample
@@ -27,3 +32,4 @@ sed -i "s|{private_key}|$PRIVATE_KEY|g" config.json
 sed -i "s|{addresses}|$ADDRESSES|g" config.json
 sed -i "s|{public_key}|$PUBLIC_KEY|g" config.json
 sed -i "s|{mtu}|$MTU|g" config.json
+sed -i "s|{reserved}|$RESERVED|g" config.json
