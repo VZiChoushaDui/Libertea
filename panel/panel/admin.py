@@ -134,6 +134,9 @@ def dashboard():
 
 @blueprint.route(root_url + "health/<domain>", methods=['GET'])
 def health_domain(domain):
+    if domain == 'cache':
+        return health_check.get_health_cache()
+
     hours = int(str(request.args.get('hours', '24')))
     return health_check.get_health_data(domain, hours=hours)
 
@@ -154,6 +157,12 @@ def user_stats():
     ips_today = stats.get_ips_today_all()
     users_today = stats.get_connected_users_today()
 
+    try:
+        traffic_today = str(round(traffic_today, 2)) + " GB"
+        traffic_this_month = str(round(traffic_this_month, 2)) + " GB"
+        traffic_past_30_days = str(round(traffic_past_30_days, 2)) + " GB"
+    except:
+        pass
     try:
         if int(users_now) > int(users_today):
             users_today = users_now
@@ -305,9 +314,9 @@ def users():
         "id": user["_id"],
         "note": user["note"],
         "created_at_timestamp": user["created_at"].timestamp(),
-        "traffic_today": user["__cache_traffic_today"].replace(' GB', '') if "__cache_traffic_today" in user else "0",
-        "traffic_this_month": user["__cache_traffic_this_month"].replace(' GB', '') if "__cache_traffic_this_month" in user else "0",
-        "traffic_past_30_days": user["__cache_traffic_past_30_days"].replace(' GB', '') if "__cache_traffic_past_30_days" in user else "0",
+        "traffic_today": str(user["__cache_traffic_today"]) if "__cache_traffic_today" in user else "0",
+        "traffic_this_month": str(user["__cache_traffic_this_month"]) if "__cache_traffic_this_month" in user else "0",
+        "traffic_past_30_days": str(user["__cache_traffic_past_30_days"]) if "__cache_traffic_past_30_days" in user else "0",
         "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
     } for user in users.find()]
 
@@ -343,6 +352,20 @@ def user(user):
         max_ips_default = True
         user['max_ips'] = settings.get_default_max_ips()
 
+    if 'monthly_traffic' not in user or user['monthly_traffic'] is None:
+        user['monthly_traffic'] = -1
+    
+    user_expired = False
+    if 'user_active_until' not in user or user['user_active_until'] is None:
+        user['user_active_until'] = ''
+    try:
+        if user['user_active_until'] != '':
+            active_until_date = datetime.strptime(user['user_active_until'], '%Y-%m-%d %H:%M')
+            if active_until_date < datetime.now():
+                user_expired = True
+    except:
+        user['user_active_until'] = ''
+
     user['panel_url'] = "https://" + config.get_panel_domain() + "/" + user['_id'] + "/"
     user['tier_enabled_for_subscription'] = utils.get_user_tiers_enabled_for_subscription(user['_id'])
 
@@ -350,14 +373,15 @@ def user(user):
         back_to='users',
         libertea_version=config.LIBERTEA_VERSION,
         no_domain_warning=not utils.has_active_endpoints(),
-        traffic_today=stats.get_gigabytes_today(user['_id'], db=db),
-        traffic_this_month=user['__cache_traffic_this_month'] if '__cache_traffic_this_month' in user else '-',
-        traffic_past_30_days=stats.get_gigabytes_past_30_days(user['_id'], db=db),
+        traffic_today=round(stats.get_gigabytes_today(user['_id'], db=db), 2),
+        traffic_this_month=round(stats.get_gigabytes_this_month(user['_id'], db=db), 2),
+        traffic_past_30_days=round(stats.get_gigabytes_past_30_days(user['_id'], db=db), 2),
         ips_today=user['__cache_ips_today'] if '__cache_ips_today' in user else '-',
         month_name=datetime.now().strftime("%B"),
         admin_uuid=config.get_admin_uuid(),
         max_ips_default=max_ips_default,
         default_max_ips_count=settings.get_default_max_ips(),
+        user_expired=user_expired,
         user=user)
 
 @blueprint.route(root_url + 'users/<user>/', methods=['POST'])
@@ -373,17 +397,36 @@ def user_save(user):
     if max_ips_default == 'on':
         max_ips = 0
 
+    monthly_traffic = -1
+    try:
+        monthly_traffic_unlimited = request.form.get('monthly_traffic_unlimited', None)
+        if monthly_traffic_unlimited == 'on':
+            monthly_traffic = -1
+        else:
+            monthly_traffic = int(request.form.get('monthly_traffic', -1))
+            if monthly_traffic <= 0:
+                monthly_traffic = -1
+    except:
+        pass
+
+    user_active_until = request.form.get('user_active_until', '')
+    user_active_until_unlimited = request.form.get('user_active_until_unlimited', None)
+    if user_active_until_unlimited == 'on':
+        user_active_until = ''
+
     if user == 'new':
         uid, _ = utils.create_user(note=note, max_ips=max_ips)
         if note.strip() == '':
             utils.update_user(uid, note=uid)
         tier_enabled_for_subscription['default'] = True
-        utils.update_user(uid, tier_enabled_for_subscription=tier_enabled_for_subscription)
+        utils.update_user(uid, max_ips=max_ips, tier_enabled_for_subscription=tier_enabled_for_subscription, 
+            monthly_traffic=monthly_traffic, user_active_until=user_active_until)
         return redirect(url_for('admin.user', user=uid))
         
     if note.strip() == '':
         note = user
-    utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription)        
+    utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription, 
+        monthly_traffic=monthly_traffic, user_active_until=user_active_until)  
     return redirect(url_for('admin.user', user=user))
 
 @blueprint.route(root_url + 'users/<user>/', methods=['DELETE'])

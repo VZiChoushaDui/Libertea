@@ -2,7 +2,7 @@
 
 # Libertea
 
-Easily install and manage a multi-protocol, multi-route V2ray VPN server; with user management, automatic routing, domain camouflage, and auto update for users.
+Easily install and manage a multi-protocol, multi-route V2ray VPN server; with advanced user management, automatic routing, domain camouflage, and auto update for users.
 
 [Chinese 中文](https://github.com/VZiChoushaDui/Libertea/blob/master/README-zh.md)
 
@@ -20,6 +20,7 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with u
 * [Frequently Asked Questions](#FrequentlyAskedQuestions)
 	* [Does Libertea keep my domains and IPs safe from being blocked?](#DoesLiberteakeepmydomainsandIPssafefrombeingblocked)
 	* [Can I route regional traffic directly (without going through VPN)?](#CanIrouteregionaltrafficdirectlywithoutgoingthroughVPN)
+    * [Can I set usage limits for users?](#CanIsetusagelimitsforusers)
 	* [Some of my servers or CDN plans have limited traffic. Can I prioritize servers?](#SomeofmyserversorCDNplanshavelimitedtraffic.CanIprioritizeservers)
 	* [How can I backup my Libertea installation, or move it to another server?](#HowcanIbackupmyLiberteainstallationormoveittoanotherserver)
 	* [I want to have my own website on the same server running on port 80/443. Can I still use Libertea?](#Iwanttohavemyownwebsiteonthesameserverrunningonport80443.CanIstilluseLibertea)
@@ -32,11 +33,11 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with u
 
 ## <a name='Features'></a>Features
 
-- **TROJAN**, **Shadowsocks/v2ray**, **VLESS** and **VMESS** protocols (Powered by XRay project)
-- **Camouflage domains** with a real website to reduce the risk of being blocked by probing
+- **TROJAN**, **Shadowsocks/v2ray**, **VLESS** and **VMESS** protocols
+- **Camouflage domains** with a real website to protect your domains and IPs
 - **One-command** installation and management
 - Support **multiple** domains and IPs, and **auto-select** the best route on user's devices
-- **Multi-user management** with connection limitation
+- **Advanced user management** with data usage, concurrent connection and time limitations
 
 ## <a name='Requirements'></a>Requirements
 
@@ -46,6 +47,7 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with u
 
 ## <a name='Recommendedconfiguration'></a>Recommended configuration
 
+- A server with at least 2GB of RAM and 2 CPU cores
 - Two domains behind a CDN (such as Cloudflare), one for the panel/update and one for the VPN itself
 - One or more extra servers for the secondary proxy (512MB RAM is enough for secondary proxies)
 
@@ -87,13 +89,20 @@ Libertea uses SSL-based protocols, so the traffic is not distinguishable from no
 
 ### <a name='CanIrouteregionaltrafficdirectlywithoutgoingthroughVPN'></a>Can I route regional traffic directly (without going through VPN)?
 
-Yes. In the admin panel, go to the *Settings* tab, and in the *Route regional IPs directly* section, select the countries you want to go through directly.
+Yes. In the admin panel, go to the *Settings* tab, and in the *Route regional IPs directly* section, select the countries you want to go through directly. This only works for Clash clients.
 
+
+
+### <a name='CanIsetusagelimitsforusers'></a>Can I set usage limits for users?
+
+Yes. You can set concurrent connection limit, monthly data usage limit, and time limit for each user in the admin panel. Users will be disconnected when they reach their limits.
+
+Please note that the usage limits take effect with a delay of up to 10 minutes.
 
 
 ### <a name='SomeofmyserversorCDNplanshavelimitedtraffic.CanIprioritizeservers'></a>Some of my servers or CDN plans have limited traffic. Can I prioritize servers?
 
-Yes. You can set a priority for each domain and secondary proxy; users' devices will try higher priority routes first, and use the lower priority ones only if those are not available. This way, you can optimize your traffic usage per server/domain according to your needs.
+Yes. You can set a group for each domain and secondary proxy; users' devices will try first group routes first, and use go to next groups only if those are not available. This way, you can optimize your traffic usage per server/domain according to your needs.
 
 
 
@@ -174,6 +183,12 @@ Feel free to submit your changes as a pull request to the `devel` branch of this
 
 
 ## <a name='Changelog'></a>Changelog
+
+#### <a name='v1043'></a>v1043
+
+- ✨ Traffic usage limit for users
+- ✨ Expire date for users
+- ✨ Updated custom reverse proxy to allow for multiple websites
 
 #### <a name='v1042'></a>v1042
 

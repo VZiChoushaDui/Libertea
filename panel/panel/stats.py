@@ -7,31 +7,51 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 
 ___json_cache = {}
+___json_cache_last_cleanup = datetime.now()
 
 def cleanup_json_cache(force=False):
     global ___json_cache
+    global ___json_cache_last_cleanup
 
     if force:
         # clear all
         ___json_cache = {}
         return
 
-    if '___LAST_CLEANUP' not in ___json_cache:
-        ___json_cache['___LAST_CLEANUP'] = datetime.now()
-
-    if (datetime.now() - ___json_cache['___LAST_CLEANUP']).total_seconds() < 30:
+    if (datetime.now() - ___json_cache_last_cleanup).total_seconds() < 30:
         return
 
-    ___json_cache['___LAST_CLEANUP'] = datetime.now()
+    ___json_cache_last_cleanup = datetime.now()
 
     try:
         for key in list(___json_cache.keys()):
             if ___json_cache[key][0] < datetime.now():
                 del ___json_cache[key]
     except Exception as e:
-        print(e)
+        print("Error cleaning up json cache:", e)
 
-def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=True, domain=None, db=None):
+def populate_json_cache(file_name):
+    global ___json_cache
+    with open(config.get_root_dir() + file_name, 'r') as f:
+        temp_data = json.loads(f.read())
+        data = {}
+        for user in temp_data['users']:
+            key = list(user.keys())[0]
+            domains = {}
+            # remove domains with ~0 usage from [total] (ip scans)
+            if key == '[total]':
+                for domain in list(user[key]['domains'].keys()):
+                    if user[key]['domains'][domain]['megabytes'] > 0.1:
+                        domains[domain] = user[key]['domains'][domain]
+            data[key] = {
+                'megabytes': user[key]['megabytes'],
+                'ips': user[key]['ips'],
+                'domains': domains
+            }
+    ___json_cache[file_name] = (datetime.now() + timedelta(seconds=60), data)
+
+
+def ___get_total_gigabytes(date, date_resolution, conn_url, domain=None, db=None):
     global ___json_cache
     try:
         # cache if not for today
@@ -52,9 +72,9 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
                 db = client[config.MONGODB_DB_NAME]
             
             if date_resolution == 'day':
-                cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGb-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m-%d") + '-trafficGbV2-' + conn_url
             elif date_resolution == 'month':
-                cache_entry_name = date.strftime("%Y-%m") + '-trafficGb-' + conn_url
+                cache_entry_name = date.strftime("%Y-%m") + '-trafficGbV2-' + conn_url
 
             if domain is not None:
                 cache_entry_name += '-' + domain
@@ -64,54 +84,38 @@ def ___get_total_gigabytes(date, date_resolution, conn_url, return_as_string=Tru
             cached = stats_cache.find_one({'_id': cache_entry_name})
             if cached is not None:
                 gigabytes = cached['gigabytes']
-                if return_as_string:
-                    gigabytes = round(cached['gigabytes'] * 100) / 100
-                    gigabytes = str(gigabytes) + ' GB'
                 return gigabytes
-        
-        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
-            data = ___json_cache[file_name][1]
-        else:
-            with open(config.get_root_dir() + file_name, 'r') as f:
-                data = json.load(f)
-            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
 
+        if file_name not in ___json_cache or ___json_cache[file_name][0] < datetime.now():
+            populate_json_cache(file_name)
+        data = ___json_cache[file_name][1]
         cleanup_json_cache()
 
-        for user in data['users']:
-            entry_name = list(user.keys())[0]
-            if entry_name == conn_url:
-                gigabytes = 0
-                if domain is None:
-                    gigabytes = user[entry_name]['megabytes'] / 1024
+        gigabytes = 0
+        if conn_url in data:
+            entry = data[conn_url]
+            if domain is None:
+                gigabytes = entry['megabytes'] / 1024
+            else:
+                if domain in entry['domains']:
+                    gigabytes = entry['domains'][domain]['megabytes'] / 1024
                 else:
-                    if domain in user[entry_name]['domains']:
-                        gigabytes = user[entry_name]['domains'][domain]['megabytes'] / 1024
-                    else:
-                        gigabytes = 0
+                    gigabytes = 0
 
-                if cache_result:
-                    stats_cache = db.stats_cache
-                    stats_cache.update_one(
-                        {'_id': cache_entry_name},
-                        {'$set': {
-                            'gigabytes': gigabytes,
-                        }},
-                        upsert=True
-                    )
+        if cache_result:
+            stats_cache = db.stats_cache
+            stats_cache.update_one(
+                {'_id': cache_entry_name},
+                {'$set': {
+                    'gigabytes': gigabytes,
+                }},
+                upsert=True
+            )
 
-                if return_as_string:
-                    gigabytes = round(gigabytes * 100) / 100
-                    gigabytes = str(gigabytes) + ' GB'
-                return gigabytes
+        return gigabytes
                 
-        if return_as_string:
-            return '0 GB'
-        return 0
     except Exception as e:
-        print(e)
-        if return_as_string:
-            return '-'
+        print("Error getting total gigabytes:", e)
         return None
 
 def ___get_total_ips(date, date_resolution, conn_url, db=None):
@@ -145,32 +149,27 @@ def ___get_total_ips(date, date_resolution, conn_url, db=None):
             if cached is not None:
                 return cached['ips']
             
-        if file_name in ___json_cache and ___json_cache[file_name][0] > datetime.now():
-            data = ___json_cache[file_name][1]
-        else:
-            with open(config.get_root_dir() + file_name, 'r') as f:
-                data = json.load(f)
-            ___json_cache[file_name] = (datetime.now() + timedelta(seconds=30), data)
-            
+        if file_name not in ___json_cache or ___json_cache[file_name][0] < datetime.now():
+            populate_json_cache(file_name)
+        data = ___json_cache[file_name][1]
         cleanup_json_cache()
 
-        for user in data['users']:
-            entry_name = list(user.keys())[0]
-            if entry_name == conn_url:
-                connections = user[entry_name]['ips']
-                if cache_result:
-                    stats_cache = db.stats_cache
-                    stats_cache.update_one(
-                        {'_id': cache_entry_name},
-                        {'$set': {
-                            'ips': connections,
-                        }},
-                        upsert=True
-                    )
-                connections = str(connections)
-                return connections
-
-        return '0'
+        connections = 0
+        if conn_url in data:
+            entry = data[conn_url]
+            connections = entry['ips']
+        
+        if cache_result:
+            stats_cache = db.stats_cache
+            stats_cache.update_one(
+                {'_id': cache_entry_name},
+                {'$set': {
+                    'ips': connections,
+                }},
+                upsert=True
+            )
+        connections = str(connections)
+        return connections
     except:
         return '-'
 
@@ -228,7 +227,7 @@ def get_traffic_per_day(user_id, days=7, domain=None, db=None):
         date = date_obj.strftime('%Y-%m-%d')
         xs.append(date)
         try:
-            traffic = ___get_total_gigabytes(date_obj, 'day', conn_url, return_as_string=False, domain=domain, db=db)
+            traffic = ___get_total_gigabytes(date_obj, 'day', conn_url, domain=domain, db=db)
             if traffic is None:
                 traffic = 0
 
@@ -256,7 +255,7 @@ def get_traffic_per_day_all(days=7, domain=None, include_extra_data_for_online_r
         date = date_obj.strftime('%Y-%m-%d')
         xs.append(date)
         try:
-            traffic = ___get_total_gigabytes(date_obj, 'day', '[total]', return_as_string=False, domain=domain, db=db)
+            traffic = ___get_total_gigabytes(date_obj, 'day', '[total]', domain=domain, db=db)
             if traffic is None:
                 traffic = 0
 
@@ -283,12 +282,12 @@ def get_gigabytes_past_30_days(user_id, db=None):
     end_date = datetime.now()
     sum_gigabytes = 0
     while start_date <= end_date:
-        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', conn_url, return_as_string=False, db=db)
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', conn_url, db=db)
         if cur_gigabytes is not None:
             sum_gigabytes += cur_gigabytes
         start_date += timedelta(days=1)
 
-    return str(round(sum_gigabytes * 100) / 100) + ' GB'
+    return sum_gigabytes
 
 def get_gigabytes_past_30_days_all(db=None):
     if db is None:
@@ -299,12 +298,12 @@ def get_gigabytes_past_30_days_all(db=None):
     end_date = datetime.now()
     sum_gigabytes = 0
     while start_date <= end_date:
-        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', '[total]', return_as_string=False, db=db)
+        cur_gigabytes = ___get_total_gigabytes(start_date, 'day', '[total]', db=db)
         if cur_gigabytes is not None:
             sum_gigabytes += cur_gigabytes
         start_date += timedelta(days=1)
 
-    return str(round(sum_gigabytes * 100) / 100) + ' GB'
+    return sum_gigabytes
 
 
 def get_gigabytes_this_month_all():

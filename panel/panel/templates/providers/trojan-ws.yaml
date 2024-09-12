@@ -11,3 +11,5 @@
       path: "{{path}}"
       headers:
         Host: {{host}}
+      max-early-data: 2048
+      early-data-header-name: Sec-WebSocket-Protocol

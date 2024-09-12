@@ -33,7 +33,14 @@ proxy-groups:
   - name: "main"
     type: select
     proxies:
+{% if custom_info_entries is none or custom_info_entries | length == 0 %}
       - auto-group
+{% endif %}
+{% if custom_info_entries is not none %}
+{% for info_entry in custom_info_entries %}
+      - "{{ info_entry }}"
+{% endfor %}
+{% endif %}
 {% if manual_tier_select_clash %}
 {% for tier in tiers %}{% if tier.exists %}
       - tier{{tier.index}}-group
@@ -67,6 +74,17 @@ proxy-groups:
 {% endwith %}
 {% endfor %}
 
+
+{% if custom_info_entries is not none %}
+{% for info_entry in custom_info_entries %}
+  - name: "{{ info_entry }}"
+    type: select
+    proxies:
+      - auto-group
+{% endfor %}
+{% endif %}
+
+
 mixed-port: 1096
 redir-port: 7892
 external-controller: 127.0.0.1:9090
@@ -76,6 +94,14 @@ script:
     udpnetwork: network == 'udp'
 
 rules:
+  - IP-CIDR,127.0.0.1/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+
+{% for domain_suffix in domain_direct_suffixes %}
+  - DOMAIN-SUFFIX,{{ domain_suffix }},DIRECT
+{% endfor %}
+
 {% for country in ips_direct_countries %}
 {% include "rules/" + country + "-direct.yaml" %}
 {% endfor %}

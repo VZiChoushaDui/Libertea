@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 from . import config
 from . import settings
+from . import utils
 import threading
 
 ___health_checks = []
@@ -246,3 +247,58 @@ def get_health_data(domain, hours=24, db=None):
         item['time_slice'] = item['time_slice'].strftime("%Y-%m-%d %H:%M:%S")
 
     return items
+
+
+def update_health_cache():
+    if settings.get_periodic_health_check() == False:
+        return
+
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+
+    health_cache = db.health_cache
+    domains = db.domains
+    all_domains = [domain['_id'] for domain in domains.find()]
+    proxy_ips = utils.secondary_route_get_all(db)
+    proxies = [{
+        "ip": x['ip'],
+        "tier": x['tier'],
+        "update_available": x['update_available'],
+        "online": x['online'],
+        "domains": [utils.get_domain_for_ip(x['ip'])] if utils.get_domain_for_ip(x['ip']) is not None else [],
+    } for x in proxy_ips]
+
+    proxy_domains = []
+    for proxy in proxies:
+        proxy_domains += proxy['domains']
+    all_domains = [x for x in all_domains if x not in proxy_domains]
+
+    print("Domains: ", all_domains)
+    print("Proxies: ", [x['ip'] + "@" + str(x['domains']) for x in proxies])
+
+    for domain in all_domains + proxy_domains + [x['ip'] for x in proxies]:
+        try:
+            print("Processing health data for", domain)
+            health_data = get_health_data(domain, hours=24, db=db)
+            avg_success_rate = sum([x['success_rate'] for x in health_data]) / len(health_data)
+
+            print("   average health for", domain, "is", avg_success_rate)
+            health_cache.update_one({
+                '_id': domain
+            }, {
+                '$set': {
+                    'averageSuccessRate': avg_success_rate,
+                    'updatedAt': datetime.utcnow(),
+                }
+            }, upsert=True)
+        except:
+            print("Failed to get health data for", domain)
+
+def get_health_cache():
+    client = config.get_mongo_client()
+    db = client[config.MONGODB_DB_NAME]
+
+    health_cache = db.health_cache
+
+    return list(health_cache.find())
+

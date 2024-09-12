@@ -52,6 +52,7 @@ def periodic_health_check_parse(signal):
     cron_uid = 'periodic_health_check_parse_' + str(random.randint(0, 1000000))
     log_cron(cron_uid, "Health check parse")
     health_check.parse()
+    health_check.update_health_cache()
     log_cron(cron_uid, "DONE health check parse")
 
 @uwsgidecorators.cron(-10, -1, -1, -1, -1)
@@ -68,14 +69,33 @@ def update_certificates():
     log_cron(cron_uid, "Updating certificates")
     domains = utils.get_domains()
     domains.append(config.get_panel_domain())
+
+    needs_reload = False
     for domain in domains:
         log_cron(cron_uid, "Updating certificate for " + domain)
-        certbot.generate_certificate(domain, retry=False)
+        result = certbot.generate_certificate(domain, retry=False, reload_haproxy=False)
+        log_cron(cron_uid, "Result for " + domain + ": " + result)
+        if result in ['success', 'failed_but_changed']:
+            needs_reload = True
+    
+    if needs_reload:
+        log_cron(cron_uid, "Reloading HAProxy")
+        sysops.haproxy_reload()
+    else:
+        log_cron(cron_uid, "No need to reload HAProxy")
+
     log_cron(cron_uid, "DONE updating certificates")
 
 @uwsgidecorators.cron(-5, -1, -1, -1, -1)
 def update_certificates_cron(signal):
     update_certificates()
+
+@uwsgidecorators.signal(config.SIGNAL_INVALIDATE_CACHE, target='workers')
+def invalidate_caches(signum):
+    log_cron('invalidate_caches', "Invalidating caches")
+    utils.invalidate_user_configuration_cache()
+    stats.cleanup_json_cache(force=True)
+    log_cron('invalidate_caches', "DONE invalidating caches")
 
 def create_app():
     app = Flask(__name__)
@@ -114,6 +134,7 @@ def create_app():
     try:
         sysops.regenerate_camouflage_cert()
         # update_certificates()
+        health_check.update_health_cache()
     except:
         traceback.print_exc()
         pass

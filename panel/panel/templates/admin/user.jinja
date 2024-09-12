@@ -1,5 +1,8 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <div class="qr-modal">
     <div class="qr-modal-content">
         <div id="qr-code"></div>
@@ -34,21 +37,35 @@
     </div>
 </div>
 <hr />
+{% if user_expired %}
+<div class="alert alert-danger mt-4 mx-3" role="alert">
+    <i class="fa-solid fa-circle-exclamation"></i> This user is expired. It was active until {{ user.user_active_until }}.
+</div>
+{% endif %} 
+{% if user.monthly_traffic > 0 and traffic_this_month > user.monthly_traffic %}
+<div class="alert alert-danger mt-4 mx-3" role="alert">
+    <i class="fa-solid fa-circle-exclamation"></i> This user has exceeded their monthly traffic limit.
+</div>
+{% endif %}
 <div class="section stats mb-5">
     <div class="row">
         <div class="col-6 col-sm-3 stats-item">
-            <div class="stats-item-value">{{ traffic_today }}</div>
+            <div class="stats-item-value">{{ traffic_today }} GB</div>
             <div class="stats-item-desc">Traffic today</div>
         </div>
         <div class="col-6 col-sm-3 stats-item">
-            <div class="stats-item-value">{{ traffic_past_30_days }}</div>
+            <div class="stats-item-value">{{ traffic_this_month }} GB</div>
+            <div class="stats-item-desc">Traffic in {{ month_name }}</div>
+        </div>
+        <div class="col-6 col-sm-3 stats-item">
+            <div class="stats-item-value">{{ traffic_past_30_days }} GB</div>
             <div class="stats-item-desc">Traffic in past 30 days</div>
         </div>
         <div class="col-6 col-sm-3 stats-item">
             <div class="stats-item-value ips-connected-right-now spinner text-spinner">⌛</div>
             <div class="stats-item-desc">IPs connected right now</div>
         </div>
-        <div class="col-6 col-sm-3 stats-item">
+        <div class="col-6 col-sm-3 stats-item d-none">
             <div class="stats-item-value max-concurrent-connections spinner text-spinner">⌛</div>
             <div class="stats-item-desc">Max concurrent connections today</div>
         </div>
@@ -78,8 +95,42 @@
             <input type="text" class="form-control" id="displayName" name="note" value="{{ user.note }}">
         </div>
         <div class="form-group mb-4">
+            <label for="monthly_traffic">Monthly traffic (GB)</label>
+            <div class="input-group">  
+                <div class="input-group-text">
+                    <input class="form-check-input mt-0" type="checkbox" value="on" id="monthly_traffic_unlimited" name="monthly_traffic_unlimited" {% if user.monthly_traffic == -1 %}checked{% endif %}>
+                    <label class="form-check-label mx-2" for="monthly_traffic_unlimited">
+                        Unlimited
+                    </label>
+                </div>
+                <input type="number" class="form-control" id="monthly_traffic" name="monthly_traffic" value="{% if user.monthly_traffic == -1 %}50{% else %}{{ user.monthly_traffic }}{% endif %}">
+            </div>
+            <div style="opacity: 0.75; font-size: 12px; float:left;" class="mb-3">
+                Monthly traffic limit resets on the first day of each month.
+            </div>
+            <div style="opacity: 0.9; font-size: 14px; float: right;" class="mb-3 monthly-traffic-hint">
+                Current usage: {{ traffic_this_month }} GB
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+        <div class="form-group mb-4">
+            <label for="user_active_until">User active until</label>
+            <div class="input-group">  
+                <div class="input-group-text">
+                    <input class="form-check-input mt-0" type="checkbox" value="on" id="user_active_until_unlimited" name="user_active_until_unlimited" {% if user.user_active_until == '' %}checked{% endif %}>
+                    <label class="form-check-label mx-2" for="user_active_until_unlimited">
+                        Forever
+                    </label>
+                </div>
+                <input type="number" class="form-control" id="user_active_until" name="user_active_until" value="">
+            </div>
+            <div style="opacity: 0.9; font-size: 14px; text-align: right; float: right" class="mb-3 user-active-hint">
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+        <div class="form-group mb-4">
             <label for="max_ips">Max concurrent IPs to connect</label>
-            <div class="input-group mb-3">  
+            <div class="input-group">  
                 <div class="input-group-text">
                     <input class="form-check-input mt-0" type="checkbox" value="on" id="max_ips_default" name="max_ips_default" {% if max_ips_default %}checked{% endif %}>
                     <label class="form-check-label mx-2" for="max_ips_default">
@@ -88,16 +139,20 @@
                 </div>
                 <input type="number" class="form-control" id="max_ips" name="max_ips" value="{{ user.max_ips }}">
             </div>
+            <div style="opacity: 0.9; font-size: 14px; float: right;" class="mb-3 monthly-traffic-hint">
+                Currently connected: <span class="ips-connected-right-now spinner text-spinner text-spinner-xs">0</span> IPs
+            </div>
         </div>
-        <div class="form-group">
+        <div style="clear: both;"></div>
+        <div class="form-group mt-4">
             <label class="form-check-label">
                 Default available servers<br />
                 <span style="opacity: 0.75; font-size: 12px;">
-                    Select which priority groups should be visible to each user. This affects Clash, V2Ray and Shadowsocks connections.
+                    Select which priority groups should be visible to this user. This affects Clash, V2Ray and Shadowsocks connections.
                 </span>
             </label>
         </div>
-        <div class="mb-4 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
+        <div class="mb-5 mx-2 route-direct-countries-list" style="border-left: 2px solid #aaa; padding-left: 8px;">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_default" id="tier_enabled_for_subscription_default" {% if user.tier_enabled_for_subscription['default'] %}checked{% endif %}>
                 <label class="form-check-label" for="tier_enabled_for_subscription_default">
@@ -108,7 +163,7 @@
                 <div class="form-check tier-enabled-for-subscription-custom">
                     <input class="form-check-input" type="checkbox" value="on" name="tier_enabled_for_subscription_{{ tier }}" id="tier_enabled_for_subscription_{{ tier }}" {% if user.tier_enabled_for_subscription[tier] %}checked{% endif %}>
                     <label class="form-check-label" for="tier_enabled_for_subscription_{{ tier }}">
-                        Priority {{ tier }}
+                        Group {{ tier }}
                     </label>
                 </div>
             {% endfor %}
@@ -205,8 +260,6 @@
             document.querySelector('.btn-copy').dispatchEvent(new Event('click'));
         });
 
-
-        // disable max_ips input if max_ips_default is checked
         document.getElementById('max_ips_default').addEventListener('change', function() {
             document.getElementById('max_ips').disabled = this.checked;
             if (this.checked) {
@@ -214,6 +267,70 @@
             }
         });
         document.getElementById('max_ips_default').dispatchEvent(new Event('change'));
+
+        document.getElementById('monthly_traffic_unlimited').addEventListener('change', function() {
+            document.getElementById('monthly_traffic').disabled = this.checked;
+            if (this.checked) {
+                document.getElementById('monthly_traffic').value = '';
+            } else {
+                document.getElementById('monthly_traffic').value = '{% if user.monthly_traffic == -1 %}50{%else%}{{ user.monthly_traffic }}{%endif%}';
+            }
+        });
+        document.getElementById('monthly_traffic_unlimited').dispatchEvent(new Event('change'));
+
+        function getUserActiveDefaultDate() {
+            {% if user.user_active_until == '' %}
+            var expireDate = new Date();
+            expireDate.setFullYear(expireDate.getFullYear() + 1);
+            return expireDate.getFullYear() + '-' + (expireDate.getMonth() + 1).toString().padStart(2, '0') + '-' + expireDate.getDate().toString().padStart(2, '0') + ' ' + expireDate.getHours().toString().padStart(2, '0') + ':' + expireDate.getMinutes().toString().padStart(2, '0');
+            {% else %}
+            return '{{ user.user_active_until }}';
+            {% endif %}
+        }
+
+        function updateUserActiveUntilHint() {
+            if (document.getElementById('user_active_until_unlimited').checked) {
+                document.querySelector('.user-active-hint').innerHTML = '';
+                document.querySelector('.user-active-hint').style.color = 'green';
+                return;
+            }
+        
+            var expireDateString = document.getElementById('user_active_until').value; // yyyy-mm-dd hh:mm
+            var expireDate = new Date(expireDateString);
+            var today = new Date();
+            var diff = expireDate - today;
+            var days = Math.round(diff / (1000 * 60 * 60 * 24));
+            if (days < 0) {
+                document.querySelector('.user-active-hint').innerHTML = 'Expired';
+                document.querySelector('.user-active-hint').style.color = 'red';
+            } else if (days == 0) {
+                document.querySelector('.user-active-hint').innerHTML = 'Expires today';
+                document.querySelector('.user-active-hint').style.color = 'orange';
+            } else {
+                document.querySelector('.user-active-hint').innerHTML = 'Expires in ' + days + ' days';
+                document.querySelector('.user-active-hint').style.color = '';
+            }
+        }
+        setTimeout(updateUserActiveUntilHint, 200);
+
+        document.getElementById('user_active_until_unlimited').addEventListener('change', function() {
+            document.getElementById('user_active_until').disabled = this.checked;
+            if (this.checked) {
+                setTimeout(function() {
+                    document.getElementById('user_active_until').value = '';
+                    updateUserActiveUntilHint();
+                }, 100);
+            } else {
+                document.getElementById('user_active_until').value = getUserActiveDefaultDate();
+                updateUserActiveUntilHint();
+            }
+        });
+        document.getElementById('user_active_until_unlimited').dispatchEvent(new Event('change'));
+
+
+        document.getElementById('user_active_until').addEventListener('change', function() {
+            updateUserActiveUntilHint();
+        });
 
 
         function get_ips_connected_right_now() {
@@ -223,11 +340,17 @@
                 })
                 .then(function(data) {
                     if (Number.isInteger(parseInt(data))) {
-                        document.querySelector('.ips-connected-right-now').innerHTML = data;
+                        document.querySelectorAll('.ips-connected-right-now').forEach(function (el) {
+                            el.innerHTML = data;
+                        });
                     } else {
-                        document.querySelector('.ips-connected-right-now').innerHTML = '-';
+                        document.querySelectorAll('.ips-connected-right-now').forEach(function (el) {
+                            el.innerHTML = '-';
+                        });
                     }
-                    document.querySelector('.ips-connected-right-now').classList.remove('spinner');
+                    document.querySelectorAll('.ips-connected-right-now').forEach(function (el) {
+                        el.classList.remove('spinner');
+                    });
                 });
         }
 
@@ -426,7 +549,90 @@
         setCustomTierEnabledForSubscriptionVisiblity();
 
         document.getElementById('tier_enabled_for_subscription_default').addEventListener('change', setCustomTierEnabledForSubscriptionVisiblity);
+
+        flatpickr('#user_active_until', {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            position: 'above',
+            defaultDate: getUserActiveDefaultDate(),
+            onChange: function(selectedDates, dateStr, instance) {
+                setTimeout(updateUserActiveUntilHint, 100);
+            },
+            onOpen: function(selectedDates, dateStr, instance) {
+                instance.setDate(document.getElementById('user_active_until').value);
+                console.log('open');
+                console.log(instance);
+
+                setTimeout(function() {
+                    // create a div as the first element in the calendar container
+                    var extra = document.createElement('div');
+                    extra.classList.add('flatpickr-calendar-extra');
+
+                    // create 1 month, 2 months, 3 months, 6 months, 1 year buttons
+                    var today = new Date();
+                    var months = [1, 2, 3, 6, 12, 24, 'Forever'];
+                    months.forEach(function (month) {
+                        var button = document.createElement('button');
+                        button.classList.add('btn', 'btn-light');
+                        button.style.flexGrow = 1;
+                        if (month == 'Forever')
+                            button.innerHTML = 'Forever';
+                        else if (month % 12 == 0)
+                            button.innerHTML = month / 12 + ' year' + (month / 12 > 1 ? 's' : '');
+                        else
+                            button.innerHTML = month + ' month' + (month > 1 ? 's' : '');
+                        button.addEventListener('click', function() {
+                            if (month == 'Forever') {
+                                document.getElementById('user_active_until_unlimited').checked = true;
+                                document.getElementById('user_active_until_unlimited').dispatchEvent(new Event('change'));
+                                instance.close();
+                            } else {
+                                var newDate = new Date(today);
+                                newDate.setMonth(newDate.getMonth() + month);
+                                instance.setDate(newDate);
+                            }
+                            updateUserActiveUntilHint();
+                        });
+                        extra.appendChild(button);
+                    });
+
+                    instance.calendarContainer.insertBefore(extra, instance.calendarContainer.firstChild);
+                }, 100);
+            },
+            onClose: function(selectedDates, dateStr, instance) {
+                console.log('close');
+                instance.calendarContainer.removeChild(instance.calendarContainer.querySelector('.flatpickr-calendar-extra'));
+            }
+        });
     </script>
+    <style>
+    .flatpickr-calendar-extra {
+        height: 100%;
+        width: 150px;
+        background: white;
+        position: absolute;
+        right: -154px;
+        box-shadow: 1px 0 0 #e6e6e6, -1px 0 0 #e6e6e6, 0 1px 0 #e6e6e6, 0 -1px 0 #e6e6e6, 0 3px 13px rgba(0,0,0,0.08);
+        border-radius: 4px;
+        animation: fadeIn 0.2s ease-in-out forwards;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: space-around;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    </style>
 </div>
 
 {% endblock %}

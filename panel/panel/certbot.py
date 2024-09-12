@@ -5,22 +5,38 @@ from . import sysops
 from . import config
 from datetime import datetime, timedelta
 
-def save_cert(domain):
+def save_cert(domain, reload_haproxy=True):
     fullchain_file = '/etc/letsencrypt/live/' + domain + '/fullchain.pem'
     privkey_file = '/etc/letsencrypt/live/' + domain + '/privkey.pem'
     cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
+
+    prev_file_hash = None
+    if os.path.isfile(cert_file):
+        with open(cert_file, 'r') as f:
+            prev_file_hash = hash(f.read())
+            
     with open(cert_file, 'w') as f:
         f.write(open(fullchain_file).read())
         f.write(open(privkey_file).read())
 
-    print('  - Reloading HAProxy')
-    sysops.haproxy_reload()
+    new_file_hash = None
+    with open(cert_file, 'r') as f:
+        new_file_hash = hash(f.read())
+
+    if prev_file_hash == new_file_hash:
+        print('  - Certificate file unchanged')
+        return False
+
+    if reload_haproxy:
+        print('  - Reloading HAProxy')
+        sysops.haproxy_reload()
+    return True
 
 def cert_exists(domain):
     cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
     return os.path.isfile(cert_file)
 
-def generate_certificate(domain, retry=True):
+def generate_certificate(domain, retry=True, reload_haproxy=True):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     domain_certificates = db.domain_certificates
@@ -32,10 +48,10 @@ def generate_certificate(domain, retry=True):
                     print('Certificate for ' + domain + ' does not exist. Regenerating.')
                 else:
                     print('Certificate for ' + domain + ' is still valid. Skipping.')
-                    return True
+                    return 'skipped'
             if domain_entry['skip_until'] > datetime.now():
                 print('Certificate for ' + domain + ' is skipped due to multiple failures. Skipping.')
-                return False
+                return 'skipped_multiple_failures'
         except Exception as e:
             pass
     
@@ -54,7 +70,7 @@ def generate_certificate(domain, retry=True):
 
     if result == 0:
         print('  - Certificate generated successfully')
-        save_cert(domain)
+        result = save_cert(domain, reload_haproxy=reload_haproxy)
 
         print('  - Finalizing')
         domain_certificates.update_one({'_id': domain}, {'$set': {
@@ -64,24 +80,22 @@ def generate_certificate(domain, retry=True):
             'skip_until': datetime.now()
         }}, upsert=True)
 
-        return True
+        if result:
+            return 'success'
+        return 'unchanged'
     else:
         print('  - Certificate generation for ' + domain + ' failed: ' + str(result))
 
         fullchain_file = '/etc/letsencrypt/live/' + domain + '/fullchain.pem'
         privkey_file = '/etc/letsencrypt/live/' + domain + '/privkey.pem'
 
+        result = False
         try:
             if os.path.isfile(fullchain_file) and os.path.isfile(privkey_file):
-                cert_file = '/etc/ssl/ha-certs/' + domain + '.pem'
-                with open(cert_file, 'w') as f:
-                    f.write(open(fullchain_file).read())
-                    f.write(open(privkey_file).read())
-
-                print('  - Reloading HAProxy')
-                sysops.haproxy_reload()
+                print('  - Saving certificate')
+                result = save_cert(domain, reload_haproxy=False)
         except Exception as e:
-            print(e)
+            print("  - Error saving certificate:", e)
 
         domain_certificates.update_one({'_id': domain}, {'$set': {
             '_id': domain,
@@ -89,5 +103,8 @@ def generate_certificate(domain, retry=True):
             'updated_at': datetime.now() - timedelta(days=100),
             'skip_until': datetime.now() + timedelta(hours=3) if domain_entry is not None and domain_entry['failure_count'] > 5 else datetime.now() + timedelta(minutes=5),
         }}, upsert=True)
-        return False
+        
+        if result:
+            return 'failed_but_changed'
+        return 'failed'
     

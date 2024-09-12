@@ -3,7 +3,8 @@ import re
 import random
 import socket
 import requests
-from datetime import timedelta
+from pytz import timezone
+from datetime import datetime, timedelta
 from pymongo import MongoClient
 
 print("Initializing...")
@@ -20,7 +21,7 @@ socket.getaddrinfo = new_getaddrinfo
 def get_libertea_branch():
     return os.environ.get('LIBERTEA_BRANCH_NAME')
 
-LIBERTEA_VERSION = 1042
+LIBERTEA_VERSION = 1043
 LIBERTEA_PROXY_VERSION = 1007
 VERSION_ENDPOINT = "https://raw.githubusercontent.com/VZiChoushaDui/Libertea/" + get_libertea_branch() + "/version.txt"
 
@@ -165,3 +166,52 @@ def get_root_dir():
             path += '/'
         return path
     return "/root/libertea/"
+
+
+def get_regional_domain_suffixes(countries):
+    suffixes = ['local', 'lan']
+    if 'cn' in countries: # china
+        suffixes.append('cn')
+    elif 'cu' in countries: # cuba
+        suffixes.append('cu')
+    elif 'ir' in countries: # iran
+        suffixes.append('ir')
+    elif 'ru' in countries: # russia
+        suffixes.append('ru')
+    elif 'sa' in countries: # saudi arabia
+        suffixes.append('sa')
+    elif 'sy' in countries: # syria
+        suffixes.append('sy')
+    elif 'th' in countries: # thailand
+        suffixes.append('th')
+    elif 'tm' in countries: # turkmenistan
+        suffixes.append('tm')
+    elif 'tr' in countries:
+        suffixes.append('tr')
+    return suffixes
+
+def get_timezone(country):
+    if country == 'cn':
+        return 'Asia/Shanghai'
+    elif country == 'ru':
+        return 'Europe/Moscow'
+    elif country == 'cu':
+        return 'America/Havana'
+    elif country == 'th':
+        return 'Asia/Bangkok'
+    elif country == 'tm':
+        return 'Asia/Ashgabat'
+    elif country == 'ir':
+        return 'Asia/Tehran'
+    elif country == 'sy':
+        return 'Asia/Damascus'
+    elif country == 'sa':
+        return 'Asia/Riyadh'
+    elif country == 'tr':
+        return 'Europe/Istanbul'
+    return 'UTC'
+
+def current_time_in_timezone(country):
+    return datetime.now(timezone(get_timezone(country)))
+
+SIGNAL_INVALIDATE_CACHE = 18

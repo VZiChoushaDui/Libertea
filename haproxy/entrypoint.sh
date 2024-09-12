@@ -12,8 +12,10 @@ if [ -z "$CAMOUFLAGE_HOST" ]; then
 fi
 
 export CAMOUFLAGE_IP="127.0.0.1"
+export CAMOUFLAGE_OVERRIDE_HOST=true
 if [[ $CAMOUFLAGE_HOST =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     export CAMOUFLAGE_IP=$CAMOUFLAGE_HOST
+    export CAMOUFLAGE_OVERRIDE_HOST=false
 else
     ip=$(dig +short $CAMOUFLAGE_HOST A | head -n 1)
     if [ -z "$ip" ]; then
@@ -24,6 +26,9 @@ else
         echo "Resolved $CAMOUFLAGE_HOST to $ip"
         export CAMOUFLAGE_IP="$ip"
     fi
+fi
+if [ "$CAMOUFLAGE_IP" == "localhost" ]; then
+    export CAMOUFLAGE_OVERRIDE_HOST=false
 fi
 
 pidfile=/var/run/haproxy.pid
@@ -44,8 +49,10 @@ function reload
     fi
 
     export CAMOUFLAGE_IP="127.0.0.1"
+    export CAMOUFLAGE_OVERRIDE_HOST=true
     if [[ $CAMOUFLAGE_HOST =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         export CAMOUFLAGE_IP=$CAMOUFLAGE_HOST
+        export CAMOUFLAGE_OVERRIDE_HOST=false
     else
         ip=$(dig +short $CAMOUFLAGE_HOST A | head -n 1)
         if [ -z "$ip" ]; then
@@ -57,17 +64,33 @@ function reload
             export CAMOUFLAGE_IP="$ip"
         fi
     fi
+    if [ "$CAMOUFLAGE_HOST" == "localhost" ]; then
+        export CAMOUFLAGE_OVERRIDE_HOST=false
+    fi
 
     # haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile -sf $(cat $pidfile) &
 
-    echo "  Killing haproxy..."
+    date
+    echo "Killing haproxy..."
     killall haproxy
-    echo "  Starting haproxy..."
+
+    echo "Starting haproxy..."
+    echo "  CAMOUFLAGE_HOST: $CAMOUFLAGE_HOST"
+    echo "  CAMOUFLAGE_IP: $CAMOUFLAGE_IP"
+    echo "  CAMOUFLAGE_PORT: $CAMOUFLAGE_PORT"
+    echo "  CAMOUFLAGE_OVERRIDE_HOST: $CAMOUFLAGE_OVERRIDE_HOST"
+
     haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p $pidfile &
 
     wait
 }
 
+date
+echo "Starting haproxy..."
+echo "  CAMOUFLAGE_HOST: $CAMOUFLAGE_HOST"
+echo "  CAMOUFLAGE_IP: $CAMOUFLAGE_IP"
+echo "  CAMOUFLAGE_PORT: $CAMOUFLAGE_PORT"
+echo "  CAMOUFLAGE_OVERRIDE_HOST: $CAMOUFLAGE_OVERRIDE_HOST"
 
 trap reload SIGHUP
 trap "kill -TERM $(cat $pidfile) || exit 1" SIGTERM SIGINT
