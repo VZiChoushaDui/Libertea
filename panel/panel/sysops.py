@@ -78,8 +78,14 @@ def haproxy_update_users_list():
         f.write('/' + config.get_proxy_connect_uuid() + '/' + '\n')
         f.write('/' + config.get_proxy_configuration_uuid() + '/' + '\n')
         count += 1
-
     print("Wrote " + str(count) + " users to haproxy-lists/valid-panel-endpoints.lst")
+
+    with open(config.get_root_dir() + 'data/haproxy-lists/socks-outbound-port.lst', 'w') as f:
+        if settings.get_use_warp() == True:
+            f.write('2997\n')
+        else:
+            f.write('2998\n')
+        
     return haproxy_reload()
 
 def haproxy_update_domains_list():

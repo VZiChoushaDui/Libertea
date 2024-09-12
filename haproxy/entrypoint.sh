@@ -1,5 +1,10 @@
 #!/bin/bash
 
+export SOCKS_OUTBOUND_PORT=$(head -n 1 /haproxy-files/lists/socks-outbound-port.lst | xargs echo -n)
+if [ -z "$SOCKS_OUTBOUND_PORT" ]; then
+    export SOCKS_OUTBOUND_PORT="2998"
+fi
+
 export CAMOUFLAGE_PORT=$(head -n 1 /haproxy-files/lists/camouflage-port.lst | xargs echo -n)
 if [ -z "$CAMOUFLAGE_PORT" ]; then
     export CAMOUFLAGE_PORT="443"
@@ -36,7 +41,12 @@ pidfile=/var/run/haproxy.pid
 function reload
 {
     echo "Reloading haproxy..."
-    
+
+    export SOCKS_OUTBOUND_PORT=$(head -n 1 /haproxy-files/lists/socks-outbound-port.lst | xargs echo -n)
+    if [ -z "$SOCKS_OUTBOUND_PORT" ]; then
+        export SOCKS_OUTBOUND_PORT="2998"
+    fi
+
     export CAMOUFLAGE_PORT=$(head -n 1 /haproxy-files/lists/camouflage-port.lst | xargs echo -n)
     if [ -z "$CAMOUFLAGE_PORT" ]; then
         export CAMOUFLAGE_PORT="443"

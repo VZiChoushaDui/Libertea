@@ -51,6 +51,16 @@ echo " *** Building and pushing libertea/provider-shadowsocks-v2ray:$version ***
 docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-shadowsocks-v2ray:$version ./providers/shadowsocks-v2ray --push
 docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-shadowsocks-v2ray:latest ./providers/shadowsocks-v2ray --push
 
+# providers/provider-outbound-warp
+echo " *** Building and pushing libertea/provider-outbound-warp:$version *** "
+docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-outbound-warp:$version ./providers/outbound-warp --push
+docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-outbound-warp:latest ./providers/outbound-warp --push
+
+# providers/provider-outbound-direct
+echo " *** Building and pushing libertea/provider-outbound-direct:$version *** "
+docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-outbound-direct:$version ./providers/outbound-direct --push
+docker buildx build --platform linux/amd64,linux/arm64 -t libertea/provider-outbound-direct:latest ./providers/outbound-direct --push
+
 # ./proxy-register
 echo " *** Building and pushing libertea/proxy-register:$version *** "
 docker buildx build --platform linux/amd64,linux/arm64 -t libertea/proxy-register:$version ./proxy-register --push

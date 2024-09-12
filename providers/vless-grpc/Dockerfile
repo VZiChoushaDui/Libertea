@@ -1,6 +1,6 @@
 FROM teddysun/xray:latest
 
-RUN apk update && apk add iptables
+RUN apk update && apk add jq
 
 COPY entrypoint.sh /entrypoint.sh
 

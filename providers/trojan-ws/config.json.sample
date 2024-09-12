@@ -4,6 +4,7 @@
     },
     "inbounds": [
         {
+            "listen": "127.0.0.1",
             "port": {port},
             "protocol": "trojan",
             "settings": {
@@ -59,7 +60,15 @@
     ],
     "outbounds": [
         {
-            "protocol": "freedom"
+            "protocol": "socks",
+            "settings": {
+                "servers": [
+                    {
+                        "port": 2999,
+                        "address": "127.0.0.1"
+                    }
+                ]
+            }
         }
     ]
 }

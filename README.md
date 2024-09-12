@@ -184,6 +184,10 @@ Feel free to submit your changes as a pull request to the `devel` branch of this
 
 ## <a name='Changelog'></a>Changelog
 
+#### <a name='v1044'></a>v1044
+
+- ✨ WARP outbound support (Experimental)
+
 #### <a name='v1043'></a>v1043
 
 - ✨ Traffic usage limit for users

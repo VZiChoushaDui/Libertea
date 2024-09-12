@@ -1,37 +1,13 @@
 #!/bin/sh
 
-# disable all outbound connections except common ones, to prevent abuse
-echo " ** Setting up outbound firewall..."
+if [ -z "$OUTBOUND_PORT" ]; then
+    OUTBOUND_PORT="2999"
+fi
 
-# get docker interface name
-DOCKER_INTERFACE=$(ip route | grep default | awk '{print $5}') 
-echo " ** Docker interface: $DOCKER_INTERFACE"
+jq --argjson port $OUTBOUND_PORT '.outbounds[0].settings.servers[0].port = $port' /etc/xray/config.json > /etc/xray/config.tmp.json 
 
-# NOTE: -I adds the rule to the top of the chain
-
-# drop all outbound connections (tcp udp) 
-iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp --dport 0:16384 -j DROP
-iptables -I OUTPUT -o $DOCKER_INTERFACE -p udp --dport 0:16384 -j DROP
-# iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp -j LOG --log-prefix "XRAY DROPPED: " --log-level 6
-# iptables -I OUTPUT -o $DOCKER_INTERFACE -p udp -j LOG --log-prefix "XRAY DROPPED: " --log-level 6
-
-# except established connections and allowed ports
-iptables -I OUTPUT -o $DOCKER_INTERFACE -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-for port in $(echo $FIREWALL_OUTBOUND_TCP_PORTS | tr "," "
-
-"); do
-    iptables -I OUTPUT -o $DOCKER_INTERFACE -p tcp --dport $port -j ACCEPT
-    echo "    - TCP port $port"
-done
-for port in $(echo $FIREWALL_OUTBOUND_UDP_PORTS | tr "," "
-
-"); do
-    iptables -I OUTPUT -o $DOCKER_INTERFACE -p udp --dport $port -j ACCEPT
-    echo "    - UDP port $port"
-done
-
+cat /etc/xray/config.tmp.json
 
 # run xray
 echo " ** Starting Xray..."
-/usr/bin/xray -config /etc/xray/config.json
+/usr/bin/xray -config /etc/xray/config.tmp.json

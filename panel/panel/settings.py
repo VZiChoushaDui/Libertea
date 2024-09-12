@@ -233,6 +233,23 @@ def set_manual_tier_select_clash(val, db=None):
     db.settings.update_one({"_id": "manual_tier_select_clash"}, {"$set": {"value": val}}, upsert=True)
     return True
 
+def get_use_warp(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "use_warp"})
+    if setting is None:
+        return False
+    return setting["value"]
+
+def set_use_warp(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    
+    db.settings.update_one({"_id": "use_warp"}, {"$set": {"value": val}}, upsert=True)
+    return sysops.haproxy_update_users_list()
+
 def get_has_dashboard_opened(db=None):
     if db is None:
         client = config.get_mongo_client()

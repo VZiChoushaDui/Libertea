@@ -691,6 +691,7 @@ def app_settings():
         provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssv2ray', 'ssgrpc']},
         proxygroup_type_selected=proxygroup_type_selected,
         tier_enabled_for_subscription=tier_enabled_for_subscription,
+        use_warp=settings.get_use_warp(),
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
@@ -705,6 +706,7 @@ def app_settings_save():
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
     manual_tier_select_clash = request.form.get('manual_tier_select_clash', None)
+    use_warp = request.form.get('use_warp', None)
 
     tier_enabled_for_subscription = {i: request.form.get(f'tier_enabled_for_subscription_{i}', None) for i in [1,2,3,4]}
     tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
@@ -722,6 +724,7 @@ def app_settings_save():
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')
     settings.set_manual_tier_select_clash(manual_tier_select_clash == 'on')
+    settings.set_use_warp(use_warp == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
     for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssgrpc']:

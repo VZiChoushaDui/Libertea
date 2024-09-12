@@ -85,15 +85,8 @@ services:
     ports:
       - "127.0.0.1:25898:80"
   provider-trojan-ws:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     image: libertea/provider-trojan-ws
-    ports:
-      - "127.0.0.1:2001:2001"
-      - "127.0.0.1:12001:12001"
-    cap_add:
-      - NET_ADMIN
+    network_mode: host
     container_name: libertea-provider-trojan-ws
     restart: always
     volumes:
@@ -101,14 +94,8 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-trojan-grpc:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     image: libertea/provider-trojan-grpc
-    ports:
-      - "127.0.0.1:2004:2004"
-    cap_add:
-      - NET_ADMIN
+    network_mode: host
     container_name: libertea-provider-trojan-grpc
     restart: always
     volumes:
@@ -116,15 +103,8 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vless-ws:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     image: libertea/provider-vless-ws
-    ports:
-      - "127.0.0.1:2002:2002"
-      - "127.0.0.1:12002:12002"
-    cap_add:
-      - NET_ADMIN
+    network_mode: host
     container_name: libertea-provider-vless-ws
     restart: always
     volumes:
@@ -132,14 +112,8 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vless-grpc:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     image: libertea/provider-vless-grpc
-    ports:
-      - "127.0.0.1:2005:2005"
-    cap_add:
-      - NET_ADMIN
+    network_mode: host
     container_name: libertea-provider-vless-grpc
     restart: always
     volumes:
@@ -147,14 +121,8 @@ services:
       - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
       - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
   provider-vmess-grpc:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
     image: libertea/provider-vmess-grpc
-    ports:
-      - "127.0.0.1:2007:2007"
-    cap_add:
-      - NET_ADMIN
+    network_mode: host
     container_name: libertea-provider-vmess-grpc
     restart: always
     volumes:
@@ -190,4 +158,26 @@ services:
   #     - './providers/shadowsocks-grpc/config.json:/etc/xray/config.json'
   #     - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
   #     - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
-  
+  provider-outbound-warp:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+    image: libertea/provider-outbound-warp
+    privileged: true
+    ports:
+      - "127.0.0.1:2997:2997"
+    container_name: libertea-provider-outbound-warp
+    restart: always
+    volumes:
+      - './providers/outbound-warp/config.json:/etc/xray/config.json'
+  provider-outbound-direct:
+    environment:
+      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+    image: libertea/provider-outbound-direct
+    ports:
+      - "127.0.0.1:2998:2998"
+    container_name: libertea-provider-outbound-direct
+    restart: always
+    volumes:
+      - './providers/outbound-direct/config.json:/etc/xray/config.json'

@@ -1,0 +1,42 @@
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "routing": {
+        "rules": [
+            {
+                "port": "80,443",
+                "network": "tcp",
+                "outboundTag": "web"
+            },
+            {
+                "port": "80,443",
+                "network": "udp",
+                "outboundTag": "web"
+            },
+            {
+                "network": "bittorrent",
+                "outboundTag": "block"
+            }
+        ]
+    },
+    "inbounds": [
+        {
+            "port": {port},
+            "protocol": "socks",
+            "udp": true,
+            "ip": "127.0.0.1",
+            "auth": "noauth"
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol":"blackhole",
+            "tag":"block"
+        },
+        {
+            "protocol": "freedom",
+            "tag": "web"
+        }
+    ]
+}
