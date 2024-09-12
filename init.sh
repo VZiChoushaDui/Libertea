@@ -354,7 +354,10 @@ if ! grep -q "Match User libertea" /etc/ssh/sshd_config; then
     echo "    PermitTunnel yes" >> /etc/ssh/sshd_config
     echo "    AllowAgentForwarding no" >> /etc/ssh/sshd_config
     echo "    ForceCommand /bin/false" >> /etc/ssh/sshd_config
+    set +e
     systemctl reload sshd
+    systemctl reload ssh
+    set -e
 fi
 
 echo " ** Initializing providers..."
