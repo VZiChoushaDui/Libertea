@@ -88,6 +88,21 @@ fi
 set -e
 
 pip3 install -r panel/requirements.txt | sed 's/^/        /'
+if [ $? -ne 0 ]; then
+    echo "Failed to install requirements. Trying to fix it..."
+    pip3 install -r panel/requirements.txt --force-reinstall --ignore-installed | sed 's/^/        /'
+    pip3 install -r panel/requirements.txt | sed 's/^/        /'
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo ""
+        echo "Failed to install requirements. Please send a bug report at"
+        echo "https://github.com/VZiChoushaDui/Libertea/issues/new"
+        echo "and send this log alongside it."
+        echo ""
+        echo ""
+        exit 1
+    fi
+fi
 
 set +e
 if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
