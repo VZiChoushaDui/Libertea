@@ -196,6 +196,7 @@ Feel free to submit your changes as a pull request to the `devel` branch of this
 #### <a name='v1044'></a>v1044
 
 - ✨ WARP outbound support (Experimental)
+- 🐛 bugfix in pip install flow
 
 #### <a name='v1043'></a>v1043
 
