@@ -17,6 +17,7 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with a
 * [Update](#Update)
 * [Uninstall](#Uninstall)
 * [Contribution](#Contribution)
+* [Thanks](#Thanks)
 * [Frequently Asked Questions](#FrequentlyAskedQuestions)
 	* [Does Libertea keep my domains and IPs safe from being blocked?](#DoesLiberteakeepmydomainsandIPssafefrombeingblocked)
 	* [Can I route regional traffic directly (without going through VPN)?](#CanIrouteregionaltrafficdirectlywithoutgoingthroughVPN)
@@ -78,6 +79,14 @@ If you want to uninstall Liberta or Liberta-secondary-proxy from your server for
 ## <a name='Contribution'></a>Contribution
 
 Contributions are welcome! Please feel free to open an issue for any bugs, improvements and ideas; or open a pull request if you want to contribute code. If you're opening a pull request, make sure to send it to the `devel` branch of this repository.
+
+## <a name='Thanks'></a>Thanks
+
+Libertea is made possible with help of these other open-source projects:
+
+- [Xray-Core](https://github.com/XTLS/Xray-core/)
+- [Clash.Meta](https://github.com/MetaCubeX/mihomo/)
+- [warp-reg.sh](https://github.com/chise0713/warp-reg.sh/)
 
 ## <a name='FrequentlyAskedQuestions'></a>Frequently Asked Questions
 
