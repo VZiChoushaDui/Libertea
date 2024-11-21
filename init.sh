@@ -85,7 +85,7 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
         pip3 install pyopenssl==24.0.0 | sed 's/^/        /'
     fi
 fi
-set -e
+
 
 pip3 install -r panel/requirements.txt
 if [ $? -ne 0 ]; then
@@ -104,7 +104,6 @@ if [ $? -ne 0 ]; then
     fi
 fi
 
-set +e
 if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
     pip3 --version > /dev/null 2>&1
     if [ $? -ne 0 ]; then
