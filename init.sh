@@ -481,6 +481,16 @@ if ! crontab -l | grep -q "autoupdate.sh"; then
     (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
 fi
 
+sleep 5
+set +e
+./bash-tools/upgrade-mongodb.sh
+if [ "$ENVIRONMENT" == "dev" ]; then
+    docker compose -f docker-compose.dev.yml up -d
+else
+    docker compose up -d
+fi
+set -e
+
 echo " ** Waiting for services to start..."
 
 # check status of the docker containers with name starting with "libertea" (max 30 seconds) and log each one that has been up for at least 5 seconds
@@ -574,6 +584,7 @@ while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     set -e
 done
 echo "    ✅ libertea-panel started"
+
 
 echo " ** Checking domain configuration..."
 while true; do
