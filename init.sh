@@ -454,6 +454,7 @@ if [ "$ENVIRONMENT" == "dev" ]; then
     echo " ** Starting docker containers..."
     set +e
     docker compose -f docker-compose.dev.yml down >/dev/null
+    docker rm -f libertea-mongodb >/dev/null
     set -e
     docker compose -f docker-compose.dev.yml up -d
 else
@@ -464,6 +465,7 @@ else
     echo " ** Starting docker containers..."
     set +e
     docker compose down >/dev/null
+    docker rm -f libertea-mongodb >/dev/null
     set -e
     docker compose up -d
 fi
