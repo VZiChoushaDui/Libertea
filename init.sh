@@ -481,6 +481,7 @@ if ! crontab -l | grep -q "autoupdate.sh"; then
     (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
 fi
 
+echo " ** Checking mongodb..." 
 sleep 5
 set +e
 ./bash-tools/upgrade-mongodb.sh

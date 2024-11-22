@@ -8,6 +8,7 @@ wait_for_mongo_ready() {
     local retries=0
 
     echo "Waiting for MongoDB container $container_id to be ready..."
+    sleep "$RETRY_INTERVAL"
     until docker exec "$container_id" mongosh --quiet --eval "db.adminCommand({ ping: 1 })" >/dev/null 2>&1; do
         retries=$((retries + 1))
         if [ "$retries" -ge "$MAX_RETRIES" ]; then
