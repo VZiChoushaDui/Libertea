@@ -45,4 +45,5 @@ if [ $mongo_upgrade_needed != "0" ]; then
     run_mongo_command "7" 'db.adminCommand({ setFeatureCompatibilityVersion: "7.0", confirm: true })'
     docker rm -f libertea-mongodb
     run_mongo_command "8" 'db.adminCommand({ setFeatureCompatibilityVersion: "7.0", confirm: true })'
+    docker rm -f libertea-mongodb
 fi

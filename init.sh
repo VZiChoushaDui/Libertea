@@ -484,6 +484,7 @@ fi
 sleep 5
 set +e
 ./bash-tools/upgrade-mongodb.sh
+docker rm -f libertea-mongodb
 if [ "$ENVIRONMENT" == "dev" ]; then
     docker compose -f docker-compose.dev.yml up -d
 else
