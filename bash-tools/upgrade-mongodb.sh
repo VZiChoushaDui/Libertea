@@ -38,6 +38,13 @@ run_mongo_command() {
     docker stop "$container_id" >/dev/null
 }
 
+if [[ $(uname -m) == *"x86"* ]]; then
+    if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
+        # Running in compatibility mode, don't upgrade mongodb
+        exit 0
+    fi
+fi
+
 mongo_upgrade_needed=$(docker logs libertea-mongodb | grep "UPGRADE PROBLEM" | wc -l)
 if [ $mongo_upgrade_needed != "0" ]; then
     echo " ** Upgrading mongodb data files..."
