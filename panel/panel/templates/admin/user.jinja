@@ -47,6 +47,11 @@
     <i class="fa-solid fa-circle-exclamation"></i> This user has exceeded their monthly traffic limit.
 </div>
 {% endif %}
+{% if user.daily_traffic > 0 and traffic_today > user.daily_traffic %}
+<div class="alert alert-danger mt-4 mx-3" role="alert">
+    <i class="fa-solid fa-circle-exclamation"></i> This user has exceeded their daily traffic limit.
+</div>
+{% endif %}
 <div class="section stats mb-5">
     <div class="row">
         <div class="col-6 col-sm-3 stats-item">
@@ -103,13 +108,32 @@
                         Unlimited
                     </label>
                 </div>
-                <input type="number" class="form-control" id="monthly_traffic" name="monthly_traffic" value="{% if user.monthly_traffic == -1 %}50{% else %}{{ user.monthly_traffic }}{% endif %}">
+                <input type="number" class="form-control" id="monthly_traffic" name="monthly_traffic" step="any" value="{% if user.monthly_traffic == -1 %}50{% else %}{{ user.monthly_traffic }}{% endif %}">
             </div>
             <div style="opacity: 0.75; font-size: 12px; float:left;" class="mb-3">
                 Monthly traffic limit resets on the first day of each month.
             </div>
             <div style="opacity: 0.9; font-size: 14px; float: right;" class="mb-3 monthly-traffic-hint">
                 Current usage: {{ traffic_this_month }} GB
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+        <div class="form-group mb-4">
+            <label for="daily_traffic">Daily traffic (GB)</label>
+            <div class="input-group">
+                <div class="input-group-text">
+                    <input class="form-check-input mt-0" type="checkbox" value="on" id="daily_traffic_unlimited" name="daily_traffic_unlimited" {% if user.daily_traffic == -1 %}checked{% endif %}>
+                    <label class="form-check-label mx-2" for="daily_traffic_unlimited">
+                        Unlimited
+                    </label>
+                </div>
+                <input type="number" class="form-control" id="daily_traffic" name="daily_traffic" step="any" value="{% if user.daily_traffic == -1 %}1{% else %}{{ user.daily_traffic }}{% endif %}">
+            </div>
+            <div style="opacity: 0.75; font-size: 12px; float:left;" class="mb-3">
+                Daily traffic limit resets at midnight UTC.
+            </div>
+            <div style="opacity: 0.9; font-size: 14px; float: right;" class="mb-3 daily-traffic-hint">
+                Current usage: {{ traffic_today }} GB
             </div>
         </div>
         <div style="clear: both;"></div>
@@ -277,6 +301,16 @@
             }
         });
         document.getElementById('monthly_traffic_unlimited').dispatchEvent(new Event('change'));
+
+        document.getElementById('daily_traffic_unlimited').addEventListener('change', function() {
+            document.getElementById('daily_traffic').disabled = this.checked;
+            if (this.checked) {
+                document.getElementById('daily_traffic').value = '';
+            } else {
+                document.getElementById('daily_traffic').value = '{% if user.daily_traffic == -1 %}1{%else%}{{ user.daily_traffic }}{%endif%}';
+            }
+        });
+        document.getElementById('daily_traffic_unlimited').dispatchEvent(new Event('change'));
 
         function getUserActiveDefaultDate() {
             {% if user.user_active_until == '' %}

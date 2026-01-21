@@ -366,6 +366,9 @@ def user(user):
     except:
         user['user_active_until'] = ''
 
+    if 'daily_traffic' not in user or user['daily_traffic'] is None:
+        user['daily_traffic'] = -1
+
     user['panel_url'] = "https://" + config.get_panel_domain() + "/" + user['_id'] + "/"
     user['tier_enabled_for_subscription'] = utils.get_user_tiers_enabled_for_subscription(user['_id'])
 
@@ -403,9 +406,21 @@ def user_save(user):
         if monthly_traffic_unlimited == 'on':
             monthly_traffic = -1
         else:
-            monthly_traffic = int(request.form.get('monthly_traffic', -1))
+            monthly_traffic = float(request.form.get('monthly_traffic', -1))
             if monthly_traffic <= 0:
                 monthly_traffic = -1
+    except:
+        pass
+
+    daily_traffic = -1
+    try:
+        daily_traffic_unlimited = request.form.get('daily_traffic_unlimited', None)
+        if daily_traffic_unlimited == 'on':
+            daily_traffic = -1
+        else:
+            daily_traffic = float(request.form.get('daily_traffic', -1))
+            if daily_traffic <= 0:
+                daily_traffic = -1
     except:
         pass
 
@@ -420,13 +435,13 @@ def user_save(user):
             utils.update_user(uid, note=uid)
         tier_enabled_for_subscription['default'] = True
         utils.update_user(uid, max_ips=max_ips, tier_enabled_for_subscription=tier_enabled_for_subscription, 
-            monthly_traffic=monthly_traffic, user_active_until=user_active_until)
+            monthly_traffic=monthly_traffic, daily_traffic=daily_traffic, user_active_until=user_active_until)
         return redirect(url_for('admin.user', user=uid))
         
     if note.strip() == '':
         note = user
     utils.update_user(user, max_ips=max_ips, note=note, tier_enabled_for_subscription=tier_enabled_for_subscription, 
-        monthly_traffic=monthly_traffic, user_active_until=user_active_until)  
+        monthly_traffic=monthly_traffic, daily_traffic=daily_traffic, user_active_until=user_active_until)  
     return redirect(url_for('admin.user', user=user))
 
 @blueprint.route(root_url + 'users/<user>/', methods=['DELETE'])

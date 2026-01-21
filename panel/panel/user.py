@@ -52,6 +52,14 @@ def get_user_limitations_info(id):
     except:
         pass
 
+    daily_traffic_limit = -1
+    traffic_today = 0
+    try:
+        daily_traffic_limit = user['daily_traffic']
+        traffic_today = round(stats.get_gigabytes_today(user['_id']), 2)
+    except:
+        pass
+
     days_remaining = None
     user_active_until = None
     try:
@@ -63,7 +71,7 @@ def get_user_limitations_info(id):
     except:
         pass
 
-    return traffic_this_month, traffic_limit, days_remaining, user_active_until
+    return traffic_this_month, traffic_limit, days_remaining, user_active_until, traffic_today, daily_traffic_limit
 
 @blueprint.route('/<id>/')
 def user_dashboard(id):
@@ -97,7 +105,7 @@ def user_dashboard(id):
     ss_subscription_url = request.url_root.replace('http://', 'https://') + str(id) + '/subscribe/ss'
     ss_server_links = subscription_conf_generator.generate_conf(user['_id'], user['connect_url'], vless=False, trojan=False, shadowsocks=True, enabled_tiers=enabled_tiers)
 
-    traffic_this_month, traffic_limit, days_remaining, _ = get_user_limitations_info(id)
+    traffic_this_month, traffic_limit, days_remaining, _, traffic_today, daily_traffic_limit = get_user_limitations_info(id)
 
     return render_template('user.jinja', 
         user=user, 
@@ -112,6 +120,8 @@ def user_dashboard(id):
         traffic_this_month=traffic_this_month,
         traffic_limit=traffic_limit,
         days_remaining=days_remaining,
+        traffic_today=traffic_today,
+        daily_traffic_limit=daily_traffic_limit,
     )
 
 @blueprint.route('/<id>/<file_name>.yaml')
@@ -132,7 +142,7 @@ def user_config(id, file_name):
             enabled_tiers.append(i)
 
     main_info_entries = []
-    traffic_this_month, traffic_limit, days_remaining, user_active_until = get_user_limitations_info(id)
+    traffic_this_month, traffic_limit, days_remaining, user_active_until, traffic_today, daily_traffic_limit = get_user_limitations_info(id)
     if days_remaining is not None:
         if days_remaining <= 0:
             main_info_entries.append(f"🚨 0 days remaining")

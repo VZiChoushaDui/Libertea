@@ -274,7 +274,7 @@
             </div>
         </div>
 
-        {% if traffic_limit > 0 or days_remaining is not none %}
+        {% if traffic_limit > 0 or daily_traffic_limit > 0 or days_remaining is not none %}
         <div class="step stats-step">
             <div class="row justify-content-center">
                 {% if traffic_limit > 0 %}
@@ -286,6 +286,17 @@
                         {% endif %}
                     </div>
                     <div class="stats-title">Traffic in {{ month_name }}</div>
+                </div>
+                {% endif %}
+                {% if daily_traffic_limit > 0 %}
+                <div class="col-6">
+                    <div class="stats-value">
+                        {{ traffic_today }}<span class="gb">GB</span> / {{ daily_traffic_limit }}<span class="gb">GB</span>
+                        {% if daily_traffic_limit < traffic_today %}
+                        <i class="fa-solid fa-triangle-exclamation" style="color: orange; font-size: 0.8em;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="stats-title">Traffic today</div>
                 </div>
                 {% endif %}
                 {% if days_remaining is not none %}

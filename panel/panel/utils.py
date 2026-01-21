@@ -57,6 +57,11 @@ def ___update_user_configuration_cache(db=None):
             user_monthly_traffic = float(user.get("monthly_traffic", -1))
             user_traffic_this_month = float(user.get("__cache_traffic_this_month", '0'))
             user_has_traffic_remaining = user_monthly_traffic < 0 or user_traffic_this_month < user_monthly_traffic
+            
+            user_daily_traffic = float(user.get("daily_traffic", -1))
+            user_traffic_today = float(user.get("__cache_traffic_today", '0'))
+            user_has_daily_traffic_remaining = user_daily_traffic < 0 or user_traffic_today < user_daily_traffic
+
             user_active = user_active_until > datetime.now()
 
             cur_user_config = {
@@ -64,7 +69,7 @@ def ___update_user_configuration_cache(db=None):
                 'monthly_traffic': user_monthly_traffic,
                 'active_until': user_active_until,
                 'active': user_active,
-                'has_traffic_remaining': user_has_traffic_remaining,
+                'has_traffic_remaining': user_has_traffic_remaining and user_has_daily_traffic_remaining,
             } 
             ___user_configuration_cache[user["_id"]] = cur_user_config
             ___user_configuration_cache[user["connect_url"]] = cur_user_config
@@ -134,7 +139,7 @@ def create_user(note, referrer=None, max_ips=None):
 
     raise Exception("Failed to update HAProxy users list")
 
-def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_for_subscription=None, monthly_traffic=-1, user_active_until=''):
+def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_for_subscription=None, monthly_traffic=-1, daily_traffic=-1, user_active_until=''):
     client = config.get_mongo_client()
     db = client[config.MONGODB_DB_NAME]
     users = db.users
@@ -150,6 +155,9 @@ def update_user(panel_id, note=None, max_ips=None, referrer=None, tier_enabled_f
     if monthly_traffic is not None:
         if isinstance(monthly_traffic, int) or isinstance(monthly_traffic, float):
             users.update_one({"_id": panel_id}, {"$set": {"monthly_traffic": monthly_traffic}})
+    if daily_traffic is not None:
+        if isinstance(daily_traffic, int) or isinstance(daily_traffic, float):
+            users.update_one({"_id": panel_id}, {"$set": {"daily_traffic": daily_traffic}})
     if user_active_until is not None:
         try:
             if user_active_until != '':
@@ -491,6 +499,9 @@ def online_route_get_all(max_age_secs=300, db=None):
         db = client[config.MONGODB_DB_NAME]
     online_routes = db.online_routes
     for online_route in online_routes.find():
+        if 'deleted' in online_route and online_route['deleted']:
+            continue
+
         ip = online_route["_id"]
         last_seen = online_route["last_seen"]
         if (now - last_seen).total_seconds() < max_age_secs:
