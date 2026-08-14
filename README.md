@@ -25,6 +25,7 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with a
 	* [Some of my servers or CDN plans have limited traffic. Can I prioritize servers?](#SomeofmyserversorCDNplanshavelimitedtraffic.CanIprioritizeservers)
 	* [How can I backup my Libertea installation, or move it to another server?](#HowcanIbackupmyLiberteainstallationormoveittoanotherserver)
 	* [I want to have my own website on the same server running on port 80/443. Can I still use Libertea?](#Iwanttohavemyownwebsiteonthesameserverrunningonport80443.CanIstilluseLibertea)
+	* [Can I use my own SSL certificate?](#CanIusemyownSSLcertificate)
 	* [Can I use Libertea with a custom reverse proxy?](#CanIuseLiberteawithacustomreverseproxy)
 	* [Can I use the beta version of Libertea?](#CanIusethebetaversionofLibertea)
 	* [How can I change the Libertea panel password or panel domain?](#HowcanIchangetheLiberteapanelpasswordorpaneldomain)
@@ -134,6 +135,20 @@ When you want to restore it on another server, after copying the folder, just ru
 ### <a name='Iwanttohavemyownwebsiteonthesameserverrunningonport80443.CanIstilluseLibertea'></a>I want to have my own website on the same server running on port 80/443. Can I still use Libertea?
 
 Libertea uses port 80 and 443 for its own purposes and needs to listen to ports 80/443, but you can configure Libertea as a *reverse proxy* for your website or services. To do this, configure your website/services on http on a different port (e.g. `8080`), and then go to the *Settings* tab in the Libertea admin panel, and set `127.0.0.1:8080` as the Camouflage domain. This way, Libertea will forward all requests to your website.
+
+
+
+### <a name='CanIusemyownSSLcertificate'></a>Can I use my own SSL certificate?
+
+Yes. Libertea issues certificates with Let's Encrypt by default. If Let's Encrypt is unreachable, or you already have a certificate, place a *combined PEM* (the full certificate chain followed by the private key) at:
+
+    /root/libertea/certs/<your-domain>.pem
+
+Use the exact domain name as the filename (for example `/root/libertea/certs/vpn.example.com.pem`). Libertea will install that file into HAProxy and will not call Let's Encrypt for that domain. To go back to Let's Encrypt, remove the file.
+
+You can create the combined PEM with:
+
+    cat fullchain.pem privkey.pem > /root/libertea/certs/vpn.example.com.pem
 
 
 

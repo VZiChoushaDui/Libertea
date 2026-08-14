@@ -68,3 +68,15 @@ Libertea 使用基于 SSL 的协议，因此流量与正常的 HTTPS 流量无�
 ##### 我的一些服务器或 CDN 计划流量有限。我可以优先考虑服务器吗？
 
 是的。您可以为每个域和二级代理设置优先级；用户的设备将首先尝试优先级较高的路由，只有在这些路由不可用时才使用优先级较低的路由。这样，您就可以根据需要优化每个服务器/域的流量使用。
+
+##### 我可以使用自己的 SSL 证书吗？
+
+可以。Libertea 默认通过 Let's Encrypt 签发证书。如果无法访问 Let's Encrypt，或你已有证书，请将*合并 PEM*（完整证书链，后接私钥）放到：
+
+    /root/libertea/certs/<your-domain>.pem
+
+文件名必须与域名完全一致（例如 `/root/libertea/certs/vpn.example.com.pem`）。Libertea 会把该文件安装到 HAProxy，并且不会再为该域名调用 Let's Encrypt。若要恢复 Let's Encrypt，删除该文件即可。
+
+可用以下命令生成合并 PEM：
+
+    cat fullchain.pem privkey.pem > /root/libertea/certs/vpn.example.com.pem

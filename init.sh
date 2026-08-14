@@ -485,6 +485,7 @@ echo "    - outbound-direct (sing-box 1.13.1)..."
 
 echo " ** Installing web panel..."
 mkdir -p ./data
+mkdir -p "$DIR/certs"
 touch ./data/all-domains-ever.lst
 cp panel/libertea-panel.service /etc/systemd/system/
 # replace {rootpath} with the path to the root of the project

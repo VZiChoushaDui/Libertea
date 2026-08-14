@@ -72,13 +72,16 @@ def update_certificates():
     domains.append(config.get_panel_domain())
 
     needs_reload = False
+    if certbot.cleanup_invalid_certs():
+        needs_reload = True
+
     for domain in domains:
         log_cron(cron_uid, "Updating certificate for " + domain)
         result = certbot.generate_certificate(domain, retry=False, reload_haproxy=False)
         log_cron(cron_uid, "Result for " + domain + ": " + result)
         if result in ['success', 'failed_but_changed']:
             needs_reload = True
-    
+
     if needs_reload:
         log_cron(cron_uid, "Reloading HAProxy")
         sysops.haproxy_reload()
@@ -140,6 +143,8 @@ def create_app():
     try:
         sysops.regenerate_camouflage_cert()
         # update_certificates()
+        if certbot.cleanup_invalid_certs():
+            sysops.haproxy_reload()
         health_check.update_health_cache()
     except:
         traceback.print_exc()
