@@ -217,6 +217,49 @@
                 <i style="opacity: 0.75; font-size: 12px;">Note: currently does not work with Shadowsocks.</i>
             </label>
         </div>
+
+        <hr class="my-4">
+
+        <div class="form-group mb-3">
+            <label for="hosts_textarea" class="fw-bold">Static DNS hosts</label>
+            <small class="form-text text-muted d-block mb-1">
+                One entry per line: <code>domain ip</code> — e.g. <code>example.com 1.2.3.4</code><br>
+                These mappings override DNS resolution for the specified domains.
+            </small>
+            <textarea class="form-control font-monospace" id="hosts_textarea" name="hosts_textarea"
+                      rows="5" placeholder="example.com 1.2.3.4&#10;other.com 10.0.0.1">{{ hosts_textarea }}</textarea>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="direct_textarea" class="fw-bold">Outbound bypass list</label>
+            <small class="form-text text-muted d-block mb-1">
+                One entry per line: domain suffix, IP address, or CIDR range — e.g. <code>.example.com</code>, <code>1.2.3.4</code>, <code>10.0.0.0/8</code><br>
+                Traffic to these destinations is sent directly <b>from this server</b>, bypassing the outbound VPN.<br>If you wish to send some traffic directly from client's device, use Clash custom rules section instead.
+            </small>
+            <textarea class="form-control font-monospace" id="direct_textarea" name="direct_textarea"
+                      rows="5" placeholder=".example.com&#10;1.2.3.4&#10;10.0.0.0/8">{{ direct_textarea }}</textarea>
+        </div>
+
+        <div class="form-group mb-4">
+            <label for="block_textarea" class="fw-bold">Block list</label>
+            <small class="form-text text-muted d-block mb-1">
+                One entry per line: domain suffix, IP address, or CIDR range — e.g. <code>.ads.example.com</code>, <code>1.2.3.4</code>, <code>192.168.0.0/16</code><br>
+                Traffic to these destinations is blocked at both DNS and routing level.
+            </small>
+            <textarea class="form-control font-monospace" id="block_textarea" name="block_textarea"
+                      rows="5" placeholder=".ads.example.com&#10;1.2.3.4&#10;192.168.0.0/16">{{ block_textarea }}</textarea>
+        </div>
+
+        <div class="form-group mb-4">
+            <label for="clash_custom_rules_textarea" class="fw-bold">Clash custom rules</label>
+            <small class="form-text text-muted d-block mb-1">
+                One raw Clash rule per line — e.g. <code>DOMAIN-SUFFIX,example.com,REJECT</code> or <code>DOMAIN-SUFFIX,example.com,DIRECT</code><br>
+                These rules are injected into the Clash config before the final <code>MATCH</code> rule. They only affect Clash clients.<br>
+                Appropriate destinations: <code>REJECT</code> (block), <code>DIRECT</code> (bypass VPN), <code>main</code> (route through VPN).
+            </small>
+            <textarea class="form-control font-monospace" id="clash_custom_rules_textarea" name="clash_custom_rules_textarea"
+                      rows="8" placeholder="DOMAIN-SUFFIX,example.com,REJECT&#10;DOMAIN-SUFFIX,example2.com,DIRECT&#10;DOMAIN-SUFFIX,example3.com,main">{{ clash_custom_rules_textarea }}</textarea>
+        </div>
     </div>
     <button type="submit" class="btn btn-primary">Save</button>
 </form>

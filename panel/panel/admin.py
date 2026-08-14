@@ -716,6 +716,12 @@ def app_settings():
         tier_enabled_for_subscription[str(i)] = settings.get_tier_enabled_for_subscription(i)
     print(tier_enabled_for_subscription)
 
+    ob = outbounds_module
+    hosts_textarea              = ob.get_hosts_list()
+    direct_textarea             = ob.get_direct_list()
+    block_textarea              = ob.get_block_list()
+    clash_custom_rules_textarea = ob.get_clash_custom_rules()
+
     return render_template('admin/settings.jinja',
         page='settings',
         libertea_version=config.LIBERTEA_VERSION,
@@ -737,10 +743,39 @@ def app_settings():
         proxygroup_type_selected=proxygroup_type_selected,
         tier_enabled_for_subscription=tier_enabled_for_subscription,
         use_warp=settings.get_use_warp(),
+        hosts_textarea=hosts_textarea,
+        direct_textarea=direct_textarea,
+        block_textarea=block_textarea,
+        clash_custom_rules_textarea=clash_custom_rules_textarea,
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
 def app_settings_save():
+    ob = outbounds_module
+    needs_outbound_restart = False
+
+    hosts_text = request.form.get('hosts_textarea', None)
+    if hosts_text is not None:
+        ob.set_hosts_list(hosts_text)
+        needs_outbound_restart = True
+
+    direct_text = request.form.get('direct_textarea', None)
+    if direct_text is not None:
+        ob.set_direct_list(direct_text)
+        needs_outbound_restart = True
+
+    block_text = request.form.get('block_textarea', None)
+    if block_text is not None:
+        ob.set_block_list(block_text)
+        needs_outbound_restart = True
+
+    clash_custom_rules_text = request.form.get('clash_custom_rules_textarea', None)
+    if clash_custom_rules_text is not None:
+        ob.set_clash_custom_rules(clash_custom_rules_text)
+
+    if needs_outbound_restart:
+        sysops.apply_outbound_config()
+
     max_ips = request.form.get('max_ips', None)
     proxy_port = request.form.get('proxy_port', None)
     single_file_clash = request.form.get('single_file_clash', None)
