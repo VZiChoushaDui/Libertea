@@ -9,6 +9,13 @@ dns:
   nameserver:
     - 4.2.2.4
     - 8.8.8.8
+  respect-rules: true
+  direct-nameserver:
+    - 8.8.8.8
+  direct-nameserver-follow-policy: false
+  proxy-server-nameserver:
+    - 8.8.8.8
+    - 4.2.2.4
 
 tun:
   enable: true
