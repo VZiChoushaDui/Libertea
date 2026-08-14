@@ -182,7 +182,7 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
     if [ "$LIBERTEA_IRAN" = "1" ]; then
         apt-get install -q -y docker-compose >/dev/null
     else
-        apt-get install docker-compose-plugin >/dev/null
+        apt-get install -q -y docker-compose-plugin >/dev/null
     fi
 
     # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313

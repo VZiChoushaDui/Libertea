@@ -169,7 +169,7 @@ echo "    - Installing docker compose..."
 if [ "$LIBERTEA_IRAN" = "1" ]; then
     apt-get install -q -y docker-compose | sed 's/^/        /'
 else
-    apt-get install -q docker-compose-plugin | sed 's/^/        /'
+    apt-get install -q -y docker-compose-plugin | sed 's/^/        /'
 fi
 
 # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313

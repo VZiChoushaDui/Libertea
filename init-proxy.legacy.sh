@@ -135,7 +135,7 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
         sh /tmp/get-docker.sh >/dev/null
     fi
     echo " ** Installing docker compose..."
-    apt-get install docker-compose-plugin >/dev/null
+    apt-get install -q -y docker-compose-plugin >/dev/null
 
     # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
     if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
