@@ -129,7 +129,7 @@ def get_panel_domain():
     return os.environ.get('PANEL_DOMAIN')
 
 def get_mongodb_connection_string():
-    connstr = "mongodb://" + MONGODB_USER + ":" + get_mongodb_password() + "@" + MONGODB_HOST
+    connstr = "mongodb://" + MONGODB_USER + ":" + get_mongodb_password() + "@" + MONGODB_HOST + "/?authSource=admin"
     # print("connstr:", connstr)
     return connstr
 
