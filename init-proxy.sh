@@ -8,6 +8,9 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+
 LIBERTEA_IRAN=0
 POSITIONAL=()
 for arg in "$@"; do
@@ -133,7 +136,6 @@ if [ -f .libertea.main ]; then
 fi
 
 touch .libertea.proxy
-export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
 

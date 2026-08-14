@@ -8,6 +8,9 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+
 CONN_PROXY_IP="$1"
 PANEL_SECRET_KEY="$2"
 PROXY_REGISTER_ENDPOINT="$3"
@@ -93,7 +96,6 @@ if [ -f .libertea.main ]; then
 fi
 
 touch .libertea.proxy
-export DEBIAN_FRONTEND=noninteractive
 
 echo " ** Installing dependencies..."
 

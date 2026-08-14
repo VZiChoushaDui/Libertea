@@ -66,6 +66,7 @@ fi
 
 touch .libertea.main
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 
 echo " ** Installing dependencies..."
 if ! command -v sed &> /dev/null; then

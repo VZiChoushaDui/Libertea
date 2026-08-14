@@ -27,6 +27,9 @@ if [ "$COMMAND" != "uninstall" ]; then
         exit 1
     fi
 
+    export DEBIAN_FRONTEND=noninteractive
+    export NEEDRESTART_MODE=a
+
     # Make sure git is installed
     if ! command -v git &> /dev/null; then
         echo " ** Installing git..."
