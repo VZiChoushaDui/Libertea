@@ -1,5 +1,6 @@
 __pycache__
 /data
+/certs
 .env
 .env.bak
 .vscode
