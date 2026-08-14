@@ -598,6 +598,19 @@ set -e
 
 echo "    - Starting MongoDB..."
 compose up -d mongodb
+sleep 3
+if docker logs libertea-mongodb 2>&1 | grep -q "UPGRADE PROBLEM"; then
+    echo "    - MongoDB data files need a version upgrade..."
+    set +e
+    ./bash-tools/upgrade-mongodb.sh
+    upgrade_rc=$?
+    set -e
+    if [ "$upgrade_rc" -ne 0 ]; then
+        echo "ERROR: MongoDB data-file upgrade failed."
+        exit 1
+    fi
+    compose up -d mongodb
+fi
 echo -n "    - Waiting for MongoDB..."
 for i in $(seq 1 60); do
     if (echo > /dev/tcp/localhost/27017) 2>/dev/null; then
@@ -664,16 +677,6 @@ if ! crontab -l | grep -q "autoupdate.sh"; then
     (crontab -l 2>/dev/null; echo "") | crontab -
     (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
 fi
-
-echo " ** Checking mongodb..."
-set +e
-./bash-tools/upgrade-mongodb.sh
-# Only bring services back if the upgrade script removed the mongodb container.
-# An unconditional rm+up here can interrupt first-boot root-user init.
-if ! docker inspect libertea-mongodb >/dev/null 2>&1; then
-    compose up -d $COMPOSE_UP_SERVICES
-fi
-set -e
 
 echo " ** Waiting for services to start..."
 
