@@ -310,15 +310,44 @@ def users():
 
     month_short_name = datetime.now().strftime("%b")
     
-    all_users = [{
-        "id": user["_id"],
-        "note": user["note"],
-        "created_at_timestamp": user["created_at"].timestamp(),
-        "traffic_today": str(user["__cache_traffic_today"]) if "__cache_traffic_today" in user else "0",
-        "traffic_this_month": str(user["__cache_traffic_this_month"]) if "__cache_traffic_this_month" in user else "0",
-        "traffic_past_30_days": str(user["__cache_traffic_past_30_days"]) if "__cache_traffic_past_30_days" in user else "0",
-        "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
-    } for user in users.find()]
+    def _build_user_row(user):
+        traffic_today = float(user["__cache_traffic_today"]) if "__cache_traffic_today" in user else 0.0
+        traffic_this_month = float(user["__cache_traffic_this_month"]) if "__cache_traffic_this_month" in user else 0.0
+        daily_limit = float(user["daily_traffic"]) if "daily_traffic" in user and user["daily_traffic"] not in (None, -1, "-1") else -1
+        monthly_limit = float(user["monthly_traffic"]) if "monthly_traffic" in user and user["monthly_traffic"] not in (None, -1, "-1") else -1
+
+        is_expired = False
+        active_until = user.get("user_active_until", "") or ""
+        try:
+            if active_until:
+                if datetime.strptime(active_until, '%Y-%m-%d %H:%M') < datetime.now():
+                    is_expired = True
+        except Exception:
+            pass
+
+        daily_exceeded = daily_limit > 0 and traffic_today >= daily_limit
+        monthly_exceeded = monthly_limit > 0 and traffic_this_month >= monthly_limit
+        daily_remaining = round(max(daily_limit - traffic_today, 0), 2) if daily_limit > 0 else None
+        monthly_remaining = round(max(monthly_limit - traffic_this_month, 0), 2) if monthly_limit > 0 else None
+
+        return {
+            "id": user["_id"],
+            "note": user["note"],
+            "created_at_timestamp": user["created_at"].timestamp(),
+            "traffic_today": str(round(traffic_today, 2)),
+            "traffic_this_month": str(round(traffic_this_month, 2)),
+            "traffic_past_30_days": str(user["__cache_traffic_past_30_days"]) if "__cache_traffic_past_30_days" in user else "0",
+            "ips_today": user["__cache_ips_today"] if "__cache_ips_today" in user else 0,
+            "daily_limit": daily_limit,
+            "monthly_limit": monthly_limit,
+            "daily_remaining": daily_remaining,
+            "monthly_remaining": monthly_remaining,
+            "daily_exceeded": daily_exceeded,
+            "monthly_exceeded": monthly_exceeded,
+            "is_expired": is_expired,
+        }
+
+    all_users = [_build_user_row(user) for user in users.find()]
 
     return render_template('admin/users.jinja', 
         page='users',

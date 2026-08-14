@@ -1,5 +1,45 @@
 {% extends "admin/base.jinja" %}
 {% block content %}
+<style>
+    .user-row-expired {
+        background-color: rgba(220, 53, 69, 0.10) !important;
+        border-left: 3px solid #dc3545 !important;
+    }
+    .user-row-exceeded {
+        background-color: rgba(255, 140, 0, 0.10) !important;
+        border-left: 3px solid #fd7e14 !important;
+    }
+    .user-row-expired:hover {
+        background-color: rgba(220, 53, 69, 0.18) !important;
+    }
+    .user-row-exceeded:hover {
+        background-color: rgba(255, 140, 0, 0.18) !important;
+    }
+    .traffic-limit-badge {
+        font-size: 0.72em;
+        padding: 1px 5px;
+        border-radius: 3px;
+        margin-left: 3px;
+        vertical-align: middle;
+    }
+    .badge-exceeded {
+        background-color: #fd7e14;
+        color: #fff;
+    }
+    .badge-expired {
+        background-color: #dc3545;
+        color: #fff;
+    }
+    .remaining-traffic {
+        font-size: 0.78em;
+        opacity: 0.8;
+    }
+    .remaining-zero {
+        color: #dc3545;
+        font-weight: 600;
+        opacity: 1;
+    }
+</style>
 <div class="w-100 mt-4 px-3">
     <div class="float-start mb-2">
         Sort by
@@ -12,7 +52,6 @@
                 <li><a class="dropdown-item" href="#" data-sort-id="created-at-asc" data-sort-field="data-created-at" data-order="asc" onclick="sort_items(this)">Created At (Oldest first)</a></li>
                 <li><a class="dropdown-item" href="#" data-sort-id="traffic-desc" data-sort-field="data-traffic-this-month" data-order="desc" onclick="sort_items(this)">Traffic in {{ month_long_name }} (Highest first)</a></li>
                 <li><a class="dropdown-item" href="#" data-sort-id="traffic-today-desc" data-sort-field="data-traffic-today" data-order="desc" onclick="sort_items(this)">Traffic Today (Highest first)</a></li>
-                <!-- <li><a class="dropdown-item" href="#" data-sort-id="ips-desc" data-sort-field="data-ips-today" data-order="desc" onclick="sort_items(this)">IPs today (Highest first)</a></li> -->
             </ul>
         </div>
     </div>
@@ -27,10 +66,24 @@
     <i class="fa-solid fa-circle-exclamation warning-icon"></i> Warning: You don't have any domains or secondary proxies set for your VPN. User's won't be able to connect to your VPN until you add a domain.
 </div>
 {% endif %}
+
+<!-- Legend -->
+<div class="w-100 px-3 mb-1 mt-1" style="font-size: 0.82em; color: #666;">
+    <span style="display:inline-block; width:10px; height:10px; background:#dc3545; border-radius:2px; margin-right:4px;"></span>Expired &nbsp;
+    <span style="display:inline-block; width:10px; height:10px; background:#fd7e14; border-radius:2px; margin-right:4px;"></span>Traffic limit reached
+</div>
+
 <div class="list-group list-group-flush mt-2 users-list">
     {% for user in users %}
+        {% if user.is_expired %}
+            {% set row_class = "user-row-expired" %}
+        {% elif user.daily_exceeded or user.monthly_exceeded %}
+            {% set row_class = "user-row-exceeded" %}
+        {% else %}
+            {% set row_class = "" %}
+        {% endif %}
         <a href="/{{ admin_uuid }}/users/{{ user.id }}/" 
-            class="list-group-item list-group-item-action" 
+            class="list-group-item list-group-item-action {{ row_class }}" 
             data-created-at="{{ user.created_at_timestamp }}" 
             data-traffic-this-month="{{ user.traffic_this_month }}"
             data-traffic-past-30-days="{{ user.traffic_past_30_days }}"
@@ -41,15 +94,40 @@
                     <div class="row">
                         <div class="col-7 list-item-title">
                             {{ user.note }}
+                            {% if user.is_expired %}
+                                <span class="traffic-limit-badge badge-expired">Expired</span>
+                            {% endif %}
+                            {% if user.daily_exceeded %}
+                                <span class="traffic-limit-badge badge-exceeded">Daily limit</span>
+                            {% endif %}
+                            {% if user.monthly_exceeded %}
+                                <span class="traffic-limit-badge badge-exceeded">Monthly limit</span>
+                            {% endif %}
                         </div>
                         <div class="col-5 list-item-subtitle" style="text-align: right;">
-                            {{ user.traffic_this_month }} GB @ {{ month_name }}
+                            {% if user.monthly_limit > 0 %}
+                                {% if user.monthly_exceeded %}
+                                    <span class="remaining-zero">0 GB left</span> / {{ user.monthly_limit }} GB @ {{ month_name }}
+                                {% else %}
+                                    <span class="remaining-traffic">{{ user.monthly_remaining }} GB left</span> / {{ user.monthly_limit }} GB @ {{ month_name }}
+                                {% endif %}
+                            {% else %}
+                                {{ user.traffic_this_month }} GB @ {{ month_name }}
+                            {% endif %}
                         </div>
                         <div class="col-7 list-item-subtitle">
                             {{ user.id }}
                         </div>
                         <div class="col-5 list-item-subtitle" style="text-align: right;">
-                            {{ user.traffic_today }} GB today
+                            {% if user.daily_limit > 0 %}
+                                {% if user.daily_exceeded %}
+                                    <span class="remaining-zero">0 GB left</span> / {{ user.daily_limit }} GB today
+                                {% else %}
+                                    <span class="remaining-traffic">{{ user.daily_remaining }} GB left</span> / {{ user.daily_limit }} GB today
+                                {% endif %}
+                            {% else %}
+                                {{ user.traffic_today }} GB today
+                            {% endif %}
                         </div>
                     </div>
                 </div>
