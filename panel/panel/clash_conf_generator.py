@@ -55,7 +55,13 @@ def get_all_servers(db):
         ports = [443]
 
     secondary_proxy_domains_all = set()
-    for secondary_route in utils.online_route_get_all(db=db):
+
+    max_seen = 300
+    if settings.get_add_domains_even_if_inactive(db=db):
+        max_seen = 1000000000
+    for secondary_route in utils.online_route_get_all(max_age_secs=max_seen, db=db):
+        if '\n' in secondary_route:
+            continue
         server_entry_type = utils.get_route_entry_type(secondary_route, db=db)
         tier = utils.get_domain_or_online_route_tier(secondary_route, db=db)
         if tier is None:
@@ -70,6 +76,8 @@ def get_all_servers(db):
 
     for server in utils.get_domains(db=db):
         if server in secondary_proxy_domains_all:
+            continue
+        if '\n' in server:
             continue
         if settings.get_add_domains_even_if_inactive(db=db) or utils.check_domain_set_properly(server, db=db) in ['active', 'cdn-disabled']:
             server_entry_type = utils.get_route_entry_type(server, db=db)
@@ -95,6 +103,21 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
     for server, port, tier, server_entry_type in servers:
         if enabled_tiers is not None and str(tier) not in enabled_tiers:
             continue
+            
+        if '\n' in server:
+            continue
+
+        server = server.replace('\n','')
+        server = server.replace("'", "")
+        server = server.replace('"', '')
+        server = server.replace('<', '')
+        server = server.replace('>', '')
+        server = server.replace(' ', '')
+        server = server.replace(';', '')
+        server = server.replace('=', '')
+        server = server.replace('/', '')
+        server = server.replace('#', '')
+
 
         server_ips_str = utils.get_domain_dns_domain(server, db=db)
         server_ips = [server_ips_str]
