@@ -538,8 +538,12 @@ set -e
 systemctl restart libertea-panel.service
 
 COMPOSE_BUILD_ARGS=""
+COMPOSE_UP_EXTRAS=""
 if [ "$LIBERTEA_IRAN" = "1" ]; then
     COMPOSE_BUILD_ARGS="--build-arg DOCKER_REGISTRY=${LIBERTEA_DOCKER_REGISTRY} --build-arg ALPINE_MIRROR=${LIBERTEA_ALPINE_MIRROR} --build-arg UBUNTU_MIRROR=${LIBERTEA_UBUNTU_MIRROR} --build-arg DEBIAN_MIRROR=${LIBERTEA_DEBIAN_MIRROR} --build-arg PIP_INDEX_URL=${PIP_INDEX_URL} --build-arg PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}"
+    # Dockerfile wget's xray-plugin / shadowsocks-rust from GitHub.
+    COMPOSE_UP_EXTRAS="--scale provider-shadowsocks-v2ray=0"
+    echo "    - Skipping provider-shadowsocks-v2ray (image build needs GitHub)"
 fi
 
 if [ "$ENVIRONMENT" == "dev" ]; then
@@ -623,7 +627,7 @@ if [ "$mongo_ready" -ne 1 ]; then
 fi
 echo ""
 echo "    - Starting remaining containers..."
-compose up -d
+compose up -d $COMPOSE_UP_EXTRAS
 
 mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
@@ -644,7 +648,7 @@ set +e
 # Only bring services back if the upgrade script removed the mongodb container.
 # An unconditional rm+up here can interrupt first-boot root-user init.
 if ! docker inspect libertea-mongodb >/dev/null 2>&1; then
-    compose up -d
+    compose up -d $COMPOSE_UP_EXTRAS
 fi
 set -e
 
