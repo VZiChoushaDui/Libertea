@@ -101,6 +101,15 @@ def invalidate_caches(signum):
     stats.cleanup_json_cache(force=True)
     log_cron('invalidate_caches', "DONE invalidating caches")
 
+@uwsgidecorators.postfork
+def start_outbound_health_agents():
+    # Accept threads started in the master do not survive uWSGI fork.
+    outbounds._started = False
+    try:
+        outbounds.start_health_agents()
+    except Exception:
+        traceback.print_exc()
+
 def create_app():
     static_uuid = config.get_static_resource_uuid()
     app = Flask(__name__, static_url_path='/' + static_uuid)
@@ -162,13 +171,17 @@ def create_app():
         traceback.print_exc()
         pass
 
-    # Neither of these may keep the panel from starting: without it there is no
-    # way to fix a broken outbound setup.
+    # Health agents are started in start_outbound_health_agents after uWSGI
+    # forks. Binding here in the master leaves listen sockets with no accept
+    # thread, and /outbounds/ then waits 1s per slot for STATS.
     try:
-        print("Starting outbound health agents")
-        outbounds.start_health_agents()
-    except:
-        traceback.print_exc()
+        import uwsgi  # noqa: F401
+    except ImportError:
+        try:
+            print("Starting outbound health agents")
+            outbounds.start_health_agents()
+        except Exception:
+            traceback.print_exc()
 
     try:
         print("Updating singbox outbound config")

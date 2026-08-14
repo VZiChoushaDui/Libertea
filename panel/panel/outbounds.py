@@ -1055,6 +1055,7 @@ import threading
 import statistics
 import requests as _requests
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 # _health_status:  {slot: bool}              — current up/down for HAProxy
 # _health_fails:   {slot: int}               — consecutive failure counter
@@ -1113,44 +1114,54 @@ def _get_stats(slot):
     loss_pct = round(samples.count(-1) / total * 100, 1) if total >= 4 else None
     return median_ms, loss_pct, total
 
+def _query_slot_health(slot):
+    """Return (slot, stats_dict) or (slot, None) if that ctrl port does not answer."""
+    port = CTRL_BASE_PORT + slot
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(1)
+        s.connect(('127.0.0.1', port))
+        s.sendall(b'STATS\n')
+        data = s.recv(128).decode().strip()
+        s.close()
+        parts = data.split('|')
+        up = parts[0] == 'up'
+        ping = int(parts[1]) if len(parts) > 1 and parts[1] != '?' else None
+        loss = float(parts[2]) if len(parts) > 2 and parts[2] != '?' else None
+        samples = int(parts[3]) if len(parts) > 3 and parts[3].isdigit() else 0
+        weight = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else 100
+
+        if samples == 0:
+            display_status = 'checking'
+        elif samples < HEALTH_MIN_SAMPLES_UI:
+            display_status = 'up' if up else 'checking'
+        else:
+            display_status = 'up' if up else 'down'
+
+        return slot, {
+            'up': up,
+            'ping': ping,
+            'loss': loss,
+            'samples': samples,
+            'weight': weight,
+            'display_status': display_status,
+        }
+    except Exception:
+        return slot, None
+
 def get_all_health():
     """Query ctrl ports for stats. Works across uWSGI workers.
     Returns {slot: {'up': bool, 'ping': int|None, 'loss': float|None,
-                    'samples': int, 'display_status': 'checking'|'up'|'down'}}."""
+                    'samples': int, 'display_status': 'checking'|'up'|'down'}}.
+
+    All slots are queried in parallel so a missing accept thread costs ~1s
+    total, not 1s per slot.
+    """
     result = {}
-    for slot in range(MAX_OUTBOUNDS):
-        port = CTRL_BASE_PORT + slot
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
-            s.connect(('127.0.0.1', port))
-            s.sendall(b'STATS\n')
-            data = s.recv(128).decode().strip()
-            s.close()
-            parts = data.split('|')
-            up = parts[0] == 'up'
-            ping = int(parts[1]) if len(parts) > 1 and parts[1] != '?' else None
-            loss = float(parts[2]) if len(parts) > 2 and parts[2] != '?' else None
-            samples = int(parts[3]) if len(parts) > 3 and parts[3].isdigit() else 0
-            weight = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else 100
-
-            if samples == 0:
-                display_status = 'checking'
-            elif samples < HEALTH_MIN_SAMPLES_UI:
-                display_status = 'up' if up else 'checking'
-            else:
-                display_status = 'up' if up else 'down'
-
-            result[slot] = {
-                'up': up,
-                'ping': ping,
-                'loss': loss,
-                'samples': samples,
-                'weight': weight,
-                'display_status': display_status,
-            }
-        except Exception:
-            pass
+    with ThreadPoolExecutor(max_workers=MAX_OUTBOUNDS) as pool:
+        for slot, stats in pool.map(_query_slot_health, range(MAX_OUTBOUNDS)):
+            if stats is not None:
+                result[slot] = stats
     return result
 
 def _record_probe(slot, ms):
@@ -1323,12 +1334,35 @@ def _health_check_loop():
 
 
 _started = False
+_agent_lock_fd = None
 
 def start_health_agents():
-    """Start agent TCP servers and the probe loop. Safe to call multiple times."""
-    global _started
+    """Start agent TCP servers and the probe loop. Safe to call multiple times.
+
+    Under uWSGI this must run after fork (see postfork in __init__.py). The
+    master process binds the ports during create_app(), then forks; accept
+    threads do not survive, so later STATS/HAProxy connects sit in the listen
+    queue until they time out. A file lock keeps a single worker as the owner.
+    """
+    global _started, _agent_lock_fd
     if _started:
         return
+
+    import fcntl
+    lock_path = '/tmp/libertea-outbound-health.lock'
+    try:
+        _agent_lock_fd = open(lock_path, 'w')
+        fcntl.flock(_agent_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        if _agent_lock_fd is not None:
+            try:
+                _agent_lock_fd.close()
+            except OSError:
+                pass
+            _agent_lock_fd = None
+        _started = True
+        return
+
     _started = True
 
     failed = []
