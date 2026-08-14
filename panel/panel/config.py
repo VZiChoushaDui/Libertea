@@ -116,6 +116,9 @@ def get_panel_secret_key():
 def get_admin_uuid():
     return os.environ.get('PANEL_ADMIN_UUID')
 
+def get_static_resource_uuid():
+    return os.environ.get('STATIC_RESOURCE_UUID', 'static')
+
 def get_proxy_connect_uuid():
     return os.environ.get('PANEL_PROXY_CONNECT_UUID')
 

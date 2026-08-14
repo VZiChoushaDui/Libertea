@@ -98,7 +98,12 @@ def invalidate_caches(signum):
     log_cron('invalidate_caches', "DONE invalidating caches")
 
 def create_app():
-    app = Flask(__name__)
+    static_uuid = config.get_static_resource_uuid()
+    app = Flask(__name__, static_url_path='/' + static_uuid)
+
+    @app.context_processor
+    def inject_static_prefix():
+        return {'static_prefix': '/' + static_uuid}
 
     print("Updating HAProxy lists")
     sysops.haproxy_update_users_list()

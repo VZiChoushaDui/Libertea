@@ -63,6 +63,7 @@ services:
       - HOSTCONTROLLER_API_KEY=${HOSTCONTROLLER_API_KEY}
       - PANEL_ADMIN_UUID=${PANEL_ADMIN_UUID}
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD}
+      - STATIC_RESOURCE_UUID=${STATIC_RESOURCE_UUID}
     image: libertea/haproxy
     container_name: libertea-haproxy
     volumes:

@@ -2,9 +2,9 @@
 {% block content %}
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+  href="{{ static_prefix }}/vendor/css/flag-icons.min.css"
 />
-<h1 class="mt-5">{{ domain }}</h1>
+<h1>{{ domain }}</h1>
 {% if secondary_proxy %}
 <div class="section text-center mt-1" style="font-size: 16px; font-weight: 400;">
     <span class="server-provider-name spinner text-spinner">⌛</span>
@@ -173,7 +173,7 @@
             Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
             And SSL/TLS encryption mode is set to <strong>Full</strong>.<br />
             <br />
-            <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png" />
+            <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="{{ static_prefix }}/img/cloudflare-full-ssl.png" />
         </div>
     </div>
     {% endif %}
@@ -184,7 +184,7 @@
             <i class="fa-solid fa-circle-exclamation warning-icon mx-1"></i> Make sure your domain is pointing to <strong>{{ server_ip }}</strong><br />
             And SSL/TLS encryption mode is set to <strong>Full</strong>.<br />
             <br />
-            <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="https://raw.githubusercontent.com/VZiChoushaDui/Libertea/master/docs/cloudflare-full-ssl.png" />
+            <img style="max-width: 500px; width: 100%; border: 1px solid #888; border-radius: 20px;" src="{{ static_prefix }}/img/cloudflare-full-ssl.png" />
         </div>
     </div>
     {% endif %}
