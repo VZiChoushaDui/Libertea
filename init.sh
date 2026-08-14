@@ -143,7 +143,13 @@ fi
 
 echo "    - Initializing firewall..."
 set +e
-SSH_PORT=$(netstat -tulpn | grep sshd | cut -d ":" -f 2 | cut -d " " -f 1 | head -n 1)
+SSH_PORT=$(ss -tlpn 2>/dev/null | grep sshd | grep -oP '(?<=:)\d+(?=\s)' | head -n 1)
+if [[ ! $SSH_PORT =~ ^[0-9]+$ ]]; then
+    SSH_PORT=$(ss -tlpn 2>/dev/null | grep ':22' | grep -oP '(?<=:)\d+(?=\s)' | head -n 1)
+fi
+if [[ ! $SSH_PORT =~ ^[0-9]+$ ]]; then
+    SSH_PORT=$(netstat -tulpn 2>/dev/null | grep sshd | cut -d ":" -f 2 | cut -d " " -f 1 | head -n 1)
+fi
 # check if SSH_PORT is a number
 if [[ ! $SSH_PORT =~ ^[0-9]+$ ]]; then
     echo "       WARNING: Could not detect ssh port. Will not touch firewall."
@@ -490,25 +496,74 @@ systemctl restart libertea-panel.service
 if [ "$ENVIRONMENT" == "dev" ]; then
     echo " ** Building docker containers..."
     docker compose -f docker-compose.dev.yml build
-
-    echo " ** Starting docker containers..."
-    set +e
-    docker compose -f docker-compose.dev.yml down >/dev/null
-    docker rm -f libertea-mongodb >/dev/null
-    set -e
-    docker compose -f docker-compose.dev.yml up -d
+    COMPOSE_FILE_ARGS="-f docker-compose.dev.yml"
 else
     echo " ** Pulling docker containers..."
     docker compose pull
     docker compose build
-
-    echo " ** Starting docker containers..."
-    set +e
-    docker compose down >/dev/null
-    docker rm -f libertea-mongodb >/dev/null
-    set -e
-    docker compose up -d
+    COMPOSE_FILE_ARGS=""
 fi
+
+echo " ** Starting docker containers..."
+set +e
+docker compose $COMPOSE_FILE_ARGS down >/dev/null
+set -e
+
+echo "    - Starting MongoDB..."
+docker compose $COMPOSE_FILE_ARGS up -d mongodb
+echo -n "    - Waiting for MongoDB..."
+for i in $(seq 1 60); do
+    if (echo > /dev/tcp/localhost/27017) 2>/dev/null; then
+        break
+    fi
+    echo -n "."
+    sleep 2
+    if [ "$i" -eq 60 ]; then
+        echo ""
+        echo "ERROR: MongoDB port 27017 never opened."
+        exit 1
+    fi
+done
+
+echo ""
+echo "    - Waiting for MongoDB to accept auth..."
+mongo_ready=0
+for i in $(seq 1 60); do
+    if docker exec libertea-mongodb mongosh --quiet --username root --password "$PANEL_MONGODB_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 })" >/dev/null 2>&1; then
+        mongo_ready=1
+        break
+    fi
+
+    # Mongo is up but has no root user (init was interrupted, then skipped
+    # because data/db already existed). Localhost exception can create it.
+    if docker exec libertea-mongodb mongosh --quiet --eval "db.adminCommand({ ping: 1 })" >/dev/null 2>&1; then
+        echo ""
+        echo "    - Creating missing MongoDB root user..."
+        docker exec libertea-mongodb mongosh --quiet --eval "
+            db.getSiblingDB('admin').createUser({
+                user: 'root',
+                pwd: '$PANEL_MONGODB_PASSWORD',
+                roles: [{ role: 'root', db: 'admin' }]
+            })
+        " 2>&1 | sed 's/^/        /'
+        if docker exec libertea-mongodb mongosh --quiet --username root --password "$PANEL_MONGODB_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 })" >/dev/null 2>&1; then
+            mongo_ready=1
+            echo "    - Root user created successfully."
+            break
+        fi
+    fi
+
+    echo -n "."
+    sleep 2
+done
+if [ "$mongo_ready" -ne 1 ]; then
+    echo ""
+    echo "ERROR: MongoDB did not become ready in time."
+    exit 1
+fi
+echo ""
+echo "    - Starting remaining containers..."
+docker compose $COMPOSE_FILE_ARGS up -d
 
 mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
@@ -523,15 +578,13 @@ if ! crontab -l | grep -q "autoupdate.sh"; then
     (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
 fi
 
-echo " ** Checking mongodb..." 
-sleep 5
+echo " ** Checking mongodb..."
 set +e
 ./bash-tools/upgrade-mongodb.sh
-docker rm -f libertea-mongodb
-if [ "$ENVIRONMENT" == "dev" ]; then
-    docker compose -f docker-compose.dev.yml up -d
-else
-    docker compose up -d
+# Only bring services back if the upgrade script removed the mongodb container.
+# An unconditional rm+up here can interrupt first-boot root-user init.
+if ! docker inspect libertea-mongodb >/dev/null 2>&1; then
+    docker compose $COMPOSE_FILE_ARGS up -d
 fi
 set -e
 
@@ -569,60 +622,68 @@ for container in $containers; do
     echo "    ✅ $container started"
 done
 
-# wait for the panel to start 
+# wait for the panel to start (up to 5 restarts, 15s/30s/45s per attempt)
 echo -ne "    ⌛ libertea-panel\r"
+MAX_PANEL_TRIES=5
 try_count=0
 response_code="0"
+panel_try_start=$(date +%s)
 set +e
 response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
 set -e
 while [ "$response_code" != "200" ] && [ "$response_code" != "302" ]; do
     sleep 1
-    if [ $(($try_count)) -eq 0 ] && [ $(( $(date +%s) - start_time )) -gt 45 ]; then
-        echo "    ❌ libertea-panel failed to start. Retrying..."
-        try_count=1
+    elapsed_try=$(( $(date +%s) - panel_try_start ))
 
-        # restart the panel
-        set +e
-        pkill -9 -f uwsgi
-        systemctl kill libertea-panel.service
-        pkill -9 -f uwsgi
-        set -e
-        systemctl restart libertea-panel.service
-
-        echo -ne "    ⌛ libertea-panel\r"
+    if [ $try_count -eq 0 ]; then
+        timeout_threshold=15
+    elif [ $try_count -eq 1 ]; then
+        timeout_threshold=30
+    else
+        timeout_threshold=45
     fi
 
-    if [ $(($try_count)) -gt 0 ] && [ $(( $(date +%s) - start_time )) -gt 100 ]; then
-        echo "*******************************************************"
-        echo "ERROR: Timeout while waiting for panel to start."
-        echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
-        echo "       and include the following information:"
-        echo ""
-        set +e
-        PANEL_LISTENING="True"
-        PANEL_ROOT_STATUS_CODE=""
-        PANEL_ADMIN_STATUS_CODE=""
-        if [ "$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)" == "000" ]; then
-            # check if localhost:1000 is open at all or it's refusing connections
-            PANEL_LISTENING="False"
+    if [ $elapsed_try -gt $timeout_threshold ]; then
+        if [ $try_count -lt $MAX_PANEL_TRIES ]; then
+            try_count=$(( try_count + 1 ))
+            echo "    ❌ libertea-panel failed to start. Retrying ($try_count/$MAX_PANEL_TRIES)..."
+
+            set +e
+            pkill -9 -f uwsgi
+            systemctl kill libertea-panel.service
+            pkill -9 -f uwsgi
+            set -e
+            systemctl restart libertea-panel.service
+
+            panel_try_start=$(date +%s)
+            echo -ne "    ⌛ libertea-panel\r"
+        else
+            echo "*******************************************************"
+            echo "ERROR: Timeout while waiting for panel to start."
+            echo "       Please open an issue on https://github.com/VZiChoushaDui/Libertea/issues/new"
+            echo "       and include the following information:"
+            echo ""
+            set +e
+            PANEL_LISTENING="True"
+            if [ "$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)" == "000" ]; then
+                PANEL_LISTENING="False"
+            fi
+            PANEL_ROOT_STATUS_CODE="$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)"
+            PANEL_ADMIN_STATUS_CODE="$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
+            echo "       - component name: libertea-panel"
+            echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
+            echo "       - OS version: $(cat /etc/os-release | grep -E "^VERSION_ID=" | cut -d "=" -f 2)"
+            echo "       - Docker version: $(docker --version)"
+            echo "       - Panel listening: $PANEL_LISTENING"
+            echo "       - Panel root status code: $PANEL_ROOT_STATUS_CODE"
+            echo "       - Panel admin status code: $PANEL_ADMIN_STATUS_CODE"
+            echo "       Also include the output of the following command:"
+            echo "           tail -n 100 /tmp/libertea-panel.log"
+            echo ""
+            exit 1
         fi
-        PANEL_ROOT_STATUS_CODE="$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/" 2>/dev/null)"
-        PANEL_ADMIN_STATUS_CODE="$(curl --max-time 3 -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
-
-        echo "       - component name: libertea-panel"
-        echo "       - OS: $(cat /etc/os-release | grep -E "^NAME=" | cut -d "=" -f 2)"
-        echo "       - OS version: $(cat /etc/os-release | grep -E "^VERSION_ID=" | cut -d "=" -f 2)"
-        echo "       - Docker version: $(docker --version)"
-        echo "       - Panel listening: $PANEL_LISTENING"
-        echo "       - Panel root status code: $PANEL_ROOT_STATUS_CODE"
-        echo "       - Panel admin status code: $PANEL_ADMIN_STATUS_CODE"
-        echo "       Also include the output of the following command:"
-        echo "           tail -n 100 /tmp/libertea-panel.log"
-        echo ""
-        exit 1
     fi
-    
+
     set +e
     response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:1000/$PANEL_ADMIN_UUID/" 2>/dev/null)"
     set -e
@@ -630,6 +691,7 @@ done
 echo "    ✅ libertea-panel started"
 
 
+if [ "$PANEL_DOMAIN" != "$my_ip" ]; then
 echo " ** Checking domain configuration..."
 while true; do
     status=""
@@ -663,6 +725,7 @@ while true; do
         break
     fi
 done
+fi
 
 panel_ip=$(dig +short "$PANEL_DOMAIN" | head -n 1)
 panel_ip=$(echo "$panel_ip" | tr -d '[:space:]')

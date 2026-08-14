@@ -23,9 +23,21 @@ mkdir -p /etc/ssl/ha-certs
 cp ./fullchain.pem /etc/ssl/ha-certs/selfsigned.pem
 
 echo "Fetching certificate for $CAMOUFLAGE_DOMAIN..."
-openssl s_client -showcerts -connect $CAMOUFLAGE_DOMAIN:443 </dev/null 2>/dev/null | openssl x509 -outform PEM > $CAMOUFLAGE_DOMAIN.cert
-SUBJECT=$(openssl x509 -in $CAMOUFLAGE_DOMAIN.cert -noout -subject -nameopt compat | sed 's/^subject=//g')
-ISSUER=$(openssl x509 -in $CAMOUFLAGE_DOMAIN.cert -noout -issuer -nameopt compat | sed 's/^issuer=//g')
+DEFAULT_SUBJECT="CN=$CAMOUFLAGE_DOMAIN, O=Internet Security Research Group, C=US"
+DEFAULT_ISSUER="CN=R11, O=Let's Encrypt, C=US"
+
+timeout 10 openssl s_client -showcerts -connect "$CAMOUFLAGE_DOMAIN:443" </dev/null 2>/dev/null | openssl x509 -outform PEM > "$CAMOUFLAGE_DOMAIN.cert" || true
+
+if openssl x509 -in "$CAMOUFLAGE_DOMAIN.cert" -noout 2>/dev/null; then
+    SUBJECT=$(openssl x509 -in "$CAMOUFLAGE_DOMAIN.cert" -noout -subject -nameopt compat | sed 's/^subject=//g')
+    ISSUER=$(openssl x509 -in "$CAMOUFLAGE_DOMAIN.cert" -noout -issuer -nameopt compat | sed 's/^issuer=//g')
+    [ -z "$SUBJECT" ] && SUBJECT="$DEFAULT_SUBJECT"
+    [ -z "$ISSUER" ] && ISSUER="$DEFAULT_ISSUER"
+else
+    echo "Warning: Could not fetch certificate for $CAMOUFLAGE_DOMAIN (no internet access or timeout). Using default values."
+    SUBJECT="$DEFAULT_SUBJECT"
+    ISSUER="$DEFAULT_ISSUER"
+fi
 
 echo "Generating self-signed certificate for $CAMOUFLAGE_DOMAIN..."
 openssl ecparam -out issuer.key -name prime256v1 -genkey
