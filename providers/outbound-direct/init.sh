@@ -70,13 +70,24 @@ fi
 
 mkdir -p "$ROOT_DIR/data"
 if [ ! -f "$ROOT_DIR/data/outbound.json" ]; then
-    cat > "$ROOT_DIR/data/outbound.json" << 'EOF'
+    # The panel rewrites this file on startup; it only has to carry traffic until
+    # then, and to keep working if the panel never comes up. On a
+    # restricted-network install that means following the host resolver instead of
+    # a foreign DNS server that cannot be reached. Mirrors _local_dns_server() in
+    # panel/panel/outbounds.py.
+    if [ -f "$ROOT_DIR/.libertea.iran" ]; then
+        bootstrap_dns='{ "type": "local", "tag": "dns-direct" },
+      { "type": "local", "tag": "dns-vpn" }'
+    else
+        bootstrap_dns='{ "type": "udp", "tag": "dns-direct", "server": "8.8.8.8" },
+      { "type": "udp", "tag": "dns-vpn", "server": "8.8.8.8" }'
+    fi
+    cat > "$ROOT_DIR/data/outbound.json" << EOF
 {
   "log": { "level": "warn" },
   "dns": {
     "servers": [
-      { "type": "udp", "tag": "dns-direct", "server": "8.8.8.8" },
-      { "type": "udp", "tag": "dns-vpn", "server": "8.8.8.8" }
+      $bootstrap_dns
     ],
     "final": "dns-vpn",
     "strategy": "prefer_ipv4"

@@ -233,6 +233,8 @@ def set_manual_tier_select_clash(val, db=None):
     db.settings.update_one({"_id": "manual_tier_select_clash"}, {"$set": {"value": val}}, upsert=True)
     return True
 
+# WARP is an outbound now, not a setting. These two are only still here so the
+# migration in create_app() can find and clear the value of an older install.
 def get_use_warp(db=None):
     if db is None:
         client = config.get_mongo_client()

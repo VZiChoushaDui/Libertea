@@ -35,18 +35,30 @@ if [ "$COMMAND" != "uninstall" ]; then
     fi
 
     # Clone the repository to /root if not exists, otherwise update it
-    if [ -d "/root/$PROJECT_NAME" ]; then
+    if [ -d "/root/$PROJECT_NAME/.git" ]; then
         echo " ** Updating repository..."
         cd "/root/$PROJECT_NAME"
         git reset --hard >/dev/null
         git checkout master >/dev/null
         git reset --hard >/dev/null
         git clean -fd >/dev/null
-        
-        git pull --rebase >/dev/null
+
+        if ! git pull --rebase >/dev/null; then
+            echo "    - Could not reach $REPO_URL, continuing with the files already on disk."
+        fi
+    elif [ -d "/root/$PROJECT_NAME" ]; then
+        # Files placed by hand, e.g. an offline archive on a restricted network.
+        echo " ** Using the existing files in /root/$PROJECT_NAME (not a git checkout)..."
+        cd "/root/$PROJECT_NAME"
     else
         echo " ** Cloning repository..."
-        git clone "$REPO_URL" "/root/$PROJECT_NAME" >/dev/null
+        if ! git clone "$REPO_URL" "/root/$PROJECT_NAME" >/dev/null; then
+            echo ""
+            echo "ERROR: Could not clone $REPO_URL."
+            echo "       If GitHub is unreachable, copy the Libertea files to"
+            echo "       /root/$PROJECT_NAME yourself and run this command again."
+            exit 1
+        fi
         cd "/root/$PROJECT_NAME"
     fi
 
@@ -58,10 +70,13 @@ if [ "$COMMAND" != "uninstall" ]; then
         fi
     fi  
 
-    if [ -n "$LIBERTEA_BRANCH" ]; then
+    if [ -n "$LIBERTEA_BRANCH" ] && [ -d "/root/$PROJECT_NAME/.git" ]; then
         echo " ** Checking out branch $LIBERTEA_BRANCH..."
-        git checkout "$LIBERTEA_BRANCH" >/dev/null
-        git pull --rebase >/dev/null
+        if ! git checkout "$LIBERTEA_BRANCH" >/dev/null; then
+            echo "    - Branch $LIBERTEA_BRANCH is not available locally, staying on the current one."
+        elif ! git pull --rebase >/dev/null; then
+            echo "    - Could not reach $REPO_URL, continuing with the files already on disk."
+        fi
     fi
 fi
 

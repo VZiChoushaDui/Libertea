@@ -24,4 +24,4 @@ services:
   provider-vmess-grpc:
     build: ./providers/vmess-grpc
   # shadowsocks-v2ray is not built here: its Dockerfile wget's from GitHub.
-  # init.sh starts the stack with --scale provider-shadowsocks-v2ray=0.
+  # init.sh leaves it out of the list of services it starts.

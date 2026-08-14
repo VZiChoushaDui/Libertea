@@ -2,9 +2,11 @@ import os
 import json
 import time
 import glob
+import subprocess
 import ipaddress as _ipaddress
 from datetime import datetime
 from bson import ObjectId
+from bson.errors import InvalidId
 from . import config
 
 _ROOT = config.get_root_dir()
@@ -16,6 +18,11 @@ CLASH_CUSTOM_RULES_PATH     = _ROOT + 'data/clash-custom-rules.txt'
 MAX_OUTBOUNDS = 20
 BASE_PORT        = 13000   # normal SOCKS ports:  13000-13019
 BACKUP_BASE_PORT = 13100   # backup SOCKS ports:  13100-13119
+
+RESTRICTED_NETWORK_MARKER = _ROOT + '.libertea.iran'
+# Domestic resolvers, used only on restricted-network installs. Mirrors
+# LIBERTEA_IR_DNS in bash-tools/restricted-network.sh.
+RESTRICTED_DNS_SERVERS = ['78.157.42.101', '217.218.155.155', '217.218.127.127']
 
 OPENVPN_CONF_DIR = '/etc/openvpn'
 OPENVPN_TUN_PREFIX = 'tun-lb-'
@@ -46,6 +53,30 @@ SS_METHODS = [
     '2022-blake3-chacha20-poly1305',
 ]
 
+def restricted_network_mode():
+    """True when the installer applied the restricted-network (Iran) profile."""
+    return os.path.isfile(RESTRICTED_NETWORK_MARKER)
+
+def restricted_dns_servers():
+    """Domestic resolvers to prefer, or an empty list on a normal install."""
+    if restricted_network_mode():
+        return list(RESTRICTED_DNS_SERVERS)
+    return []
+
+def _local_dns_server(tag):
+    """DNS server for queries that leave this host directly, i.e. domestic and
+    bypassed destinations.
+
+    On a restricted-network install this follows the host resolver, which the
+    profile points at the domestic servers in LIBERTEA_IR_DNS
+    (bash-tools/restricted-network.sh). That is the only way to use all of them:
+    a sing-box DNS server takes a single address and has no fallback list.
+    Everywhere else Google DNS is kept, as before.
+    """
+    if restricted_network_mode():
+        return {'type': 'local', 'tag': tag}
+    return {'type': 'udp', 'tag': tag, 'server': '8.8.8.8'}
+
 def _db():
     client = config.get_mongo_client()
     return client[config.MONGODB_DB_NAME]
@@ -53,8 +84,18 @@ def _db():
 def get_all():
     return list(_db().outbounds.find().sort('index', 1))
 
+def _object_id(outbound_id):
+    """Return outbound_id as an ObjectId, or None if it isn't a valid one."""
+    try:
+        return ObjectId(outbound_id)
+    except (InvalidId, TypeError):
+        return None
+
 def get_one(outbound_id):
-    return _db().outbounds.find_one({'_id': ObjectId(outbound_id)})
+    oid = _object_id(outbound_id)
+    if oid is None:
+        return None
+    return _db().outbounds.find_one({'_id': oid})
 
 def create(data):
     db = _db()
@@ -68,11 +109,153 @@ def create(data):
     return str(db.outbounds.insert_one(data).inserted_id)
 
 def update(outbound_id, data):
+    oid = _object_id(outbound_id)
+    if oid is None:
+        return
     data['updated_at'] = datetime.now()
-    _db().outbounds.update_one({'_id': ObjectId(outbound_id)}, {'$set': data})
+    _db().outbounds.update_one({'_id': oid}, {'$set': data})
 
 def delete(outbound_id):
-    _db().outbounds.delete_one({'_id': ObjectId(outbound_id)})
+    oid = _object_id(outbound_id)
+    if oid is None:
+        return
+    _db().outbounds.delete_one({'_id': oid})
+
+
+WARP_REG_SCRIPT = _ROOT + 'warp-reg.sh'
+WARP_REG_TIMEOUT = 120   # the script installs xxd/python3 first if they are missing
+WARP_MTU = '1280'        # what the WARP provider container used
+
+def _first_json_object(text):
+    """Parse the first JSON object in text, ignoring any lines before it.
+    warp-reg.sh prints progress lines when it has to install a package first."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() != '{':
+            continue
+        try:
+            return json.loads('\n'.join(lines[i:]))
+        except ValueError:
+            continue
+    return None
+
+def register_warp():
+    """Register a fresh Cloudflare WARP identity, as WireGuard outbound fields.
+
+    warp-reg.sh asks Cloudflare for an identity and prints it as JSON; it is the
+    same registration the installer did while WARP was a provider container.
+    Raises ValueError with a message meant for the admin page.
+    """
+    if not os.path.isfile(WARP_REG_SCRIPT):
+        raise ValueError('Cannot register with WARP: ' + WARP_REG_SCRIPT + ' is missing.')
+
+    try:
+        proc = subprocess.run(['bash', WARP_REG_SCRIPT], capture_output=True,
+                              text=True, timeout=WARP_REG_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise ValueError('WARP registration timed out. Cloudflare may not be '
+                         'reachable from this server.')
+
+    reg = _first_json_object(proc.stdout)
+    if reg is None:
+        detail = (proc.stderr or proc.stdout or '').strip().splitlines()
+        raise ValueError('WARP registration failed. ' +
+                         (detail[-1].strip() if detail else 'No answer from Cloudflare.'))
+
+    endpoint = str(reg.get('endpoint', {}).get('host', ''))
+    host, _, port = endpoint.rpartition(':')
+    if not host:
+        host, port = endpoint, '2408'
+    private_key = reg.get('private_key', '')
+    public_key  = reg.get('public_key', '')
+    addresses   = [a for a in (reg.get('v4', ''), reg.get('v6', '')) if a]
+    if not host or not private_key or not public_key or not addresses:
+        raise ValueError('WARP registration came back incomplete. Try again.')
+
+    reserved = reg.get('reserved_dec') or []
+    return {
+        'type':               'wireguard',
+        'server':             host,
+        'server_port':        int(port) if str(port).isdigit() else 2408,
+        'wg_private_key':     private_key,
+        'wg_peer_public_key': public_key,
+        # WARP hands out one v4 and one v6 address, always as single hosts.
+        'wg_local_address':   ', '.join(
+            a + ('/128' if ':' in a else '/32') for a in addresses),
+        'wg_mtu':             WARP_MTU,
+        'wg_reserved':        ','.join(str(x) for x in reserved) if any(reserved) else '',
+    }
+
+
+LEGACY_WARP_CONFIG_PATH = _ROOT + 'providers/outbound-warp/config.json'
+
+def import_legacy_warp():
+    """Turn the retired WARP provider container into a WireGuard outbound.
+
+    Before outbounds were configurable, WARP was a container switched on by a
+    single setting, and its registration lived in the container's xray config.
+    The container is gone, so that registration is carried over here to keep the
+    traffic of installs that used it going through WARP.
+
+    Returns the id of the new outbound, or None if there was nothing to import.
+    """
+    if _db().outbounds.count_documents({}, limit=1) > 0:
+        # Outbounds are already set up, so this install is past the old setting.
+        return None
+
+    try:
+        with open(LEGACY_WARP_CONFIG_PATH, 'r') as f:
+            legacy = json.load(f)
+    except (OSError, ValueError) as e:
+        print('  - No usable WARP config to import: ' + str(e))
+        return None
+
+    peers = []
+    for entry in legacy.get('outbounds', []):
+        if entry.get('protocol') != 'wireguard':
+            continue
+        s = entry.get('settings', {})
+        if s.get('peers'):
+            peers.append(s)
+    if not peers:
+        print('  - No WireGuard outbound found in ' + LEGACY_WARP_CONFIG_PATH)
+        return None
+
+    # The config holds the same registration twice, once with the reserved bytes
+    # of the registered client and once zeroed. Prefer the registered one.
+    settings_entry = next((s for s in peers if any(s.get('reserved', []))), peers[0])
+    peer = settings_entry['peers'][0]
+
+    endpoint = str(peer.get('endpoint', ''))
+    host, _, port = endpoint.rpartition(':')
+    if not host or not port.isdigit():
+        print('  - WARP config has an unusable endpoint: ' + endpoint)
+        return None
+
+    private_key = settings_entry.get('secretKey', '')
+    public_key  = peer.get('publicKey', '')
+    if not private_key or not public_key:
+        print('  - WARP config is missing its keys')
+        return None
+
+    reserved = settings_entry.get('reserved') or []
+    record = {
+        'name':               'Cloudflare WARP',
+        'type':               'wireguard',
+        'enabled':            True,
+        'backup':             False,
+        'weight':             100,
+        'server':             host,
+        'server_port':        int(port),
+        'wg_private_key':     private_key,
+        'wg_peer_public_key': public_key,
+        'wg_local_address':   ', '.join(str(a) for a in settings_entry.get('address', [])),
+        'wg_mtu':             str(settings_entry.get('mtu', '') or ''),
+        'wg_reserved':        ','.join(str(x) for x in reserved) if any(reserved) else '',
+    }
+    outbound_id = create(record)
+    print('  - Imported the WARP registration as outbound "Cloudflare WARP"')
+    return outbound_id
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +303,57 @@ def get_clash_custom_rules():
 
 def set_clash_custom_rules(text):
     _write_text(CLASH_CUSTOM_RULES_PATH, text)
+
+
+CLASH_RULE_TYPES = {
+    'DOMAIN', 'DOMAIN-SUFFIX', 'DOMAIN-KEYWORD', 'DOMAIN-REGEX', 'GEOSITE',
+    'IP-CIDR', 'IP-CIDR6', 'IP-SUFFIX', 'IP-ASN', 'GEOIP',
+    'SRC-GEOIP', 'SRC-IP-ASN', 'SRC-IP-CIDR', 'SRC-IP-SUFFIX',
+    'DST-PORT', 'SRC-PORT', 'IN-PORT', 'IN-TYPE', 'IN-USER', 'IN-NAME',
+    'PROCESS-NAME', 'PROCESS-NAME-REGEX', 'PROCESS-PATH', 'PROCESS-PATH-REGEX',
+    'UID', 'NETWORK', 'DSCP', 'RULE-SET', 'AND', 'OR', 'NOT', 'SUB-RULE',
+}
+
+def check_clash_rule(rule):
+    """Return an error message if `rule` is not a usable Clash rule, else None.
+
+    These lines are injected verbatim into every user's config, so one bad line
+    would make the config unparseable for everyone.
+    """
+    if ': ' in rule or rule.endswith(':') or ' #' in rule:
+        return 'would break YAML (remove ": ", a trailing ":", or " #")'
+    if rule.count('(') != rule.count(')'):
+        return 'unbalanced parentheses'
+
+    parts = [part.strip() for part in rule.split(',')]
+    rule_type = parts[0].upper()
+    if rule_type == 'MATCH':
+        return 'MATCH would capture every request; use DOMAIN-SUFFIX or IP-CIDR instead'
+    if rule_type not in CLASH_RULE_TYPES:
+        return 'unknown rule type "' + parts[0] + '"'
+    if len(parts) < 3:
+        return 'expected at least TYPE,value,target'
+    if not parts[1] or not parts[-1]:
+        return 'empty value or target'
+    return None
+
+def validate_clash_rules(text):
+    """Return a human-readable error describing bad rule lines, or None if all
+    lines are usable."""
+    errors = []
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        rule = raw.strip()
+        if not rule or rule.startswith('#'):
+            continue
+        problem = check_clash_rule(rule)
+        if problem is not None:
+            errors.append('line ' + str(lineno) + ': ' + problem)
+
+    if not errors:
+        return None
+    if len(errors) > 3:
+        errors = errors[:3] + ['and ' + str(len(errors) - 3) + ' more']
+    return 'Clash custom rules not saved - ' + '; '.join(errors)
 
 
 def parse_list(text):
@@ -294,10 +528,13 @@ def _build_proxy_outbound(ob, tag, ovpn_indices=None):
         else:
             if ob.get('tls_insecure'):
                 tls['insecure'] = True
-        if ob.get('tls_fingerprint'):
+        # REALITY cannot work without uTLS, so fall back to a fingerprint
+        # instead of writing a config sing-box refuses to load.
+        fingerprint = ob.get('tls_fingerprint') or ('chrome' if ob.get('tls_reality') else '')
+        if fingerprint:
             tls['utls'] = {
                 'enabled':     True,
-                'fingerprint': ob['tls_fingerprint'],
+                'fingerprint': fingerprint,
             }
         result['tls'] = tls
 
@@ -453,17 +690,9 @@ def generate_config(outbounds, relay_config=None):
                 "tag": "hosts",
                 "predefined": hosts if hosts else {}
             },
-            {
-                'type': 'udp',
-                'tag': 'dns-direct',
-                'server': '8.8.8.8',
-            },
+            _local_dns_server('dns-direct'),
             # Fallback VPN DNS used when no outbounds are active
-            {
-                'type': 'udp',
-                'tag': 'dns-vpn',
-                'server': '8.8.8.8',
-            },
+            _local_dns_server('dns-vpn'),
             {
                 "type": "fakeip",
                 "tag": "fakeip",
@@ -1029,18 +1258,40 @@ def _probe_slot(slot, is_backup=False):
 
 def _health_check_loop():
     """Periodically probe all configured outbound slots."""
+    first_pass = True
     while True:
-        # Wait for the normal interval, but wake early if reset_health() fires.
-        woken_by_reset = _reset_event.wait(timeout=HEALTH_CHECK_INTERVAL)
-        _reset_event.clear()
-        if woken_by_reset:
-            # Brief pause so the DB write from the edit/delete has committed
-            # before we read outbounds back.
-            time.sleep(1)
+        if first_pass:
+            # Probe straight away. Slots without a result yet are reported down,
+            # and HAProxy trusts that over its own connection check, so waiting a
+            # full interval here would take every server out of the backend for
+            # the first few seconds after each panel start.
+            first_pass = False
+        else:
+            # Wait for the normal interval, but wake early if reset_health() fires.
+            woken_by_reset = _reset_event.wait(timeout=HEALTH_CHECK_INTERVAL)
+            _reset_event.clear()
+            if woken_by_reset:
+                # Brief pause so the DB write from the edit/delete has committed
+                # before we read outbounds back.
+                time.sleep(1)
         try:
             all_obs = get_all()
             ovpn_indices = _compute_ovpn_indices(all_obs)
             active_slots = set()
+
+            if not any(ob.get('enabled', True) for ob in all_obs):
+                # Nothing enabled, so generate_config() exposes a plain direct
+                # SOCKS on the first slot and that is the only way out. Report it
+                # up without probing: a probe has to reach the internet, and on a
+                # blocked network a failing one would take away the last server
+                # HAProxy has left. Sing-box being down is still caught by
+                # HAProxy's own connection check on the same port.
+                active_slots.add(0)
+                set_weight(0, 100)
+                with _health_lock:
+                    _health_status[0] = True
+                all_obs = []
+
             for ob in all_obs:
                 slot = ob['index']
                 active_slots.add(slot)
@@ -1080,15 +1331,23 @@ def start_health_agents():
         return
     _started = True
 
+    failed = []
     for slot in range(MAX_OUTBOUNDS):
-        srv = _AgentServer(slot)
-        t = threading.Thread(target=srv.serve_forever, daemon=True)
-        t.start()
+        for server_class in (_AgentServer, _CtrlServer):
+            try:
+                srv = server_class(slot)
+            except OSError as e:
+                # Usually a leftover panel process still holding the port. Keep
+                # going: an agent that cannot bind is one HAProxy cannot reach,
+                # and an unreachable agent leaves the server up rather than
+                # taking it out of the backend.
+                failed.append(f'{server_class.__name__}[{slot}]: {e}')
+                continue
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
 
-        ctrl = _CtrlServer(slot)
-        t2 = threading.Thread(target=ctrl.serve_forever, daemon=True)
-        t2.start()
-
-    t = threading.Thread(target=_health_check_loop, daemon=True)
-    t.start()
+    # Started even if some ports are missing: the agents that did bind report
+    # every slot down until this loop has a probe result for it.
+    threading.Thread(target=_health_check_loop, daemon=True).start()
     print(f"Outbound health agents started on ports {AGENT_BASE_PORT}-{AGENT_BASE_PORT + MAX_OUTBOUNDS - 1}")
+    if failed:
+        print('  - Could not bind ' + str(len(failed)) + ' health port(s): ' + '; '.join(failed[:4]))

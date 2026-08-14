@@ -11,9 +11,16 @@ dns:
     - 8.8.8.8
   respect-rules: true
   direct-nameserver:
+{% for nameserver in restricted_dns %}
+    - {{ nameserver }}
+{% endfor %}
     - 8.8.8.8
+    - 4.2.2.4
   direct-nameserver-follow-policy: false
   proxy-server-nameserver:
+{% for nameserver in restricted_dns %}
+    - {{ nameserver }}
+{% endfor %}
     - 8.8.8.8
     - 4.2.2.4
 

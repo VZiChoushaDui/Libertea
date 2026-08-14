@@ -695,7 +695,7 @@ def proxies():
         admin_uuid=config.get_admin_uuid())
 
 @blueprint.route(root_url + 'settings/', methods=['GET'])
-def app_settings():
+def app_settings(clash_rules_error=None, clash_custom_rules_override=None):
     camouflage_error = request.args.get('camouflage_error', None)
     camouflage_domain = request.args.get('camouflage_domain', None)
 
@@ -721,6 +721,8 @@ def app_settings():
     direct_textarea             = ob.get_direct_list()
     block_textarea              = ob.get_block_list()
     clash_custom_rules_textarea = ob.get_clash_custom_rules()
+    if clash_custom_rules_override is not None:
+        clash_custom_rules_textarea = clash_custom_rules_override
 
     return render_template('admin/settings.jinja',
         page='settings',
@@ -742,11 +744,11 @@ def app_settings():
         provider_enabled={x: settings.get_provider_enabled(x) for x in ['vlessws', 'trojanws', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssv2ray', 'ssgrpc']},
         proxygroup_type_selected=proxygroup_type_selected,
         tier_enabled_for_subscription=tier_enabled_for_subscription,
-        use_warp=settings.get_use_warp(),
         hosts_textarea=hosts_textarea,
         direct_textarea=direct_textarea,
         block_textarea=block_textarea,
         clash_custom_rules_textarea=clash_custom_rules_textarea,
+        clash_rules_error=clash_rules_error,
     )
 
 @blueprint.route(root_url + 'settings/', methods=['POST'])
@@ -769,9 +771,12 @@ def app_settings_save():
         ob.set_block_list(block_text)
         needs_outbound_restart = True
 
+    clash_rules_error = None
     clash_custom_rules_text = request.form.get('clash_custom_rules_textarea', None)
     if clash_custom_rules_text is not None:
-        ob.set_clash_custom_rules(clash_custom_rules_text)
+        clash_rules_error = ob.validate_clash_rules(clash_custom_rules_text)
+        if clash_rules_error is None:
+            ob.set_clash_custom_rules(clash_custom_rules_text)
 
     if needs_outbound_restart:
         sysops.apply_outbound_config()
@@ -786,7 +791,6 @@ def app_settings_save():
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
     manual_tier_select_clash = request.form.get('manual_tier_select_clash', None)
-    use_warp = request.form.get('use_warp', None)
 
     tier_enabled_for_subscription = {i: request.form.get(f'tier_enabled_for_subscription_{i}', None) for i in [1,2,3,4]}
     tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
@@ -804,7 +808,6 @@ def app_settings_save():
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')
     settings.set_manual_tier_select_clash(manual_tier_select_clash == 'on')
-    settings.set_use_warp(use_warp == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
     for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssgrpc']:
@@ -828,14 +831,16 @@ def app_settings_save():
             else:
                 return redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 
+    if clash_rules_error is not None:
+        return app_settings(clash_rules_error=clash_rules_error,
+                            clash_custom_rules_override=clash_custom_rules_text)
+
     return redirect(url_for('admin.app_settings'))
 
-@blueprint.route(root_url + 'outbounds/')
-def outbounds():
+def _render_outbounds_page(relay_config=None):
     all_outbounds = outbounds_module.get_all()
-    relay_config  = settings.get_relay_config()
-    ovpn_indices  = outbounds_module._compute_ovpn_indices(all_outbounds)
-    health        = outbounds_module.get_all_health()
+    if relay_config is None:
+        relay_config = settings.get_relay_config()
 
     def _sort_key(ob):
         enabled = ob.get('enabled', True)
@@ -844,24 +849,26 @@ def outbounds():
         group = 2 if not enabled else (1 if backup else 0)
         return (group, -weight)
 
-    sorted_outbounds = sorted(all_outbounds, key=_sort_key)
-
     return render_template('admin/outbounds.jinja',
         page='outbounds',
         libertea_version=config.LIBERTEA_VERSION,
         admin_uuid=config.get_admin_uuid(),
-        outbounds=sorted_outbounds,
+        outbounds=sorted(all_outbounds, key=_sort_key),
         relay_config=relay_config,
-        ovpn_indices=ovpn_indices,
-        health=health,
+        ovpn_indices=outbounds_module._compute_ovpn_indices(all_outbounds),
+        health=outbounds_module.get_all_health(),
     )
+
+@blueprint.route(root_url + 'outbounds/')
+def outbounds():
+    return _render_outbounds_page()
 
 @blueprint.route(root_url + 'outbounds/relay/', methods=['POST'])
 def outbound_relay_save():
     relay_config = {
         'enabled':  request.form.get('relay_enabled') == 'on',
         'server':   request.form.get('relay_server', '').strip(),
-        'port':     int(request.form.get('relay_port', 8080) or 8080),
+        'port':     _form_int(request.form, 'relay_port', 8080, 1, 65535),
         'password': request.form.get('relay_password', '').strip(),
         'protocol': request.form.get('relay_protocol', 'hysteria2'),
     }
@@ -869,16 +876,7 @@ def outbound_relay_save():
     success, err = sysops.apply_outbound_config()
     if not success:
         relay_config['error'] = err
-        all_outbounds = outbounds_module.get_all()
-        ovpn_indices  = outbounds_module._compute_ovpn_indices(all_outbounds)
-        return render_template('admin/outbounds.jinja',
-            page='outbounds',
-            libertea_version=config.LIBERTEA_VERSION,
-            admin_uuid=config.get_admin_uuid(),
-            outbounds=all_outbounds,
-            relay_config=relay_config,
-            ovpn_indices=ovpn_indices,
-        )
+        return _render_outbounds_page(relay_config)
     return redirect(url_for('admin.outbounds'))
 
 @blueprint.route(root_url + 'outbounds/relay/setup-command/')
@@ -889,45 +887,45 @@ def outbound_relay_setup_command():
     script = outbounds_module.build_relay_setup_command_template()
     return Response(script, mimetype='text/plain')
 
-@blueprint.route(root_url + 'outbounds/new/', methods=['GET'])
-def outbound_new():
+def _render_outbound_form(outbound=None, error=None):
     return render_template('admin/outbound_edit.jinja',
         page='outbounds',
         libertea_version=config.LIBERTEA_VERSION,
         admin_uuid=config.get_admin_uuid(),
-        outbound=None,
+        outbound=outbound,
         ss_methods=outbounds_module.SS_METHODS,
-        error=None,
+        error=error,
     )
+
+@blueprint.route(root_url + 'outbounds/new/', methods=['GET'])
+def outbound_new():
+    return _render_outbound_form()
 
 @blueprint.route(root_url + 'outbounds/new/', methods=['POST'])
 def outbound_create():
     data = _parse_outbound_form(request.form)
+
+    if request.form.get('type') == 'warp':
+        # Pseudo-type: register with Cloudflare here, then store and treat it as
+        # the plain WireGuard outbound that it is.
+        try:
+            data.update(outbounds_module.register_warp())
+        except ValueError as e:
+            return _render_outbound_form(None, str(e))
+        if not data['name']:
+            data['name'] = 'Cloudflare WARP'
+
     try:
         new_id = outbounds_module.create(data)
     except ValueError as e:
-        return render_template('admin/outbound_edit.jinja',
-            page='outbounds',
-            libertea_version=config.LIBERTEA_VERSION,
-            admin_uuid=config.get_admin_uuid(),
-            outbound=None,
-            ss_methods=outbounds_module.SS_METHODS,
-            error=str(e),
-        )
+        return _render_outbound_form(None, str(e))
     new_ob = outbounds_module.get_one(new_id)
     if new_ob:
         outbounds_module.reset_health(new_ob['index'])
     success, err = sysops.apply_outbound_config()
     if not success:
         outbounds_module.delete(new_id)
-        return render_template('admin/outbound_edit.jinja',
-            page='outbounds',
-            libertea_version=config.LIBERTEA_VERSION,
-            admin_uuid=config.get_admin_uuid(),
-            outbound=data,
-            ss_methods=outbounds_module.SS_METHODS,
-            error=err,
-        )
+        return _render_outbound_form(data, err)
     return redirect(url_for('admin.outbounds'))
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/', methods=['GET'])
@@ -935,18 +933,13 @@ def outbound_edit(outbound_id):
     ob = outbounds_module.get_one(outbound_id)
     if ob is None:
         return redirect(url_for('admin.outbounds'))
-    return render_template('admin/outbound_edit.jinja',
-        page='outbounds',
-        libertea_version=config.LIBERTEA_VERSION,
-        admin_uuid=config.get_admin_uuid(),
-        outbound=ob,
-        ss_methods=outbounds_module.SS_METHODS,
-        error=None,
-    )
+    return _render_outbound_form(ob)
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/', methods=['POST'])
 def outbound_update(outbound_id):
     old_ob = outbounds_module.get_one(outbound_id)
+    if old_ob is None:
+        return redirect(url_for('admin.outbounds'))
     data = _parse_outbound_form(request.form)
     data['type'] = old_ob['type']
     outbounds_module.update(outbound_id, data)
@@ -955,14 +948,7 @@ def outbound_update(outbound_id):
     if not success:
         restore = {k: v for k, v in old_ob.items() if k != '_id'}
         outbounds_module.update(outbound_id, restore)
-        return render_template('admin/outbound_edit.jinja',
-            page='outbounds',
-            libertea_version=config.LIBERTEA_VERSION,
-            admin_uuid=config.get_admin_uuid(),
-            outbound=old_ob,
-            ss_methods=outbounds_module.SS_METHODS,
-            error=err,
-        )
+        return _render_outbound_form(old_ob, err)
     return redirect(url_for('admin.outbounds'))
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/delete/', methods=['POST'])
@@ -974,15 +960,25 @@ def outbound_delete(outbound_id):
     sysops.apply_outbound_config()
     return redirect(url_for('admin.outbounds'))
 
+def _form_int(form, field, default, minimum, maximum):
+    """Read an integer form field, clamped to [minimum, maximum].
+    Falls back to default when the field is missing or not a number."""
+    try:
+        value = int(form.get(field, '') or default)
+    except (TypeError, ValueError):
+        value = default
+    return max(minimum, min(maximum, value))
+
 def _parse_outbound_form(form):
+    tls_enabled = form.get('tls') == 'on'
     return {
         'name':                   form.get('name', '').strip(),
         'enabled':                form.get('enabled') == 'on',
         'backup':                 form.get('backup') == 'on',
-        'weight':                 max(1, min(100, int(form.get('weight') or 100))),
+        'weight':                 _form_int(form, 'weight', 100, 1, 100),
         'type':                   form.get('type', 'vless'),
         'server':                 form.get('server', '').strip(),
-        'server_port':            int(form.get('server_port', 443) or 443),
+        'server_port':            _form_int(form, 'server_port', 443, 1, 65535),
         'uuid':                   form.get('uuid', '').strip(),
         'password':               form.get('password', '').strip(),
         'method':                 form.get('method', 'chacha20-ietf-poly1305'),
@@ -990,10 +986,10 @@ def _parse_outbound_form(form):
         'transport_path':         form.get('transport_path', '').strip(),
         'transport_host':         form.get('transport_host', '').strip(),
         'transport_service_name': form.get('transport_service_name', '').strip(),
-        'tls':                    form.get('tls') == 'on',
+        'tls':                    tls_enabled,
         'tls_insecure':           form.get('tls_insecure') == 'on',
         'tls_sni':                form.get('tls_sni', '').strip(),
-        'tls_reality':            form.get('tls_reality') == 'on',
+        'tls_reality':            tls_enabled and form.get('tls_reality') == 'on',
         'tls_reality_public_key': form.get('tls_reality_public_key', '').strip(),
         'tls_reality_short_id':   form.get('tls_reality_short_id', '').strip(),
         'tls_fingerprint':        form.get('tls_fingerprint', '').strip(),

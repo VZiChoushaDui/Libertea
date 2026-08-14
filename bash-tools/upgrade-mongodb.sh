@@ -3,6 +3,17 @@
 MAX_RETRIES=30
 RETRY_INTERVAL=2 
 
+ROOT_DIR="$( cd "$(dirname "$0")/.." >/dev/null 2>&1 ; pwd -P )"
+
+# Restricted-network installs cannot reach Docker Hub. init.sh exports the
+# mirror; when this script is run on its own, read it from the profile instead.
+MONGO_REGISTRY="${LIBERTEA_DOCKER_REGISTRY:-}"
+if [ -z "$MONGO_REGISTRY" ] && [ -f "$ROOT_DIR/.libertea.iran" ]; then
+    # shellcheck source=restricted-network.sh
+    . "$ROOT_DIR/bash-tools/restricted-network.sh"
+    MONGO_REGISTRY="$LIBERTEA_IR_DOCKER_REGISTRY"
+fi
+
 wait_for_mongo_ready() {
     local container_id=$1
     local retries=0
@@ -27,7 +38,7 @@ run_mongo_command() {
     local mongo_command=$2
 
     echo "Starting MongoDB $mongo_version container..."
-    container_id=$(docker run -d -v "./data/db:/data/db" --name libertea-mongodb -h libertea-mongodb -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=${PANEL_MONGODB_PASSWORD} -v ./data/db:/data/db mongo:$mongo_version)
+    container_id=$(docker run -d -v "./data/db:/data/db" --name libertea-mongodb -h libertea-mongodb -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=${PANEL_MONGODB_PASSWORD} -v ./data/db:/data/db "${MONGO_REGISTRY}mongo:$mongo_version")
 
     wait_for_mongo_ready "$container_id"
 

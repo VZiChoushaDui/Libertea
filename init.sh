@@ -312,6 +312,13 @@ else
         sed -i '/FIREWALL_OUTBOUND_UDP_PORTS="53 443 123 19302:19309"/d' .env
     fi
 
+    # The variable-adding loop below only fills in missing variables, so an
+    # empty value left over from a hand-edited .env has to be healed here.
+    if grep -q "^STATIC_RESOURCE_UUID=[[:space:]]*$" .env; then
+        echo "    - Filling empty STATIC_RESOURCE_UUID in .env..."
+        sed -i "s|^STATIC_RESOURCE_UUID=[[:space:]]*$|STATIC_RESOURCE_UUID=$(uuidgen)|" .env
+    fi
+
     # If a variable is missing from .env, add it and fill it with value
     while IFS= read -r line; do
         if [[ $line != *"=" ]]; then
@@ -538,12 +545,8 @@ set -e
 systemctl restart libertea-panel.service
 
 COMPOSE_BUILD_ARGS=""
-COMPOSE_UP_EXTRAS=""
 if [ "$LIBERTEA_IRAN" = "1" ]; then
     COMPOSE_BUILD_ARGS="--build-arg DOCKER_REGISTRY=${LIBERTEA_DOCKER_REGISTRY} --build-arg ALPINE_MIRROR=${LIBERTEA_ALPINE_MIRROR} --build-arg UBUNTU_MIRROR=${LIBERTEA_UBUNTU_MIRROR} --build-arg DEBIAN_MIRROR=${LIBERTEA_DEBIAN_MIRROR} --build-arg PIP_INDEX_URL=${PIP_INDEX_URL} --build-arg PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}"
-    # Dockerfile wget's xray-plugin / shadowsocks-rust from GitHub.
-    COMPOSE_UP_EXTRAS="--scale provider-shadowsocks-v2ray=0"
-    echo "    - Skipping provider-shadowsocks-v2ray (image build needs GitHub)"
 fi
 
 if [ "$ENVIRONMENT" == "dev" ]; then
@@ -568,9 +571,28 @@ else
     fi
 fi
 
+# Services to start. Empty means "all of them". Compose resolves the image of
+# every service in the file on `up`, pulling the ones it cannot build, and it
+# does so even for services scaled to 0 -- so a service whose image is out of
+# reach has to be left out of the list instead of scaled down.
+# Listed by hand (same names in docker-compose.yml and docker-compose.dev.yml)
+# so this works with apt's docker-compose 1.x, which we install in iran mode.
+# `config --services` exists on 1.25+ but interpolates the whole file and is
+# easy to break; a static list does not.
+COMPOSE_UP_SERVICES=""
+if [ "$LIBERTEA_IRAN" = "1" ]; then
+    # provider-shadowsocks-v2ray's Dockerfile wget's xray-plugin and
+    # shadowsocks-rust from GitHub, so its image can be neither built nor pulled.
+    echo "    - Skipping provider-shadowsocks-v2ray (image needs GitHub)"
+    COMPOSE_UP_SERVICES="mongodb rsyslog log-parser haproxy camouflage-nginx-fallback provider-trojan-ws provider-trojan-grpc provider-vless-ws provider-vless-grpc provider-vmess-grpc"
+fi
+
 echo " ** Starting docker containers..."
 set +e
-compose down >/dev/null
+# --remove-orphans also clears out containers of services that no longer exist,
+# such as the outbound-warp and outbound-direct providers replaced by the
+# host sing-box. Left behind they would keep running with restart: always.
+compose down --remove-orphans >/dev/null
 set -e
 
 echo "    - Starting MongoDB..."
@@ -627,7 +649,7 @@ if [ "$mongo_ready" -ne 1 ]; then
 fi
 echo ""
 echo "    - Starting remaining containers..."
-compose up -d $COMPOSE_UP_EXTRAS
+compose up -d $COMPOSE_UP_SERVICES
 
 mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
@@ -648,7 +670,7 @@ set +e
 # Only bring services back if the upgrade script removed the mongodb container.
 # An unconditional rm+up here can interrupt first-boot root-user init.
 if ! docker inspect libertea-mongodb >/dev/null 2>&1; then
-    compose up -d $COMPOSE_UP_EXTRAS
+    compose up -d $COMPOSE_UP_SERVICES
 fi
 set -e
 

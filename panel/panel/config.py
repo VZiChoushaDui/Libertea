@@ -116,7 +116,9 @@ def get_admin_uuid():
     return os.environ.get('PANEL_ADMIN_UUID')
 
 def get_static_resource_uuid():
-    return os.environ.get('STATIC_RESOURCE_UUID', 'static')
+    # An empty value would mount the static files at "/" and shadow every route,
+    # so treat a blank .env entry the same as a missing one.
+    return os.environ.get('STATIC_RESOURCE_UUID') or 'static'
 
 def get_proxy_connect_uuid():
     return os.environ.get('PANEL_PROXY_CONNECT_UUID')

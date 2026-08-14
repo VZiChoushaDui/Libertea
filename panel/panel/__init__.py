@@ -125,7 +125,19 @@ def create_app():
         except Exception as e:
             print("Failed to regenerate camouflage cert: " + str(e))
         settings.set_migration_counter(3)
-            
+
+    if settings.get_migration_counter() <= 3:
+        # The WARP provider container is gone. Installs that had it switched on
+        # keep exiting through WARP by way of an outbound instead.
+        if settings.get_use_warp():
+            print("Migrating the WARP outbound setting")
+            try:
+                if outbounds.import_legacy_warp():
+                    settings.set_use_warp(False)
+            except Exception as e:
+                print("Failed to import the WARP config: " + str(e))
+        settings.set_migration_counter(4)
+
 
     domains_count = len(utils.get_domains())
     users_count = len(utils.get_users())
@@ -150,11 +162,19 @@ def create_app():
         traceback.print_exc()
         pass
 
-    print("Starting outbound health agents")
-    outbounds.start_health_agents()
+    # Neither of these may keep the panel from starting: without it there is no
+    # way to fix a broken outbound setup.
+    try:
+        print("Starting outbound health agents")
+        outbounds.start_health_agents()
+    except:
+        traceback.print_exc()
 
-    print("Updating singbox outbound config")
-    sysops.apply_outbound_config()
+    try:
+        print("Updating singbox outbound config")
+        sysops.apply_outbound_config()
+    except:
+        traceback.print_exc()
 
     print("Starting the app")
     app.register_blueprint(admin.blueprint)

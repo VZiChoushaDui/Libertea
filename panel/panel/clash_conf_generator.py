@@ -235,12 +235,18 @@ def get_providers(connect_url, db, is_for_subscription=False, enabled_tiers=None
     return server_groups + providers
 
 def _parse_clash_custom_rules(text):
-    """Return a list of non-empty, non-comment lines from the custom rules textarea."""
+    """Return the usable rules from the custom rules textarea, skipping blanks,
+    comments and anything malformed that would break the generated config."""
     rules = []
     for line in text.splitlines():
         stripped = line.strip()
-        if stripped and not stripped.startswith('#'):
-            rules.append(stripped)
+        if not stripped or stripped.startswith('#'):
+            continue
+        problem = outbounds_module.check_clash_rule(stripped)
+        if problem is not None:
+            print('Skipping invalid Clash custom rule (' + problem + '): ' + stripped)
+            continue
+        rules.append(stripped)
     return rules
 
 
@@ -322,6 +328,7 @@ def generate_conf_singlefile(user_id, connect_url, meta=False, premium=False, en
         domain_direct_suffixes=domain_direct_suffixes,
         custom_info_entries=custom_info_entries if custom_info_entries is not None else [],
         clash_custom_rules=clash_custom_rules,
+        restricted_dns=outbounds_module.restricted_dns_servers(),
     )
 
     return result

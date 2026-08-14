@@ -96,17 +96,29 @@
                 </select>
             {% else %}
                 <select class="form-select" name="type" id="ob-type" onchange="updateFields()">
-                    {% for t in ['vless','vmess','shadowsocks','trojan','socks','wireguard','openvpn','direct'] %}
+                    {% for t in ['vless','vmess','shadowsocks','trojan','socks','wireguard','warp','openvpn','direct'] %}
                     <option value="{{ t }}" {% if outbound and outbound.type == t %}selected{% endif %}>
                         {%- if t == 'direct' %}Direct (bind interface)
                         {%- elif t == 'openvpn' %}OpenVPN
                         {%- elif t == 'socks' %}SOCKS
+                        {%- elif t == 'warp' %}Cloudflare WARP
                         {%- else %}{{ t | upper }}
                         {%- endif %}
                     </option>
                     {% endfor %}
                 </select>
             {% endif %}
+        </div>
+
+        <!-- Cloudflare WARP: nothing to fill in, the panel registers on save -->
+        <div class="mb-3 field-warp">
+            <div class="alert alert-secondary mb-0">
+                <i class="fa-solid fa-cloud me-1"></i>
+                Saving registers a new WARP identity with Cloudflare and adds it as a
+                WireGuard outbound, so websites see a Cloudflare IP instead of this
+                server's. There is nothing to configure; it may take a few seconds.
+                Afterwards it is an ordinary WireGuard outbound you can edit.
+            </div>
         </div>
 
         <!-- Server / Port — hidden for direct type -->
@@ -434,8 +446,13 @@ function updateFields() {
     const isProxy  = ['vless','vmess','shadowsocks','trojan'].includes(type);
     const isSocks  = type === 'socks';
     const isWg     = type === 'wireguard';
+    const isWarp   = type === 'warp';
     const isDirect = type === 'direct';
     const isOvpn   = type === 'openvpn';
+
+    // WARP registers itself on save, so it has no fields of its own
+    document.querySelectorAll('.field-warp').forEach(el =>
+        el.style.display = isWarp ? '' : 'none');
 
     // Server / port row — shown for proxy, socks and wireguard
     document.querySelectorAll('.field-server').forEach(el =>
@@ -483,11 +500,12 @@ function updateFields() {
         // TLS sub-fields
         document.getElementById('tls-fields').style.display = tlsOn ? '' : 'none';
 
-        if (tlsOn) {
-            // Sync hidden checkbox value used by the server
-            const realityHidden = document.getElementById('tls_reality_hidden');
-            if (realityHidden) realityHidden.value = isReality ? 'on' : '';
+        // Sync hidden checkbox value used by the server. Also runs when TLS is
+        // off, so that unchecking TLS clears a previously saved REALITY flag.
+        const realityHidden = document.getElementById('tls_reality_hidden');
+        if (realityHidden) realityHidden.value = (tlsOn && isReality) ? 'on' : '';
 
+        if (tlsOn) {
             // Show/hide REALITY vs regular TLS sub-sections
             if (document.getElementById('tls-reality-fields'))
                 document.getElementById('tls-reality-fields').style.display = isReality ? '' : 'none';

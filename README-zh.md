@@ -89,6 +89,8 @@ Libertea 使用基于 SSL 的协议，因此流量与正常的 HTTPS 流量无�
 
 `--restricted-network` 与该参数相同。在 `bootstrap.sh` 中把它放在命令后面（`install --iran-blackout`、`update --iran-blackout`、`install-proxy … --iran-blackout`）。
 
+**Libertea 本身也来自 GitHub**，因此在完全断网时需要你自己把文件放到服务器上：将它们复制到 `/root/libertea`（例如从可正常访问的机器上打包），然后在该目录执行 `./init.sh install --iran-blackout`。`bootstrap.sh` 同样支持预先放好的文件：无法访问 GitHub 时它会直接使用现有文件，而不是报错退出。
+
 若对 `github.com`、`pypi.org`、`archive.ubuntu.com` 的短超时（约 5 秒）探测均失败，安装程序会请你输入 `iran` 以启用该配置，或按 Enter 跳过。之后的 `update` 若存在 `.libertea.iran` 会继续使用该配置。
 
 伊朗断网模式无法从 GitHub 下载。除非该文件已就位（或主机上已安装 sing-box 1.13.1），安装程序会**停止**：
@@ -99,8 +101,9 @@ Libertea 使用基于 SSL 的协议，因此流量与正常的 HTTPS 流量无�
 
 `--iran-blackout` 只改主机侧设置，可逆：apt 指向 `ir.archive.ubuntu.com`，在 `/etc/systemd/resolved.conf.d/libertea-restricted-dns.conf` 添加 systemd-resolved 配置，pip 使用 Liara 源，Docker 安装 `docker.io` + compose v1 并通过 Arvan 构建/拉取。默认 Dockerfile 仍指向 Docker Hub。
 
-断网结束后，删除 DNS drop-in 并重启 resolved：
+断网结束后，先删除标记文件，使后续更新不再使用该配置，然后删除 DNS drop-in 并重启 resolved：
 
+    rm -f /root/libertea/.libertea.iran
     rm -f /etc/systemd/resolved.conf.d/libertea-restricted-dns.conf
     systemctl restart systemd-resolved
 

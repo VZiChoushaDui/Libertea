@@ -1,8 +1,10 @@
 #!/bin/bash
 
-export SOCKS_OUTBOUND_PORT=$(head -n 1 /haproxy-files/lists/socks-outbound-port.lst | xargs echo -n)
-if [ -z "$SOCKS_OUTBOUND_PORT" ]; then
-    export SOCKS_OUTBOUND_PORT="2998"
+# Must never be empty: haproxy.cfg matches it with path_beg, and an empty value
+# would turn that into "/" and route every request to the panel. Matches the
+# panel's own fallback in config.get_static_resource_uuid().
+if [ -z "$STATIC_RESOURCE_UUID" ]; then
+    export STATIC_RESOURCE_UUID="static"
 fi
 
 export CAMOUFLAGE_PORT=$(head -n 1 /haproxy-files/lists/camouflage-port.lst | xargs echo -n)
@@ -41,11 +43,6 @@ pidfile=/var/run/haproxy.pid
 function reload
 {
     echo "Reloading haproxy..."
-
-    export SOCKS_OUTBOUND_PORT=$(head -n 1 /haproxy-files/lists/socks-outbound-port.lst | xargs echo -n)
-    if [ -z "$SOCKS_OUTBOUND_PORT" ]; then
-        export SOCKS_OUTBOUND_PORT="2998"
-    fi
 
     export CAMOUFLAGE_PORT=$(head -n 1 /haproxy-files/lists/camouflage-port.lst | xargs echo -n)
     if [ -z "$CAMOUFLAGE_PORT" ]; then

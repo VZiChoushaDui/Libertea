@@ -89,6 +89,8 @@
 
 `--restricted-network` همان فلگ است. در `bootstrap.sh` آن را بعد از دستور بگذارید (`install --iran-blackout`، `update --iran-blackout`، `install-proxy … --iran-blackout`).
 
+**خود لیبرتیا هم از GitHub می‌آید**، پس در قطعی کامل باید فایل‌ها را خودتان روی سرور بگذارید: آن‌ها را در `/root/libertea` کپی کنید (مثلاً آرشیوی از یک سیستم با دسترسی سالم) و بعد از همان مسیر `./init.sh install --iran-blackout` را اجرا کنید. `bootstrap.sh` هم با فایل‌های از قبل آماده کار می‌کند: اگر به GitHub نرسد، به‌جای خطا از همان فایل‌های موجود استفاده می‌کند.
+
 اگر `github.com`، `pypi.org` و `archive.ubuntu.com` در یک بررسی کوتاه (~۵ ثانیه) شکست بخورند، نصب‌کننده از شما می‌خواهد `iran` را تایپ کنید تا این پروفایل فعال شود، یا Enter بزنید تا رد شود. به‌روزرسانی‌های بعدی اگر فایل `.libertea.iran` وجود داشته باشد همان پروفایل را نگه می‌دارند.
 
 حالت قطعی ایران نمی‌تواند از GitHub دانلود کند. نصب‌کننده **متوقف می‌شود** مگر این فایل از قبل موجود باشد (یا sing-box ۱.۱۳.۱ روی میزبان نصب شده باشد):
@@ -99,8 +101,9 @@
 
 `--iran-blackout` فقط روی میزبان اعمال می‌شود و برگشت‌پذیر است: apt به `ir.archive.ubuntu.com`، یک drop-in برای systemd-resolved در `/etc/systemd/resolved.conf.d/libertea-restricted-dns.conf`، pip از ایندکس Liara، و Docker به‌صورت `docker.io` + compose v1 با آینه Arvan. Dockerfileهای پیش‌فرض روی Docker Hub می‌مانند.
 
-بعد از رفع قطعی، drop-in DNS را حذف کنید و resolved را ری‌استارت کنید:
+بعد از رفع قطعی، ابتدا فایل نشانه را حذف کنید تا به‌روزرسانی‌های بعدی از این پروفایل استفاده نکنند، سپس drop-in DNS را حذف و resolved را ری‌استارت کنید:
 
+    rm -f /root/libertea/.libertea.iran
     rm -f /etc/systemd/resolved.conf.d/libertea-restricted-dns.conf
     systemctl restart systemd-resolved
 

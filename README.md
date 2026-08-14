@@ -161,6 +161,8 @@ The default install uses public registries (Ubuntu, Docker Hub, PyPI, `docker co
 
 `--restricted-network` is the same flag. On `bootstrap.sh`, pass it after the command (`install --iran-blackout`, `update --iran-blackout`, `install-proxy … --iran-blackout`).
 
+**GitHub is where Libertea itself comes from**, so in a full blackout you have to get the files onto the server yourself: copy them to `/root/libertea` (an archive from a machine with working access, for example), then run `./init.sh install --iran-blackout` from that directory. `bootstrap.sh` also works with pre-placed files: it uses them as-is when it cannot reach GitHub, instead of failing.
+
 If `github.com`, `pypi.org`, and `archive.ubuntu.com` all fail a short (~5s) probe, the installer asks you to type `iran` to enable this profile, or press Enter to skip. A later `update` keeps the profile if `.libertea.iran` is present.
 
 Iran blackout mode cannot download from GitHub. The installer **stops** unless this file is already in place (or sing-box 1.13.1 is already installed on the host):
@@ -171,8 +173,9 @@ That file must be **sing-box 1.13.1** for this CPU (amd64 or arm64). Optionally 
 
 `--iran-blackout` is host-only and reversible: apt is pointed at `ir.archive.ubuntu.com`, a systemd-resolved drop-in is added at `/etc/systemd/resolved.conf.d/libertea-restricted-dns.conf` (so domestic mirrors resolve), pip uses the Liara index, and Docker is installed as `docker.io` + compose v1 with Arvan build/pull mirrors. Default Dockerfiles stay on Docker Hub.
 
-After the blackout, remove the DNS drop-in and restart resolved:
+After the blackout, delete the marker file so later updates stop using the profile, then remove the DNS drop-in and restart resolved:
 
+    rm -f /root/libertea/.libertea.iran
     rm -f /etc/systemd/resolved.conf.d/libertea-restricted-dns.conf
     systemctl restart systemd-resolved
 
