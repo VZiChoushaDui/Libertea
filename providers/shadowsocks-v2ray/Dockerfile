@@ -1,6 +1,9 @@
 # FROM mazy/ss-xray:latest
 
-FROM alpine:3.13
+ARG DOCKER_REGISTRY=
+FROM ${DOCKER_REGISTRY}alpine:3.13
+ARG ALPINE_MIRROR=
+RUN if [ -n "$ALPINE_MIRROR" ]; then ver=$(cut -d. -f1,2 /etc/alpine-release); printf '%s\n' "${ALPINE_MIRROR}/v${ver}/main" "${ALPINE_MIRROR}/v${ver}/community" > /etc/apk/repositories; fi
 
 ENV XRAY_PLUGIN_VERSION v1.3.1
 RUN set -ex \

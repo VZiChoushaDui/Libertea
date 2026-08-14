@@ -8,10 +8,44 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
-COMMAND="$1"
+LIBERTEA_IRAN=0
+POSITIONAL=()
+for arg in "$@"; do
+    case "$arg" in
+        --iran-blackout|--restricted-network|--iran) LIBERTEA_IRAN=1 ;;
+        *) POSITIONAL+=("$arg") ;;
+    esac
+done
+COMMAND="${POSITIONAL[0]:-}"
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd "$DIR"
+
+# shellcheck source=bash-tools/restricted-network.sh
+. "$DIR/bash-tools/restricted-network.sh"
+
+if [ "$LIBERTEA_IRAN" != "1" ] && [ -f "$DIR/$LIBERTEA_RESTRICTED_MARKER" ]; then
+    echo " ** Existing Iran blackout install detected (.libertea.iran)"
+    LIBERTEA_IRAN=1
+fi
+if [ "$LIBERTEA_IRAN" != "1" ] && libertea_restricted_detect; then
+    if libertea_restricted_prompt_autodetect; then
+        LIBERTEA_IRAN=1
+    fi
+fi
+if [ "$LIBERTEA_IRAN" = "1" ]; then
+    libertea_restricted_require_files main
+    libertea_restricted_apply
+fi
+
+COMPOSE_FILE_ARGS=""
+compose() {
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        docker-compose $COMPOSE_FILE_ARGS "$@"
+    else
+        docker compose $COMPOSE_FILE_ARGS "$@"
+    fi
+}
 
 echo ""
 echo " _      _ _               _              "
@@ -69,8 +103,7 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
     pip3 --version > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "    - Applying pip openssl fix..."
-        wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
-        python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install "$DIR/bash-tools/pip/pyOpenSSL-22.1.0-py3-none-any.whl" | sed 's/^/        /'
 
         # Fix dependencies
         pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
@@ -78,8 +111,7 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
     pip3 --version > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "    - Applying pip openssl fix 2..."
-        wget https://files.pythonhosted.org/packages/3f/0e/c6656e62d9424d9c9f14b27be27220602f4af1e64b77f2c86340b671d439/pyOpenSSL-24.0.0-py3-none-any.whl -O /tmp/pyOpenSSL-24.0.0-py3-none-any.whl | sed 's/^/        /'
-        python3 -m easy_install /tmp/pyOpenSSL-24.0.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install "$DIR/bash-tools/pip/pyOpenSSL-24.0.0-py3-none-any.whl" | sed 's/^/        /'
 
         # Fix dependencies
         pip3 install pyopenssl==24.0.0 | sed 's/^/        /'
@@ -108,8 +140,7 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
     pip3 --version > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "    - Applying pip openssl fix..."
-        wget https://files.pythonhosted.org/packages/00/3f/ea5cfb789dddb327e6d2cf9377c36d9d8607af85530af0e7001165587ae7/pyOpenSSL-22.1.0-py3-none-any.whl -O /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
-        python3 -m easy_install /tmp/pyOpenSSL-22.1.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install "$DIR/bash-tools/pip/pyOpenSSL-22.1.0-py3-none-any.whl" | sed 's/^/        /'
 
         # Fix dependencies
         pip3 install pyopenssl==22.1.0 | sed 's/^/        /'
@@ -117,8 +148,7 @@ if [ "$(pip3 --version 2>&1 | grep X509_V_FLAG)" ]; then
     pip3 --version > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "    - Applying pip openssl fix 2..."
-        wget https://files.pythonhosted.org/packages/3f/0e/c6656e62d9424d9c9f14b27be27220602f4af1e64b77f2c86340b671d439/pyOpenSSL-24.0.0-py3-none-any.whl -O /tmp/pyOpenSSL-24.0.0-py3-none-any.whl | sed 's/^/        /'
-        python3 -m easy_install /tmp/pyOpenSSL-24.0.0-py3-none-any.whl | sed 's/^/        /'
+        python3 -m easy_install "$DIR/bash-tools/pip/pyOpenSSL-24.0.0-py3-none-any.whl" | sed 's/^/        /'
 
         # Fix dependencies
         pip3 install pyopenssl==24.0.0 | sed 's/^/        /'
@@ -128,11 +158,19 @@ set -e
 
 echo "    - Installing docker..."
 if ! command -v docker &> /dev/null; then
-    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-    sh /tmp/get-docker.sh | sed 's/^/        /' >/dev/null
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        apt-get install -q -y docker.io | sed 's/^/        /'
+    else
+        curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+        sh /tmp/get-docker.sh | sed 's/^/        /' >/dev/null
+    fi
 fi
 echo "    - Installing docker compose..."
-apt-get install -q docker-compose-plugin | sed 's/^/        /'
+if [ "$LIBERTEA_IRAN" = "1" ]; then
+    apt-get install -q -y docker-compose | sed 's/^/        /'
+else
+    apt-get install -q docker-compose-plugin | sed 's/^/        /'
+fi
 
 # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
 if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
@@ -499,24 +537,40 @@ pkill -9 -f uwsgi
 set -e
 systemctl restart libertea-panel.service
 
+COMPOSE_BUILD_ARGS=""
+if [ "$LIBERTEA_IRAN" = "1" ]; then
+    COMPOSE_BUILD_ARGS="--build-arg DOCKER_REGISTRY=${LIBERTEA_DOCKER_REGISTRY} --build-arg ALPINE_MIRROR=${LIBERTEA_ALPINE_MIRROR} --build-arg UBUNTU_MIRROR=${LIBERTEA_UBUNTU_MIRROR} --build-arg DEBIAN_MIRROR=${LIBERTEA_DEBIAN_MIRROR} --build-arg PIP_INDEX_URL=${PIP_INDEX_URL} --build-arg PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}"
+fi
+
 if [ "$ENVIRONMENT" == "dev" ]; then
-    echo " ** Building docker containers..."
-    docker compose -f docker-compose.dev.yml build
     COMPOSE_FILE_ARGS="-f docker-compose.dev.yml"
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        COMPOSE_FILE_ARGS="$COMPOSE_FILE_ARGS -f docker-compose.iran.yml"
+    fi
+    echo " ** Building docker containers..."
+    compose build $COMPOSE_BUILD_ARGS
 else
-    echo " ** Pulling docker containers..."
-    docker compose pull
-    docker compose build
     COMPOSE_FILE_ARGS=""
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        COMPOSE_FILE_ARGS="-f docker-compose.yml -f docker-compose.iran.yml"
+    fi
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        echo " ** Building docker containers (restricted network, no Docker Hub pull)..."
+        compose build $COMPOSE_BUILD_ARGS
+    else
+        echo " ** Pulling docker containers..."
+        compose pull
+        compose build
+    fi
 fi
 
 echo " ** Starting docker containers..."
 set +e
-docker compose $COMPOSE_FILE_ARGS down >/dev/null
+compose down >/dev/null
 set -e
 
 echo "    - Starting MongoDB..."
-docker compose $COMPOSE_FILE_ARGS up -d mongodb
+compose up -d mongodb
 echo -n "    - Waiting for MongoDB..."
 for i in $(seq 1 60); do
     if (echo > /dev/tcp/localhost/27017) 2>/dev/null; then
@@ -569,7 +623,7 @@ if [ "$mongo_ready" -ne 1 ]; then
 fi
 echo ""
 echo "    - Starting remaining containers..."
-docker compose $COMPOSE_FILE_ARGS up -d
+compose up -d
 
 mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
@@ -590,7 +644,7 @@ set +e
 # Only bring services back if the upgrade script removed the mongodb container.
 # An unconditional rm+up here can interrupt first-boot root-user init.
 if ! docker inspect libertea-mongodb >/dev/null 2>&1; then
-    docker compose $COMPOSE_FILE_ARGS up -d
+    compose up -d
 fi
 set -e
 

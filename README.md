@@ -26,6 +26,7 @@ Easily install and manage a multi-protocol, multi-route V2ray VPN server; with a
 	* [How can I backup my Libertea installation, or move it to another server?](#HowcanIbackupmyLiberteainstallationormoveittoanotherserver)
 	* [I want to have my own website on the same server running on port 80/443. Can I still use Libertea?](#Iwanttohavemyownwebsiteonthesameserverrunningonport80443.CanIstilluseLibertea)
 	* [Can I use my own SSL certificate?](#CanIusemyownSSLcertificate)
+	* [Docker Hub / GitHub / PyPI are blocked, or Iran is in an internet blackout. How do I install?](#DockerHubGitHubPyPIareblockedHowdoIinstall)
 	* [Can I use Libertea with a custom reverse proxy?](#CanIuseLiberteawithacustomreverseproxy)
 	* [Can I use the beta version of Libertea?](#CanIusethebetaversionofLibertea)
 	* [How can I change the Libertea panel password or panel domain?](#HowcanIchangetheLiberteapanelpasswordorpaneldomain)
@@ -149,6 +150,33 @@ Use the exact domain name as the filename (for example `/root/libertea/certs/vpn
 You can create the combined PEM with:
 
     cat fullchain.pem privkey.pem > /root/libertea/certs/vpn.example.com.pem
+
+
+
+### <a name='DockerHubGitHubPyPIareblockedHowdoIinstall'></a>Docker Hub / GitHub / PyPI are blocked, or Iran is in an internet blackout. How do I install?
+
+The default install uses public registries (Ubuntu, Docker Hub, PyPI, `docker compose`). If those are unreachable (for example during an Iran-wide blackout), use the restricted-network profile:
+
+    ./init.sh install --iran-blackout
+
+`--restricted-network` is the same flag. On `bootstrap.sh`, pass it after the command (`install --iran-blackout`, `update --iran-blackout`, `install-proxy … --iran-blackout`).
+
+If `github.com`, `pypi.org`, and `archive.ubuntu.com` all fail a short (~5s) probe, the installer asks you to type `iran` to enable this profile, or press Enter to skip. A later `update` keeps the profile if `.libertea.iran` is present.
+
+Iran blackout mode cannot download from GitHub. The installer **stops** unless this file is already in place (or sing-box 1.13.1 is already installed on the host):
+
+    providers/outbound-direct/sing-box
+
+That file must be **sing-box 1.13.1** for this CPU (amd64 or arm64). Optionally also place combined PEMs at `certs/<domain>.pem` (see the SSL question above).
+
+`--iran-blackout` is host-only and reversible: apt is pointed at `ir.archive.ubuntu.com`, a systemd-resolved drop-in is added at `/etc/systemd/resolved.conf.d/libertea-restricted-dns.conf` (so domestic mirrors resolve), pip uses the Liara index, and Docker is installed as `docker.io` + compose v1 with Arvan build/pull mirrors. Default Dockerfiles stay on Docker Hub.
+
+After the blackout, remove the DNS drop-in and restart resolved:
+
+    rm -f /etc/systemd/resolved.conf.d/libertea-restricted-dns.conf
+    systemctl restart systemd-resolved
+
+Uninstall also removes the drop-in and restores the backed-up apt sources.
 
 
 

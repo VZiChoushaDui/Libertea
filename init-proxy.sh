@@ -8,16 +8,45 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
-CONFIGURATION_URL="$1"
-PROXY_TYPE="$2"
+LIBERTEA_IRAN=0
+POSITIONAL=()
+for arg in "$@"; do
+    case "$arg" in
+        --iran-blackout|--restricted-network|--iran) LIBERTEA_IRAN=1 ;;
+        *) POSITIONAL+=("$arg") ;;
+    esac
+done
+
+CONFIGURATION_URL="${POSITIONAL[0]:-}"
+PROXY_TYPE="${POSITIONAL[1]:-}"
 DOCKERIZED_PROXY="0"
 IS_UPDATING="0"
 
-OTHER_PARAM="$3"
+OTHER_PARAM="${POSITIONAL[2]:-}"
 if [ ! -z "$OTHER_PARAM" ]; then
     echo "Legacy mode detected. Switching to legacy mode..."
-    bash init-proxy.legacy.sh "$@"
+    bash init-proxy.legacy.sh "${POSITIONAL[@]}"
     exit
+fi
+
+DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cd "$DIR"
+
+# shellcheck source=bash-tools/restricted-network.sh
+. "$DIR/bash-tools/restricted-network.sh"
+
+if [ "$LIBERTEA_IRAN" != "1" ] && [ -f "$DIR/$LIBERTEA_RESTRICTED_MARKER" ]; then
+    echo " ** Existing Iran blackout install detected (.libertea.iran)"
+    LIBERTEA_IRAN=1
+fi
+if [ "$LIBERTEA_IRAN" != "1" ] && libertea_restricted_detect; then
+    if libertea_restricted_prompt_autodetect; then
+        LIBERTEA_IRAN=1
+    fi
+fi
+if [ "$LIBERTEA_IRAN" = "1" ]; then
+    libertea_restricted_require_files proxy
+    libertea_restricted_apply
 fi
 
 set +e
@@ -26,9 +55,6 @@ PANEL_DOMAIN=$(curl --fail -s "$CONFIGURATION_URL/panel-domain")
 PANEL_SECRET_KEY=$(curl --fail -s "$CONFIGURATION_URL/panel-secret-key")
 PROXY_CONNECT_UUID=$(curl --fail -s "$CONFIGURATION_URL/proxy-connect-uuid")
 set -e
-
-DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-cd "$DIR"
 
 if [ "$CONFIGURATION_URL" == "update" ]; then
     . .env
@@ -145,11 +171,19 @@ set -e
 if [ "$DOCKERIZED_PROXY" == "1" ]; then
     echo " ** Installing docker..."
     if ! command -v docker &> /dev/null; then
-        curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sh /tmp/get-docker.sh >/dev/null
+        if [ "$LIBERTEA_IRAN" = "1" ]; then
+            apt-get install -q -y docker.io >/dev/null
+        else
+            curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+            sh /tmp/get-docker.sh >/dev/null
+        fi
     fi
     echo " ** Installing docker compose..."
-    apt-get install docker-compose-plugin >/dev/null
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        apt-get install -q -y docker-compose >/dev/null
+    else
+        apt-get install docker-compose-plugin >/dev/null
+    fi
 
     # if docker version is 23.x, apply apparmor fix: https://stackoverflow.com/q/75346313
     if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
@@ -195,28 +229,57 @@ if [ ! -f /root/.ssh/id_rsa.pub ]; then
     ssh-keygen -t rsa -b 4096 -N "" -f /root/.ssh/id_rsa >/dev/null
 fi
 
-if [ "$DOCKERIZED_PROXY" == "1" ]; then
-    if [ "$ENVIRONMENT" == "dev" ]; then
-        echo " ** Building docker images..."
-        docker compose -f proxy-docker-compose.dev.yml build
-
-        echo " ** Starting docker containers..."
-        docker compose -f proxy-docker-compose.dev.yml down >/dev/null
-        docker compose -f proxy-docker-compose.dev.yml up -d
+proxy_compose() {
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        docker-compose $PROXY_COMPOSE_FILE_ARGS "$@"
     else
-        echo " ** Pulling docker images..."
-        docker compose -f proxy-docker-compose.yml pull
-        docker compose -f proxy-docker-compose.yml build
+        docker compose $PROXY_COMPOSE_FILE_ARGS "$@"
+    fi
+}
+
+if [ "$DOCKERIZED_PROXY" == "1" ]; then
+    PROXY_COMPOSE_BUILD_ARGS=""
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        PROXY_COMPOSE_BUILD_ARGS="--build-arg DOCKER_REGISTRY=${LIBERTEA_DOCKER_REGISTRY} --build-arg ALPINE_MIRROR=${LIBERTEA_ALPINE_MIRROR} --build-arg UBUNTU_MIRROR=${LIBERTEA_UBUNTU_MIRROR} --build-arg DEBIAN_MIRROR=${LIBERTEA_DEBIAN_MIRROR} --build-arg PIP_INDEX_URL=${PIP_INDEX_URL} --build-arg PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}"
+    fi
+    if [ "$ENVIRONMENT" == "dev" ]; then
+        PROXY_COMPOSE_FILE_ARGS="-f proxy-docker-compose.dev.yml"
+        if [ "$LIBERTEA_IRAN" = "1" ]; then
+            PROXY_COMPOSE_FILE_ARGS="$PROXY_COMPOSE_FILE_ARGS -f proxy-docker-compose.iran.yml"
+        fi
+        echo " ** Building docker images..."
+        proxy_compose build $PROXY_COMPOSE_BUILD_ARGS
 
         echo " ** Starting docker containers..."
-        docker compose -f proxy-docker-compose.yml down >/dev/null
-        docker compose -f proxy-docker-compose.yml up -d
+        proxy_compose down >/dev/null
+        proxy_compose up -d
+    else
+        PROXY_COMPOSE_FILE_ARGS="-f proxy-docker-compose.yml"
+        if [ "$LIBERTEA_IRAN" = "1" ]; then
+            PROXY_COMPOSE_FILE_ARGS="$PROXY_COMPOSE_FILE_ARGS -f proxy-docker-compose.iran.yml"
+        fi
+        if [ "$LIBERTEA_IRAN" = "1" ]; then
+            echo " ** Building docker images (restricted network, no Docker Hub pull)..."
+            proxy_compose build $PROXY_COMPOSE_BUILD_ARGS
+        else
+            echo " ** Pulling docker images..."
+            proxy_compose pull
+            proxy_compose build
+        fi
+
+        echo " ** Starting docker containers..."
+        proxy_compose down >/dev/null
+        proxy_compose up -d
     fi
 else
     # clean up any old libertea docker containers, if any
     set +e
     echo " ** Cleaning up old Libertea proxies..."
-    docker compose -f proxy-docker-compose.yml down >/dev/null
+    if [ "$LIBERTEA_IRAN" = "1" ]; then
+        docker-compose -f proxy-docker-compose.yml down >/dev/null
+    else
+        docker compose -f proxy-docker-compose.yml down >/dev/null
+    fi
     systemctl stop libertea-proxy-ssh-tunnel-0.service >/dev/null
     systemctl stop libertea-proxy-ssh-tunnel-1.service >/dev/null
     systemctl stop libertea-proxy-ssh-tunnel-2.service >/dev/null

@@ -1,0 +1,9 @@
+# Restricted-network override (--iran-blackout) for secondary proxies.
+version: '3'
+services:
+  proxy-register:
+    build: ./proxy-register
+  haproxy:
+    build: ./proxy-haproxy
+  asym-traffic:
+    build: ./proxy-fake-traffic

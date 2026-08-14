@@ -9,4 +9,6 @@ providers/*/config.env
 TODO
 .libertea.proxy
 .libertea.main
+.libertea.iran
+docker-compose.override.yml
 providers/outbound-direct/sing-box

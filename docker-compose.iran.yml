@@ -1,0 +1,27 @@
+# Restricted-network override (--iran-blackout). Do not use as the default compose file.
+# Pulled Hub images come from Arvan; local images get a build context because
+# docker-compose.yml only lists image: names.
+version: '3'
+services:
+  mongodb:
+    image: docker.arvancloud.ir/mongo:8
+  camouflage-nginx-fallback:
+    image: docker.arvancloud.ir/nginx:latest
+  rsyslog:
+    build: ./syslog
+  log-parser:
+    build: ./log-parser
+  haproxy:
+    build: ./haproxy
+  provider-trojan-ws:
+    build: ./providers/trojan-ws
+  provider-trojan-grpc:
+    build: ./providers/trojan-grpc
+  provider-vless-ws:
+    build: ./providers/vless-ws
+  provider-vless-grpc:
+    build: ./providers/vless-grpc
+  provider-vmess-grpc:
+    build: ./providers/vmess-grpc
+  provider-shadowsocks-v2ray:
+    build: ./providers/shadowsocks-v2ray

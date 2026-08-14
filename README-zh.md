@@ -80,3 +80,28 @@ Libertea 使用基于 SSL 的协议，因此流量与正常的 HTTPS 流量无�
 可用以下命令生成合并 PEM：
 
     cat fullchain.pem privkey.pem > /root/libertea/certs/vpn.example.com.pem
+
+##### Docker Hub / GitHub / PyPI 被屏蔽，或伊朗互联网中断时如何安装？
+
+默认安装使用公共仓库（Ubuntu、Docker Hub、PyPI 和 `docker compose`）。若这些地址不可达（例如大范围断网），请使用受限网络配置：
+
+    ./init.sh install --iran-blackout
+
+`--restricted-network` 与该参数相同。在 `bootstrap.sh` 中把它放在命令后面（`install --iran-blackout`、`update --iran-blackout`、`install-proxy … --iran-blackout`）。
+
+若对 `github.com`、`pypi.org`、`archive.ubuntu.com` 的短超时（约 5 秒）探测均失败，安装程序会请你输入 `iran` 以启用该配置，或按 Enter 跳过。之后的 `update` 若存在 `.libertea.iran` 会继续使用该配置。
+
+伊朗断网模式无法从 GitHub 下载。除非该文件已就位（或主机上已安装 sing-box 1.13.1），安装程序会**停止**：
+
+    providers/outbound-direct/sing-box
+
+该文件必须是适用于当前 CPU 的 **sing-box 1.13.1**（amd64 或 arm64）。可选：将合并 PEM 放到 `certs/<domain>.pem`（见上方 SSL 说明）。
+
+`--iran-blackout` 只改主机侧设置，可逆：apt 指向 `ir.archive.ubuntu.com`，在 `/etc/systemd/resolved.conf.d/libertea-restricted-dns.conf` 添加 systemd-resolved 配置，pip 使用 Liara 源，Docker 安装 `docker.io` + compose v1 并通过 Arvan 构建/拉取。默认 Dockerfile 仍指向 Docker Hub。
+
+断网结束后，删除 DNS drop-in 并重启 resolved：
+
+    rm -f /etc/systemd/resolved.conf.d/libertea-restricted-dns.conf
+    systemctl restart systemd-resolved
+
+卸载时也会删除该 drop-in 并恢复备份的 apt 源。

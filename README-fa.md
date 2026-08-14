@@ -80,3 +80,28 @@
 برای ساخت PEM ترکیبی:
 
     cat fullchain.pem privkey.pem > /root/libertea/certs/vpn.example.com.pem
+
+##### Docker Hub / GitHub / PyPI مسدود است، یا اینترنت ایران قطع شده. چطور نصب کنم؟
+
+نصب پیش‌فرض از رجیستری‌های عمومی (اوبونتو، Docker Hub، PyPI و `docker compose`) استفاده می‌کند. اگر این‌ها در دسترس نیستند (مثلاً در قطعی سراسری)، پروفایل شبکه محدود را فعال کنید:
+
+    ./init.sh install --iran-blackout
+
+`--restricted-network` همان فلگ است. در `bootstrap.sh` آن را بعد از دستور بگذارید (`install --iran-blackout`، `update --iran-blackout`، `install-proxy … --iran-blackout`).
+
+اگر `github.com`، `pypi.org` و `archive.ubuntu.com` در یک بررسی کوتاه (~۵ ثانیه) شکست بخورند، نصب‌کننده از شما می‌خواهد `iran` را تایپ کنید تا این پروفایل فعال شود، یا Enter بزنید تا رد شود. به‌روزرسانی‌های بعدی اگر فایل `.libertea.iran` وجود داشته باشد همان پروفایل را نگه می‌دارند.
+
+حالت قطعی ایران نمی‌تواند از GitHub دانلود کند. نصب‌کننده **متوقف می‌شود** مگر این فایل از قبل موجود باشد (یا sing-box ۱.۱۳.۱ روی میزبان نصب شده باشد):
+
+    providers/outbound-direct/sing-box
+
+این فایل باید **sing-box 1.13.1** برای همین CPU باشد (amd64 یا arm64). در صورت نیاز PEM ترکیبی را در `certs/<domain>.pem` بگذارید (سؤال SSL بالاتر).
+
+`--iran-blackout` فقط روی میزبان اعمال می‌شود و برگشت‌پذیر است: apt به `ir.archive.ubuntu.com`، یک drop-in برای systemd-resolved در `/etc/systemd/resolved.conf.d/libertea-restricted-dns.conf`، pip از ایندکس Liara، و Docker به‌صورت `docker.io` + compose v1 با آینه Arvan. Dockerfileهای پیش‌فرض روی Docker Hub می‌مانند.
+
+بعد از رفع قطعی، drop-in DNS را حذف کنید و resolved را ری‌استارت کنید:
+
+    rm -f /etc/systemd/resolved.conf.d/libertea-restricted-dns.conf
+    systemctl restart systemd-resolved
+
+حذف نصب (uninstall) هم این drop-in را برمی‌دارد و sources.list پشتیبان‌گیری‌شده را برمی‌گرداند.

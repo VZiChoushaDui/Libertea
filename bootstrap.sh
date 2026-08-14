@@ -16,7 +16,7 @@ PROJECT_NAME="libertea"
 COMMAND="$1"
 
 if [ "$COMMAND" != "install" ] && [ "$COMMAND" != "update" ] && [ "$COMMAND" != "install-proxy" ] && [ "$COMMAND" != "uninstall" ]; then
-    echo "Usage: $0 [install|update|install-proxy|uninstall]"
+    echo "Usage: $0 [install|update|install-proxy|uninstall] [--iran-blackout]"
     exit 1
 fi
 
@@ -68,15 +68,15 @@ fi
 if [ "$COMMAND" = "install" ]; then
     # Install the project
     echo " ** Installing $PROJECT_NAME..."
-    ./init.sh
+    ./init.sh "${@:2}"
 elif [ "$COMMAND" = "update" ]; then
     # Update the project
     echo "Updating $PROJECT_NAME..."
-    ./init.sh update
+    ./init.sh update "${@:2}"
 elif [ "$COMMAND" = "install-proxy" ]; then
     # Install the proxy
     echo "Installing $PROJECT_NAME-proxy..."
-    ./init-proxy.sh "$2" "$3" "$4" "$5"
+    ./init-proxy.sh "${@:2}"
 elif [ "$COMMAND" = "uninstall" ]; then
     set +e
 
@@ -121,6 +121,14 @@ elif [ "$COMMAND" = "uninstall" ]; then
     systemctl disable libertea-proxy-register.service >/dev/null 2>&1
     systemctl stop haproxy >/dev/null 2>&1
     systemctl disable haproxy >/dev/null 2>&1
+
+    echo " ** Removing restricted-network apt/DNS overrides..."
+    if [ -f "/root/$PROJECT_NAME/bash-tools/restricted-network.sh" ]; then
+        DIR="/root/$PROJECT_NAME"
+        # shellcheck source=bash-tools/restricted-network.sh
+        . "/root/$PROJECT_NAME/bash-tools/restricted-network.sh"
+        libertea_restricted_uninstall
+    fi
 
     echo " ** Deleting Libertea files..."
     cd /root
