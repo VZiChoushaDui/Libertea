@@ -172,26 +172,58 @@ if [[ $(uname -m) == *"x86"* ]]; then
     fi
 fi
 
-echo " ** Getting public IP..."
+echo " ** Detecting server IP address..."
 set +e
-my_ip=$(curl -s --ipv4 --fail --max-time 3 https://ifconfig.io/ip)
+my_ip=""
+for ip_url in https://ifconfig.io/ip https://api.ipify.org https://icanhazip.com https://ident.me https://checkip.amazonaws.com; do
+    my_ip=$(curl -s --ipv4 --fail --max-time 3 "$ip_url")
+    if [[ $my_ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "    Public IP $my_ip (from $ip_url)"
+        break
+    fi
+    my_ip=""
+done
+
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://api.ipify.org)
+    echo "    Public IP lookup failed. Trying local interfaces..."
+    for iface in eth0 ens3 ens4 ens5 enp0s3 enp0s5 enp1s0 enp3s0 ens18 ens160 eno1 bond0; do
+        candidate=$(ip -4 addr show "$iface" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
+        if [[ $candidate && ! $candidate =~ ^127\. ]]; then
+            my_ip="$candidate"
+            echo "    Detected IP $my_ip on interface $iface"
+            break
+        fi
+    done
 fi
 if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://icanhazip.com)
+    my_ip=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.' | head -n1)
+    if [[ $my_ip ]]; then
+        echo "    Detected IP $my_ip (fallback)"
+    fi
 fi
-if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://ident.me)
-fi
-if [[ ! $my_ip ]]; then
-    my_ip=$(curl -s --ipv4 --fail --max-time 3 https://checkip.amazonaws.com)
-fi
-if [[ ! $my_ip ]]; then
+set -e
+
+if [[ "$COMMAND" != "update" ]]; then
+    echo ""
+    if [[ $my_ip ]]; then
+        read -r -p "    Use $my_ip as this server's public IP? [Y/n]: " ip_confirm
+        ip_confirm="${ip_confirm:-Y}"
+        if [[ "$ip_confirm" =~ ^[Nn] ]]; then
+            my_ip=""
+        fi
+    fi
+    if [[ ! $my_ip ]]; then
+        read -r -p "    Enter this server's public IP address: " my_ip
+        while ! [[ "$my_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; do
+            echo "    Invalid IP address. Please enter a valid IPv4 address:"
+            read -r my_ip
+        done
+    fi
+    echo ""
+elif [[ ! $my_ip ]]; then
     echo " ** Failed to get public IP. Please check your internet connection."
     exit 1
 fi
-set -e
 
 
 # if .env does not exist, copy sample.env and fill it with random values
@@ -269,6 +301,14 @@ fi
 cat .env | grep -v "LIBERTEA_BRANCH_NAME=" > .env.tmp
 mv .env.tmp .env
 echo "LIBERTEA_BRANCH_NAME=$BRANCH_NAME" >> .env
+
+if [[ "$COMMAND" == "update" ]] && grep -qE '^SERVER_IP=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' .env; then
+    my_ip=$(grep "^SERVER_IP=" .env | cut -d '=' -f 2-)
+    echo "    Using SERVER_IP=$my_ip from .env"
+else
+    grep -v "^SERVER_IP=" .env > .env.tmp && mv .env.tmp .env
+    echo "SERVER_IP=$my_ip" >> .env
+fi
 set -e
 
 if [ "$BRANCH_NAME" != "master" ]; then

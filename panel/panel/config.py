@@ -86,24 +86,23 @@ def get_ip_api_url():
         'https://checkip.amazonaws.com',
     ])
 
-SERVER_MAIN_IP = None
-for i in range(5):
-    try:
-        ip = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
-        if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', ip):
+def _fetch_public_ip():
+    for _ in range(5):
+        try:
+            ip = requests.get(get_ip_api_url(), timeout=3).content.decode('utf8').strip()
+            if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', ip):
+                return ip
             print("Failed to get server ip. Result was: " + str(ip))
-            continue
+        except Exception as e:
+            print("Failed to get server ip: " + str(e))
+    return None
 
-        SERVER_MAIN_IP = ip
-        break
-    except Exception as e:
-        print("Failed to get server ip: " + str(e))
-
-if SERVER_MAIN_IP is None:
-    raise Exception("couldn't fetch SERVER_MAIN_IP")
+SERVER_MAIN_IP = os.environ.get('SERVER_IP', '').strip()
+if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
+    SERVER_MAIN_IP = _fetch_public_ip() or ''
 
 if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', SERVER_MAIN_IP):
-    raise Exception("couldn't fetch SERVER_MAIN_IP. Result was: " + str(SERVER_MAIN_IP))
+    raise Exception("SERVER_IP is not set or invalid, and public IP lookup failed. Got: " + repr(SERVER_MAIN_IP))
 
 # print("SERVER_MAIN_IP: " + SERVER_MAIN_IP)
 
