@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 import pymongo
 import threading
@@ -141,6 +142,50 @@ def haproxy_update_camouflage_list():
     print("Wrote " + str(camouflage_port) + " to haproxy-lists/camouflage-port.lst")
 
     return haproxy_reload()
+
+SINGBOX_SERVICE = 'libertea-outbound-direct.service'
+
+def apply_outbound_config():
+    """
+    Write new sing-box config from MongoDB, restart the service.
+    Reverts to the previous config and restarts if the service fails to start.
+    Returns (success: bool, error_msg: str|None).
+    """
+    from . import outbounds as ob_module
+
+    outbound_json = config.get_root_dir() + 'data/outbound.json'
+    outbound_json_bak = outbound_json + '.bak'
+
+    all_obs = ob_module.get_all()
+
+    # Bring up / tear down OpenVPN tunnels first — sing-box needs the
+    # tun interfaces to exist before it can bind to them.
+    ovpn_ok, ovpn_err = ob_module.apply_openvpn(all_obs)
+    if not ovpn_ok:
+        return False, ovpn_err
+
+    if os.path.exists(outbound_json):
+        shutil.copy2(outbound_json, outbound_json_bak)
+
+    try:
+        ob_module.write_config(all_obs)
+    except Exception as e:
+        return False, f'Failed to write config: {e}'
+
+    os.system(f'systemctl restart {SINGBOX_SERVICE}')
+    time.sleep(3)
+
+    if os.system(f'systemctl is-active --quiet {SINGBOX_SERVICE}') == 0:
+        haproxy_reload(5)
+        return True, None
+
+    error = 'sing-box failed to start with the new config. Reverted to previous config.'
+    if os.path.exists(outbound_json_bak):
+        shutil.copy2(outbound_json_bak, outbound_json)
+        os.remove(outbound_json_bak)
+        os.system(f'systemctl restart {SINGBOX_SERVICE}')
+        haproxy_reload(5)
+    return False, error
 
 def add_ssh_key(ssh_key):
     ssh_keys_dir = '/home/libertea/.ssh'

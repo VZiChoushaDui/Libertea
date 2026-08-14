@@ -287,7 +287,22 @@ def set_migration_counter(val, db=None):
     
     db.settings.update_one({"_id": "migration_counter"}, {"$set": {"value": int(val)}}, upsert=True)
     return True
-    
+
+def get_relay_config(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "relay_config"})
+    if setting is None:
+        return {"enabled": False, "server": "", "port": 8080, "password": ""}
+    return setting["value"]
+
+def set_relay_config(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "relay_config"}, {"$set": {"value": val}}, upsert=True)
+
 def get_all_domains_ever():
     filename = config.get_root_dir() + 'data/all-domains-ever.lst'
     if not os.path.exists(filename):

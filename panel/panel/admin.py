@@ -10,9 +10,10 @@ from . import config
 from . import sysops
 from . import settings
 from . import health_check
+from . import outbounds as outbounds_module
 from pymongo import MongoClient
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 
 blueprint = Blueprint('admin', __name__)
 
@@ -793,6 +794,196 @@ def app_settings_save():
                 return redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 
     return redirect(url_for('admin.app_settings'))
+
+@blueprint.route(root_url + 'outbounds/')
+def outbounds():
+    all_outbounds = outbounds_module.get_all()
+    relay_config  = settings.get_relay_config()
+    ovpn_indices  = outbounds_module._compute_ovpn_indices(all_outbounds)
+    health        = outbounds_module.get_all_health()
+
+    def _sort_key(ob):
+        enabled = ob.get('enabled', True)
+        backup  = ob.get('backup', False)
+        weight  = ob.get('weight', 100)
+        group = 2 if not enabled else (1 if backup else 0)
+        return (group, -weight)
+
+    sorted_outbounds = sorted(all_outbounds, key=_sort_key)
+
+    return render_template('admin/outbounds.jinja',
+        page='outbounds',
+        libertea_version=config.LIBERTEA_VERSION,
+        admin_uuid=config.get_admin_uuid(),
+        outbounds=sorted_outbounds,
+        relay_config=relay_config,
+        ovpn_indices=ovpn_indices,
+        health=health,
+    )
+
+@blueprint.route(root_url + 'outbounds/relay/', methods=['POST'])
+def outbound_relay_save():
+    relay_config = {
+        'enabled':  request.form.get('relay_enabled') == 'on',
+        'server':   request.form.get('relay_server', '').strip(),
+        'port':     int(request.form.get('relay_port', 8080) or 8080),
+        'password': request.form.get('relay_password', '').strip(),
+        'protocol': request.form.get('relay_protocol', 'hysteria2'),
+    }
+    settings.set_relay_config(relay_config)
+    success, err = sysops.apply_outbound_config()
+    if not success:
+        relay_config['error'] = err
+        all_outbounds = outbounds_module.get_all()
+        ovpn_indices  = outbounds_module._compute_ovpn_indices(all_outbounds)
+        return render_template('admin/outbounds.jinja',
+            page='outbounds',
+            libertea_version=config.LIBERTEA_VERSION,
+            admin_uuid=config.get_admin_uuid(),
+            outbounds=all_outbounds,
+            relay_config=relay_config,
+            ovpn_indices=ovpn_indices,
+        )
+    return redirect(url_for('admin.outbounds'))
+
+@blueprint.route(root_url + 'outbounds/relay/setup-command/')
+def outbound_relay_setup_command():
+    """Return the bash setup script template as plain text.
+    Placeholders __RELAY_PORT__ and __RELAY_PASSWORD__ are substituted
+    client-side in JavaScript so the panel updates without a network round-trip."""
+    script = outbounds_module.build_relay_setup_command_template()
+    return Response(script, mimetype='text/plain')
+
+@blueprint.route(root_url + 'outbounds/new/', methods=['GET'])
+def outbound_new():
+    return render_template('admin/outbound_edit.jinja',
+        page='outbounds',
+        libertea_version=config.LIBERTEA_VERSION,
+        admin_uuid=config.get_admin_uuid(),
+        outbound=None,
+        ss_methods=outbounds_module.SS_METHODS,
+        error=None,
+    )
+
+@blueprint.route(root_url + 'outbounds/new/', methods=['POST'])
+def outbound_create():
+    data = _parse_outbound_form(request.form)
+    try:
+        new_id = outbounds_module.create(data)
+    except ValueError as e:
+        return render_template('admin/outbound_edit.jinja',
+            page='outbounds',
+            libertea_version=config.LIBERTEA_VERSION,
+            admin_uuid=config.get_admin_uuid(),
+            outbound=None,
+            ss_methods=outbounds_module.SS_METHODS,
+            error=str(e),
+        )
+    new_ob = outbounds_module.get_one(new_id)
+    if new_ob:
+        outbounds_module.reset_health(new_ob['index'])
+    success, err = sysops.apply_outbound_config()
+    if not success:
+        outbounds_module.delete(new_id)
+        return render_template('admin/outbound_edit.jinja',
+            page='outbounds',
+            libertea_version=config.LIBERTEA_VERSION,
+            admin_uuid=config.get_admin_uuid(),
+            outbound=data,
+            ss_methods=outbounds_module.SS_METHODS,
+            error=err,
+        )
+    return redirect(url_for('admin.outbounds'))
+
+@blueprint.route(root_url + 'outbounds/<outbound_id>/', methods=['GET'])
+def outbound_edit(outbound_id):
+    ob = outbounds_module.get_one(outbound_id)
+    if ob is None:
+        return redirect(url_for('admin.outbounds'))
+    return render_template('admin/outbound_edit.jinja',
+        page='outbounds',
+        libertea_version=config.LIBERTEA_VERSION,
+        admin_uuid=config.get_admin_uuid(),
+        outbound=ob,
+        ss_methods=outbounds_module.SS_METHODS,
+        error=None,
+    )
+
+@blueprint.route(root_url + 'outbounds/<outbound_id>/', methods=['POST'])
+def outbound_update(outbound_id):
+    old_ob = outbounds_module.get_one(outbound_id)
+    data = _parse_outbound_form(request.form)
+    data['type'] = old_ob['type']
+    outbounds_module.update(outbound_id, data)
+    outbounds_module.reset_health(old_ob['index'])
+    success, err = sysops.apply_outbound_config()
+    if not success:
+        restore = {k: v for k, v in old_ob.items() if k != '_id'}
+        outbounds_module.update(outbound_id, restore)
+        return render_template('admin/outbound_edit.jinja',
+            page='outbounds',
+            libertea_version=config.LIBERTEA_VERSION,
+            admin_uuid=config.get_admin_uuid(),
+            outbound=old_ob,
+            ss_methods=outbounds_module.SS_METHODS,
+            error=err,
+        )
+    return redirect(url_for('admin.outbounds'))
+
+@blueprint.route(root_url + 'outbounds/<outbound_id>/delete/', methods=['POST'])
+def outbound_delete(outbound_id):
+    ob = outbounds_module.get_one(outbound_id)
+    if ob:
+        outbounds_module.reset_health(ob['index'])
+    outbounds_module.delete(outbound_id)
+    sysops.apply_outbound_config()
+    return redirect(url_for('admin.outbounds'))
+
+def _parse_outbound_form(form):
+    return {
+        'name':                   form.get('name', '').strip(),
+        'enabled':                form.get('enabled') == 'on',
+        'backup':                 form.get('backup') == 'on',
+        'weight':                 max(1, min(100, int(form.get('weight') or 100))),
+        'type':                   form.get('type', 'vless'),
+        'server':                 form.get('server', '').strip(),
+        'server_port':            int(form.get('server_port', 443) or 443),
+        'uuid':                   form.get('uuid', '').strip(),
+        'password':               form.get('password', '').strip(),
+        'method':                 form.get('method', 'chacha20-ietf-poly1305'),
+        'transport':              form.get('transport', 'tcp'),
+        'transport_path':         form.get('transport_path', '').strip(),
+        'transport_host':         form.get('transport_host', '').strip(),
+        'transport_service_name': form.get('transport_service_name', '').strip(),
+        'tls':                    form.get('tls') == 'on',
+        'tls_insecure':           form.get('tls_insecure') == 'on',
+        'tls_sni':                form.get('tls_sni', '').strip(),
+        'tls_reality':            form.get('tls_reality') == 'on',
+        'tls_reality_public_key': form.get('tls_reality_public_key', '').strip(),
+        'tls_reality_short_id':   form.get('tls_reality_short_id', '').strip(),
+        'tls_fingerprint':        form.get('tls_fingerprint', '').strip(),
+        'vless_flow':             form.get('vless_flow', '').strip(),
+        'wg_private_key':         form.get('wg_private_key', '').strip(),
+        'wg_peer_public_key':     form.get('wg_peer_public_key', '').strip(),
+        'wg_pre_shared_key':      form.get('wg_pre_shared_key', '').strip(),
+        'wg_local_address':       form.get('wg_local_address', '').strip(),
+        'wg_mtu':                 form.get('wg_mtu', '').strip(),
+        'wg_reserved':            form.get('wg_reserved', '').strip(),
+        'bind_interface':         form.get('bind_interface', '').strip(),
+        'ovpn_config':            form.get('ovpn_config', ''),
+        'ovpn_username':          form.get('ovpn_username', '').strip(),
+        'ovpn_password':          form.get('ovpn_password', '').strip(),
+        'socks_version':          form.get('socks_version', '5'),
+        'socks_username':         form.get('socks_username', '').strip(),
+        'socks_password':         form.get('socks_password', '').strip(),
+        **_parse_relay_override(form),
+    }
+
+def _parse_relay_override(form):
+    override = form.get('relay_protocol_override', '').strip()
+    if override == 'disabled':
+        return {'relay_disabled': True, 'relay_protocol_override': ''}
+    return {'relay_disabled': False, 'relay_protocol_override': override}
 
 @blueprint.route(root_url + 'settings/reset_tiers/', methods=['POST'])
 def app_settings_reset_tiers():

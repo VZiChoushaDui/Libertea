@@ -1,0 +1,759 @@
+{% extends 'admin/base.jinja' %}
+{% block content %}
+<div class="section" style="max-width: 700px; margin: 0 auto;">
+    <h1>{% if outbound and outbound._id %}Edit Outbound{% else %}New Outbound{% endif %}</h1>
+
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <!-- ── Import from URI ── -->
+    {% if not outbound or not outbound._id %}
+    <div class="card mb-4" style="border-style:dashed;">
+        <div class="card-body">
+            <label class="form-label fw-semibold"><i class="fa-solid fa-link me-1 text-secondary"></i>Import from Share Link <small class="text-muted fw-normal">(optional)</small></label>
+            <div class="input-group">
+                <input type="text" class="form-control font-monospace" id="uri-import-input"
+                       placeholder="vless://... or vmess://... or ss://... or trojan://...">
+                <button type="button" class="btn btn-outline-secondary" onclick="importFromUri()">
+                    <i class="fa-solid fa-file-import me-1"></i>Import
+                </button>
+            </div>
+            <div id="uri-import-error" class="text-danger small mt-1" style="display:none;"></div>
+            <div class="form-text">Paste a share link to auto-fill the fields below.</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <!-- ── Basic ── -->
+        <h6 class="bordered">Basic</h6>
+
+        <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name"
+                   value="{{ outbound.name if outbound else '' }}" placeholder="e.g. Main Outbound">
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="enabled" id="enabled"
+                   {% if not outbound or outbound.enabled %}checked{% endif %}>
+            <label class="form-check-label" for="enabled">Enabled</label>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="backup" id="backup"
+                   {% if outbound and outbound.backup %}checked{% endif %}>
+            <label class="form-check-label" for="backup">Backup</label>
+            <div class="form-text">
+                Backup outbounds are only used when <strong>all</strong> non-backup outbounds are unhealthy.
+            </div>
+        </div>
+
+        <!-- ── Advanced ── -->
+        <div class="mb-3">
+            <a class="text-secondary small" data-bs-toggle="collapse" href="#advanced-options" role="button"
+               aria-expanded="{{ 'true' if outbound and outbound.get('weight', 100) != 100 else 'false' }}">
+                <i class="fa-solid fa-sliders me-1"></i> Advanced options
+            </a>
+            <div class="collapse {% if outbound and outbound.get('weight', 100) != 100 %}show{% endif %}" id="advanced-options">
+                <div class="card card-body mt-2" style="background: var(--bs-tertiary-bg, #f8f9fa);">
+                    <div class="mb-2">
+                        <label class="form-label mb-1">Traffic weight: <strong id="weight-display">{{ outbound.weight if outbound and outbound.weight else 100 }}%</strong></label>
+                        <input type="range" class="form-range" name="weight" id="weight"
+                               min="1" max="100" step="1"
+                               value="{{ outbound.weight if outbound and outbound.weight else 100 }}"
+                               oninput="document.getElementById('weight-display').textContent = this.value + '%'">
+                        <div class="form-text">
+                            Weight controls how much traffic this outbound receives <strong>relative to other active outbounds</strong>.
+                            For example, if outbound A has weight 100 and outbound B has weight 50, A will handle roughly
+                            twice as many connections as B. All outbounds default to 100.
+                            Useful for preferring faster or higher-capacity upstreams.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Protocol ── -->
+        <h6 class="bordered mt-4">Protocol</h6>
+
+        <div class="mb-3">
+            <label class="form-label">Type</label>
+            {% if outbound and outbound._id %}
+                {# Editing — type is locked; submit as hidden field, show read-only badge #}
+                <input type="hidden" name="type" value="{{ outbound.type }}">
+                <div class="form-control bg-light" style="pointer-events:none;">
+                    {%- if outbound.type == 'direct' %}Direct (bind interface)
+                    {%- elif outbound.type == 'openvpn' %}OpenVPN
+                    {%- elif outbound.type == 'socks' %}SOCKS
+                    {%- else %}{{ outbound.type | upper }}
+                    {%- endif %}
+                    <small class="text-muted ms-2">(delete and recreate to change type)</small>
+                </div>
+                <select class="form-select" name="_type_hidden" id="ob-type" style="display:none;">
+                    <option value="{{ outbound.type }}" selected></option>
+                </select>
+            {% else %}
+                <select class="form-select" name="type" id="ob-type" onchange="updateFields()">
+                    {% for t in ['vless','vmess','shadowsocks','trojan','socks','wireguard','openvpn','direct'] %}
+                    <option value="{{ t }}" {% if outbound and outbound.type == t %}selected{% endif %}>
+                        {%- if t == 'direct' %}Direct (bind interface)
+                        {%- elif t == 'openvpn' %}OpenVPN
+                        {%- elif t == 'socks' %}SOCKS
+                        {%- else %}{{ t | upper }}
+                        {%- endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+        </div>
+
+        <!-- Server / Port — hidden for direct type -->
+        <div class="row field-server">
+            <div class="col-8 mb-3">
+                <label class="form-label">Server</label>
+                <input type="text" class="form-control" name="server"
+                       value="{{ outbound.server if outbound else '' }}" placeholder="1.2.3.4 or hostname">
+            </div>
+            <div class="col-4 mb-3">
+                <label class="form-label">Port</label>
+                <input type="number" class="form-control" name="server_port"
+                       value="{{ outbound.server_port if outbound else 443 }}" min="1" max="65535">
+            </div>
+        </div>
+
+        <!-- Direct: bind interface -->
+        <div class="mb-3 field-direct">
+            <label class="form-label">Network Interface</label>
+            <input type="text" class="form-control" name="bind_interface"
+                   value="{{ outbound.bind_interface if outbound else '' }}" placeholder="e.g. eth0, wg0, tun0">
+            <div class="form-text">Traffic exits through this interface directly.</div>
+        </div>
+
+        <!-- UUID (vless / vmess) -->
+        <div class="mb-3 field-uuid">
+            <label class="form-label">UUID</label>
+            <input type="text" class="form-control" name="uuid"
+                   value="{{ outbound.uuid if outbound else '' }}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+        </div>
+
+        <!-- Password (shadowsocks / trojan) -->
+        <div class="mb-3 field-password">
+            <label class="form-label">Password</label>
+            <input type="text" class="form-control" name="password"
+                   value="{{ outbound.password if outbound else '' }}">
+        </div>
+
+        <!-- Method (shadowsocks only) -->
+        <div class="mb-3 field-method">
+            <label class="form-label">Encryption Method</label>
+            <select class="form-select" name="method">
+                {% for m in ss_methods %}
+                <option value="{{ m }}" {% if outbound and outbound.method == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- ── WireGuard ── -->
+        <div id="wg-fields">
+            <h6 class="bordered mt-4">WireGuard</h6>
+            <div class="mb-3">
+                <label class="form-label">Private Key <span class="text-danger">*</span></label>
+                <input type="text" class="form-control font-monospace" name="wg_private_key"
+                       value="{{ outbound.wg_private_key if outbound else '' }}" placeholder="base64-encoded private key">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Peer Public Key <span class="text-danger">*</span></label>
+                <input type="text" class="form-control font-monospace" name="wg_peer_public_key"
+                       value="{{ outbound.wg_peer_public_key if outbound else '' }}" placeholder="base64-encoded peer public key">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Pre-shared Key <small class="text-muted">(optional)</small></label>
+                <input type="text" class="form-control font-monospace" name="wg_pre_shared_key"
+                       value="{{ outbound.wg_pre_shared_key if outbound else '' }}" placeholder="base64-encoded pre-shared key">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Local Address(es) <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="wg_local_address"
+                       value="{{ outbound.wg_local_address if outbound else '' }}" placeholder="10.0.0.2/32, fd00::2/128">
+                <div class="form-text">Comma-separated CIDR addresses assigned to this peer.</div>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">MTU <small class="text-muted">(optional, default 1408)</small></label>
+                    <input type="number" class="form-control" name="wg_mtu"
+                           value="{{ outbound.wg_mtu if outbound else '' }}" placeholder="1408" min="576" max="65535">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Reserved Bytes <small class="text-muted">(optional)</small></label>
+                    <input type="text" class="form-control font-monospace" name="wg_reserved"
+                           value="{{ outbound.wg_reserved if outbound else '' }}" placeholder="0, 0, 0">
+                    <div class="form-text">3 comma-separated bytes, e.g. <code>120, 31, 0</code></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── OpenVPN ── -->
+        <div id="ovpn-fields">
+            <h6 class="bordered mt-4">OpenVPN Configuration</h6>
+            <div class="mb-3">
+                <label class="form-label">Config file contents <span class="text-danger">*</span></label>
+                <div id="ovpn-drop-zone" class="position-relative">
+                    <textarea class="form-control font-monospace" name="ovpn_config" id="ovpn_config" rows="10"
+                              placeholder="Paste the contents of your .ovpn file here, or drag & drop an .ovpn file">{{ outbound.ovpn_config if outbound else '' }}</textarea>
+                    <div id="ovpn-drop-overlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                         style="display:none !important; background:rgba(var(--bs-primary-rgb),0.1); border:2px dashed var(--bs-primary); border-radius:.375rem; pointer-events:none; z-index:2;">
+                        <span class="fw-bold text-primary"><i class="fa-solid fa-file-arrow-down me-2"></i>Drop .ovpn file here</span>
+                    </div>
+                </div>
+                <div class="form-text">
+                    You don't need to add <code>auth-user-pass</code>, <code>dev</code>, or <code>route-nopull</code> — those are injected automatically.
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">Username <small class="text-muted">(optional)</small></label>
+                    <input type="text" class="form-control" name="ovpn_username"
+                           value="{{ outbound.ovpn_username if outbound else '' }}">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Password <small class="text-muted">(optional)</small></label>
+                    <input type="text" class="form-control" name="ovpn_password"
+                           value="{{ outbound.ovpn_password if outbound else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SOCKS ── -->
+        <div id="socks-fields">
+            <h6 class="bordered mt-4">SOCKS</h6>
+            <div class="mb-3">
+                <label class="form-label">SOCKS Version</label>
+                <select class="form-select" name="socks_version">
+                    {% for v in [('5','SOCKS5'),('4a','SOCKS4a'),('4','SOCKS4')] %}
+                    <option value="{{ v[0] }}" {% if outbound and outbound.socks_version == v[0] %}selected{% elif not outbound and v[0] == '5' %}selected{% endif %}>{{ v[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">Username <small class="text-muted">(optional)</small></label>
+                    <input type="text" class="form-control" name="socks_username"
+                           value="{{ outbound.socks_username if outbound else '' }}" autocomplete="off">
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Password <small class="text-muted">(optional)</small></label>
+                    <input type="text" class="form-control" name="socks_password"
+                           value="{{ outbound.socks_password if outbound else '' }}" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Transport ── -->
+        <div id="proxy-transport-section">
+        <h6 class="bordered mt-4">Transport</h6>
+
+        <div class="mb-3">
+            <label class="form-label">Transport</label>
+            <select class="form-select" name="transport" id="ob-transport" onchange="updateFields()">
+                {% for tr in [('tcp','TCP'),('ws','WebSocket'),('grpc','gRPC'),('http','HTTP')] %}
+                <option value="{{ tr[0] }}" {% if outbound and outbound.transport == tr[0] %}selected{% endif %}>{{ tr[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Path (ws / http) -->
+        <div class="mb-3 field-path">
+            <label class="form-label">Path</label>
+            <input type="text" class="form-control" name="transport_path"
+                   value="{{ outbound.transport_path if outbound else '' }}" placeholder="/">
+        </div>
+
+        <!-- Host (ws / http) -->
+        <div class="mb-3 field-host">
+            <label class="form-label">Host Header</label>
+            <input type="text" class="form-control" name="transport_host"
+                   value="{{ outbound.transport_host if outbound else '' }}" placeholder="example.com">
+        </div>
+
+        <!-- Service name (grpc) -->
+        <div class="mb-3 field-grpc">
+            <label class="form-label">gRPC Service Name</label>
+            <input type="text" class="form-control" name="transport_service_name"
+                   value="{{ outbound.transport_service_name if outbound else '' }}">
+        </div>
+
+        </div><!-- /proxy-transport-section -->
+
+        <!-- ── VLESS Flow ── -->
+        <div id="vless-flow-section">
+        <h6 class="bordered mt-4">VLESS Flow</h6>
+        <div class="mb-3">
+            <label class="form-label">Flow</label>
+            <select class="form-select" name="vless_flow" id="vless_flow">
+                <option value="" {% if not outbound or not outbound.get('vless_flow') %}selected{% endif %}>None</option>
+                <option value="xtls-rprx-vision" {% if outbound and outbound.get('vless_flow') == 'xtls-rprx-vision' %}selected{% endif %}>xtls-rprx-vision</option>
+            </select>
+            <div class="form-text">Required for XTLS Vision (REALITY + TCP). Leave empty for WebSocket/gRPC transports.</div>
+        </div>
+        </div><!-- /vless-flow-section -->
+
+        <!-- ── TLS ── -->
+        <div id="proxy-tls-section">
+        <h6 class="bordered mt-4">TLS / Security</h6>
+
+        <div class="mb-2 form-check">
+            <input type="checkbox" class="form-check-input" name="tls" id="tls"
+                   onchange="updateFields()" {% if outbound and (outbound.tls or outbound.get('tls_reality')) %}checked{% endif %}>
+            <label class="form-check-label" for="tls">Enable TLS</label>
+        </div>
+
+        <div id="tls-fields">
+            <!-- Security type: regular TLS vs REALITY -->
+            <div class="mb-3">
+                <label class="form-label">Security Type</label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="_tls_type" id="tls_type_tls" value="tls"
+                               onchange="updateFields()"
+                               {% if not outbound or not outbound.get('tls_reality') %}checked{% endif %}>
+                        <label class="form-check-label" for="tls_type_tls">TLS</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="_tls_type" id="tls_type_reality" value="reality"
+                               onchange="updateFields()"
+                               {% if outbound and outbound.get('tls_reality') %}checked{% endif %}>
+                        <label class="form-check-label" for="tls_type_reality">REALITY</label>
+                    </div>
+                </div>
+                <input type="hidden" name="tls_reality" id="tls_reality_hidden"
+                       value="{{ 'on' if outbound and outbound.get('tls_reality') else '' }}">
+            </div>
+
+            <!-- SNI (shown for both) -->
+            <div class="mb-3">
+                <label class="form-label">SNI</label>
+                <input type="text" class="form-control" name="tls_sni"
+                       value="{{ outbound.tls_sni if outbound else '' }}" placeholder="example.com">
+            </div>
+
+            <!-- Regular TLS fields -->
+            <div id="tls-regular-fields">
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" name="tls_insecure" id="tls_insecure"
+                           {% if outbound and outbound.tls_insecure %}checked{% endif %}>
+                    <label class="form-check-label" for="tls_insecure">Skip certificate verification (insecure)</label>
+                </div>
+            </div>
+
+            <!-- REALITY fields -->
+            <div id="tls-reality-fields">
+                <div class="mb-3">
+                    <label class="form-label">Public Key <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control font-monospace" name="tls_reality_public_key"
+                           value="{{ outbound.tls_reality_public_key if outbound else '' }}"
+                           placeholder="base64-encoded server public key (pbk)">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Short ID <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control font-monospace" name="tls_reality_short_id"
+                           value="{{ outbound.tls_reality_short_id if outbound else '' }}"
+                           placeholder="hex short ID (sid)">
+                </div>
+            </div>
+
+            <!-- uTLS Fingerprint (both TLS and REALITY) -->
+            <div class="mb-3">
+                <label class="form-label">uTLS Fingerprint <small class="text-muted">(optional)</small></label>
+                <select class="form-select" name="tls_fingerprint">
+                    {% for fp in [('', 'None (default)'), ('chrome', 'Chrome'), ('firefox', 'Firefox'), ('safari', 'Safari'), ('ios', 'iOS'), ('android', 'Android'), ('edge', 'Edge'), ('360', '360'), ('qq', 'QQ'), ('random', 'Random'), ('randomized', 'Randomized')] %}
+                    <option value="{{ fp[0] }}" {% if outbound and outbound.get('tls_fingerprint') == fp[0] %}selected{% elif not outbound and fp[0] == '' %}selected{% endif %}>{{ fp[1] }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Browser fingerprint for uTLS. Required for REALITY.</div>
+            </div>
+        </div>
+
+        </div><!-- /proxy-tls-section -->
+
+        <!-- ── Relay Protocol Override ── -->
+        <h6 class="bordered mt-4">Remote Relay</h6>
+        <div class="mb-3">
+            <label class="form-label">Relay behavior for this outbound</label>
+            <select class="form-select" name="relay_protocol_override">
+                <option value=""
+                    {% if not outbound or (not outbound.get('relay_disabled') and not outbound.get('relay_protocol_override')) %}selected{% endif %}>
+                    Use default (from relay settings)
+                </option>
+                <option value="hysteria2"
+                    {% if outbound and not outbound.get('relay_disabled') and outbound.get('relay_protocol_override') == 'hysteria2' %}selected{% endif %}>
+                    Hysteria2 (QUIC / UDP)
+                </option>
+                <option value="shadowsocks"
+                    {% if outbound and not outbound.get('relay_disabled') and outbound.get('relay_protocol_override') == 'shadowsocks' %}selected{% endif %}>
+                    Shadowsocks (TCP)
+                </option>
+                <option value="disabled"
+                    {% if outbound and outbound.get('relay_disabled') %}selected{% endif %}>
+                    Disabled — skip relay for this outbound
+                </option>
+            </select>
+            <div class="form-text">
+                Override relay behavior for this outbound only. Choose a protocol to force Hysteria2 or Shadowsocks, or disable relay entirely so traffic exits directly through this outbound even when remote relay is enabled globally.
+            </div>
+        </div>
+
+        <!-- ── Actions ── -->
+        <div class="d-flex gap-2 mt-4 mb-5">
+            <button type="submit" class="btn btn-primary flex-grow-1">
+                <i class="fa-solid fa-floppy-disk me-1"></i>
+                {% if outbound and outbound._id %}Save Changes{% else %}Create Outbound{% endif %}
+            </button>
+            <a href="/{{ admin_uuid }}/outbounds/" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+
+    {% if outbound and outbound._id %}
+    <form method="POST" action="/{{ admin_uuid }}/outbounds/{{ outbound._id }}/delete/"
+          onsubmit="return confirm('Delete this outbound?')">
+        <button type="submit" class="btn btn-outline-danger w-100 mb-5">
+            <i class="fa-solid fa-trash me-1"></i> Delete Outbound
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+function updateFields() {
+    const type      = document.getElementById('ob-type').value;
+    const transport = document.getElementById('ob-transport').value;
+    const tlsOn     = document.getElementById('tls').checked;
+    const isReality = document.getElementById('tls_type_reality') && document.getElementById('tls_type_reality').checked;
+
+    const isProxy  = ['vless','vmess','shadowsocks','trojan'].includes(type);
+    const isSocks  = type === 'socks';
+    const isWg     = type === 'wireguard';
+    const isDirect = type === 'direct';
+    const isOvpn   = type === 'openvpn';
+
+    // Server / port row — shown for proxy, socks and wireguard
+    document.querySelectorAll('.field-server').forEach(el =>
+        el.style.display = (isProxy || isSocks || isWg) ? '' : 'none');
+
+    // Auth fields (proxy only)
+    document.querySelectorAll('.field-uuid').forEach(el =>
+        el.style.display = ['vless','vmess'].includes(type) ? '' : 'none');
+    document.querySelectorAll('.field-password').forEach(el =>
+        el.style.display = ['shadowsocks','trojan'].includes(type) ? '' : 'none');
+    document.querySelectorAll('.field-method').forEach(el =>
+        el.style.display = type === 'shadowsocks' ? '' : 'none');
+
+    // Direct interface field
+    document.querySelectorAll('.field-direct').forEach(el =>
+        el.style.display = isDirect ? '' : 'none');
+
+    // WireGuard section
+    document.getElementById('wg-fields').style.display = isWg ? '' : 'none';
+
+    // OpenVPN section
+    document.getElementById('ovpn-fields').style.display = isOvpn ? '' : 'none';
+
+    // SOCKS section
+    document.getElementById('socks-fields').style.display = isSocks ? '' : 'none';
+
+    // VLESS flow section
+    if (document.getElementById('vless-flow-section')) {
+        document.getElementById('vless-flow-section').style.display = (type === 'vless') ? '' : 'none';
+    }
+
+    // Transport / TLS sections — only relevant for proxy types (not socks)
+    document.getElementById('proxy-transport-section').style.display = isProxy ? '' : 'none';
+    document.getElementById('proxy-tls-section').style.display       = isProxy ? '' : 'none';
+
+    if (isProxy) {
+        // Transport sub-fields
+        document.querySelectorAll('.field-path').forEach(el =>
+            el.style.display = ['ws','http'].includes(transport) ? '' : 'none');
+        document.querySelectorAll('.field-host').forEach(el =>
+            el.style.display = ['ws','http'].includes(transport) ? '' : 'none');
+        document.querySelectorAll('.field-grpc').forEach(el =>
+            el.style.display = transport === 'grpc' ? '' : 'none');
+
+        // TLS sub-fields
+        document.getElementById('tls-fields').style.display = tlsOn ? '' : 'none';
+
+        if (tlsOn) {
+            // Sync hidden checkbox value used by the server
+            const realityHidden = document.getElementById('tls_reality_hidden');
+            if (realityHidden) realityHidden.value = isReality ? 'on' : '';
+
+            // Show/hide REALITY vs regular TLS sub-sections
+            if (document.getElementById('tls-reality-fields'))
+                document.getElementById('tls-reality-fields').style.display = isReality ? '' : 'none';
+            if (document.getElementById('tls-regular-fields'))
+                document.getElementById('tls-regular-fields').style.display = isReality ? 'none' : '';
+        }
+    }
+}
+document.addEventListener('DOMContentLoaded', updateFields);
+
+// ---------------------------------------------------------------------------
+// URI import
+// ---------------------------------------------------------------------------
+function importFromUri() {
+    const raw   = document.getElementById('uri-import-input').value.trim();
+    const errEl = document.getElementById('uri-import-error');
+    errEl.style.display = 'none';
+
+    try {
+        _doImport(raw);
+    } catch(e) {
+        errEl.textContent = 'Could not parse URI: ' + e.message;
+        errEl.style.display = '';
+    }
+}
+
+function _setVal(name, value) {
+    const el = document.querySelector(`[name="${name}"]`);
+    if (el) el.value = value;
+}
+function _setCheck(name, checked) {
+    const el = document.querySelector(`[name="${name}"]`);
+    if (el) el.checked = checked;
+}
+function _setSelect(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    for (const opt of el.options) {
+        if (opt.value === value) { el.value = value; return; }
+    }
+}
+
+function _doImport(uri) {
+    if (uri.startsWith('vless://')) {
+        _importVless(uri);
+    } else if (uri.startsWith('vmess://')) {
+        _importVmess(uri);
+    } else if (uri.startsWith('ss://')) {
+        _importSS(uri);
+    } else if (uri.startsWith('trojan://')) {
+        _importTrojan(uri);
+    } else {
+        throw new Error('Unsupported scheme. Supported: vless://, vmess://, ss://, trojan://');
+    }
+}
+
+function _importVless(uri) {
+    // vless://UUID@host:port?params#name
+    const withoutScheme = uri.slice('vless://'.length);
+    const hashIdx = withoutScheme.lastIndexOf('#');
+    const name    = hashIdx >= 0 ? decodeURIComponent(withoutScheme.slice(hashIdx + 1)) : '';
+    const main    = hashIdx >= 0 ? withoutScheme.slice(0, hashIdx) : withoutScheme;
+
+    const qIdx    = main.indexOf('?');
+    const params  = qIdx >= 0 ? new URLSearchParams(main.slice(qIdx + 1)) : new URLSearchParams();
+    const hostPart = qIdx >= 0 ? main.slice(0, qIdx) : main;
+
+    const atIdx   = hostPart.lastIndexOf('@');
+    const uuid    = atIdx >= 0 ? hostPart.slice(0, atIdx) : '';
+    const hostPort = atIdx >= 0 ? hostPart.slice(atIdx + 1) : hostPart;
+
+    const [host, port] = _splitHostPort(hostPort);
+
+    _setSelect('ob-type', 'vless');
+    if (name) _setVal('name', name);
+    _setVal('server', host);
+    _setVal('server_port', port || '443');
+    _setVal('uuid', uuid);
+
+    // Transport
+    const type = params.get('type') || 'tcp';
+    _setSelect('ob-transport', type === 'tcp' ? 'tcp' : type);
+    if (params.get('path'))  _setVal('transport_path', decodeURIComponent(params.get('path')));
+    if (params.get('host'))  _setVal('transport_host', params.get('host'));
+    if (params.get('serviceName')) _setVal('transport_service_name', params.get('serviceName'));
+
+    // Security
+    const security = params.get('security') || 'none';
+    if (security === 'reality' || security === 'tls') {
+        document.getElementById('tls').checked = true;
+        if (security === 'reality') {
+            document.getElementById('tls_type_reality').checked = true;
+            if (params.get('pbk')) _setVal('tls_reality_public_key', params.get('pbk'));
+            if (params.get('sid')) _setVal('tls_reality_short_id',   params.get('sid'));
+        } else {
+            document.getElementById('tls_type_tls').checked = true;
+        }
+    }
+    if (params.get('sni'))   _setVal('tls_sni', params.get('sni'));
+    if (params.get('fp'))    _setSelect('tls_fingerprint_select', params.get('fp'));
+    // fingerprint select has name="tls_fingerprint"
+    const fpEl = document.querySelector('[name="tls_fingerprint"]');
+    if (fpEl && params.get('fp')) fpEl.value = params.get('fp');
+
+    // Flow
+    if (params.get('flow')) {
+        const flowEl = document.querySelector('[name="vless_flow"]');
+        if (flowEl) flowEl.value = params.get('flow');
+    }
+
+    updateFields();
+}
+
+function _importVmess(uri) {
+    const b64  = uri.slice('vmess://'.length);
+    const json = JSON.parse(atob(b64));
+
+    _setSelect('ob-type', 'vmess');
+    if (json.ps) _setVal('name', json.ps);
+    _setVal('server', json.add || '');
+    _setVal('server_port', json.port || '443');
+    _setVal('uuid', json.id || '');
+
+    const net = json.net || 'tcp';
+    _setSelect('ob-transport', net);
+    if (json.path) _setVal('transport_path', json.path);
+    if (json.host) _setVal('transport_host', json.host);
+    if (json.type === 'grpc' && json.path) _setVal('transport_service_name', json.path);
+
+    if (json.tls === 'tls') {
+        document.getElementById('tls').checked = true;
+        document.getElementById('tls_type_tls').checked = true;
+        if (json.sni) _setVal('tls_sni', json.sni);
+    }
+    updateFields();
+}
+
+function _importSS(uri) {
+    // ss://BASE64(method:password)@host:port#name  OR  ss://BASE64@host:port#name
+    let withoutScheme = uri.slice('ss://'.length);
+    const hashIdx = withoutScheme.lastIndexOf('#');
+    const name    = hashIdx >= 0 ? decodeURIComponent(withoutScheme.slice(hashIdx + 1)) : '';
+    withoutScheme  = hashIdx >= 0 ? withoutScheme.slice(0, hashIdx) : withoutScheme;
+
+    const qIdx   = withoutScheme.indexOf('?');
+    const main   = qIdx >= 0 ? withoutScheme.slice(0, qIdx) : withoutScheme;
+    const atIdx  = main.lastIndexOf('@');
+
+    let method = '', password = '', host = '', port = '';
+    if (atIdx >= 0) {
+        const decoded = _tryB64(main.slice(0, atIdx)) || main.slice(0, atIdx);
+        const cpColon = decoded.indexOf(':');
+        method   = cpColon >= 0 ? decoded.slice(0, cpColon) : decoded;
+        password = cpColon >= 0 ? decoded.slice(cpColon + 1) : '';
+        [host, port] = _splitHostPort(main.slice(atIdx + 1));
+    } else {
+        const decoded = _tryB64(main) || main;
+        const cpColon = decoded.indexOf(':');
+        const methodPass = cpColon >= 0 ? decoded.slice(0, cpColon) : decoded;
+        const rest = cpColon >= 0 ? decoded.slice(cpColon + 1) : '';
+        const atI  = rest.lastIndexOf('@');
+        if (atI >= 0) {
+            password = rest.slice(0, atI);
+            [host, port] = _splitHostPort(rest.slice(atI + 1));
+        }
+        method = methodPass;
+    }
+
+    _setSelect('ob-type', 'shadowsocks');
+    if (name) _setVal('name', name);
+    _setVal('server', host);
+    _setVal('server_port', port || '8388');
+    _setVal('password', password);
+    const methodEl = document.querySelector('[name="method"]');
+    if (methodEl) methodEl.value = method;
+
+    updateFields();
+}
+
+function _importTrojan(uri) {
+    // trojan://password@host:port?params#name
+    const withoutScheme = uri.slice('trojan://'.length);
+    const hashIdx = withoutScheme.lastIndexOf('#');
+    const name    = hashIdx >= 0 ? decodeURIComponent(withoutScheme.slice(hashIdx + 1)) : '';
+    const main    = hashIdx >= 0 ? withoutScheme.slice(0, hashIdx) : withoutScheme;
+    const qIdx    = main.indexOf('?');
+    const params  = qIdx >= 0 ? new URLSearchParams(main.slice(qIdx + 1)) : new URLSearchParams();
+    const hostPart = qIdx >= 0 ? main.slice(0, qIdx) : main;
+
+    const atIdx   = hostPart.lastIndexOf('@');
+    const password = atIdx >= 0 ? hostPart.slice(0, atIdx) : '';
+    const hostPort = atIdx >= 0 ? hostPart.slice(atIdx + 1) : hostPart;
+    const [host, port] = _splitHostPort(hostPort);
+
+    _setSelect('ob-type', 'trojan');
+    if (name) _setVal('name', name);
+    _setVal('server', host);
+    _setVal('server_port', port || '443');
+    _setVal('password', password);
+
+    const type = params.get('type') || 'tcp';
+    _setSelect('ob-transport', type === 'tcp' ? 'tcp' : type);
+    if (params.get('path')) _setVal('transport_path', decodeURIComponent(params.get('path')));
+    if (params.get('host')) _setVal('transport_host', params.get('host'));
+
+    const security = params.get('security') || 'tls';
+    if (security === 'tls') {
+        document.getElementById('tls').checked = true;
+        document.getElementById('tls_type_tls').checked = true;
+        if (params.get('sni')) _setVal('tls_sni', params.get('sni'));
+    }
+    updateFields();
+}
+
+function _splitHostPort(hostPort) {
+    if (hostPort.startsWith('[')) {
+        // IPv6
+        const end = hostPort.indexOf(']');
+        const host = hostPort.slice(1, end);
+        const port = hostPort.slice(end + 2);
+        return [host, port];
+    }
+    const idx = hostPort.lastIndexOf(':');
+    if (idx < 0) return [hostPort, ''];
+    return [hostPort.slice(0, idx), hostPort.slice(idx + 1)];
+}
+
+function _tryB64(s) {
+    try { return atob(s); } catch(e) { return null; }
+}
+
+(function() {
+    const zone = document.getElementById('ovpn-drop-zone');
+    const ta   = document.getElementById('ovpn_config');
+    const over = document.getElementById('ovpn-drop-overlay');
+    if (!zone) return;
+
+    let dragCounter = 0;
+
+    zone.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        dragCounter++;
+        over.style.display = 'flex';
+        over.style.setProperty('display', 'flex', 'important');
+    });
+    zone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) {
+            dragCounter = 0;
+            over.style.setProperty('display', 'none', 'important');
+        }
+    });
+    zone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dragCounter = 0;
+        over.style.setProperty('display', 'none', 'important');
+        var file = e.dataTransfer.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) { ta.value = ev.target.result; };
+        reader.readAsText(file);
+    });
+})();
+</script>
+{% endblock %}

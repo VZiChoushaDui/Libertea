@@ -9,3 +9,4 @@ providers/*/config.env
 TODO
 .libertea.proxy
 .libertea.main
+providers/outbound-direct/sing-box

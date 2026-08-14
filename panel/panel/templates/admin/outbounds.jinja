@@ -1,0 +1,267 @@
+{% extends 'admin/base.jinja' %}
+{% block content %}
+<div class="section" style="max-width: 900px; margin: 0 auto;">
+    <div class="mx-3 mt-5">
+        <h6 class="bordered">Outbound Proxies</h6>
+    </div>
+    <div class="route-section-text mt-2 mx-3">
+        User traffic is routed through one of the outbounds below, chosen at random.
+        Add multiple outbounds for redundancy or to distribute traffic across providers.
+    </div>
+
+    {% if outbounds %}
+
+    {# Warn if every configured outbound is disabled #}
+    {% set has_enabled = [] %}
+    {% for ob in outbounds %}{% if ob.enabled %}{% set _ = has_enabled.append(1) %}{% endif %}{% endfor %}
+    {% if not has_enabled %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>All outbounds are disabled. Traffic will exit directly from this server's default network interface.</span>
+    </div>
+    {% endif %}
+
+    <div class="list-group mb-4">
+        {% for ob in outbounds %}
+        <a href="/{{ admin_uuid }}/outbounds/{{ ob._id }}/"
+           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+                <span style="font-weight:600;">{{ ob.name or '(unnamed)' }}</span>
+                <span class="badge bg-secondary ms-2">{{ ob.type | upper }}</span>
+                {% if ob.type not in ('wireguard', 'direct', 'openvpn', 'socks') %}
+                    <span class="badge bg-light text-dark ms-1">{{ (ob.transport or 'tcp') | upper }}</span>
+                    {% if ob.get('tls_reality') %}<span class="badge bg-primary ms-1">REALITY</span>
+                    {% elif ob.tls %}<span class="badge bg-success ms-1">TLS</span>{% endif %}
+                    {% if ob.get('vless_flow') %}<span class="badge bg-info text-dark ms-1">Flow</span>{% endif %}
+                {% endif %}
+                {% if ob.backup %}<span class="badge bg-secondary ms-1">Backup</span>{% endif %}
+                {% if ob.get('weight', 100) != 100 %}<span class="badge bg-info text-light ms-1">{{ ob.weight }}%</span>{% endif %}
+                {% set h = health.get(ob.index) %}
+                {% if not ob.enabled %}<span class="badge bg-warning text-dark ms-1">Disabled</span>
+                {% elif not h or h.get('display_status') == 'checking' %}<span class="badge bg-light text-dark ms-1">Checking…</span>
+                {% elif h.get('display_status') == 'up' %}<span class="badge bg-success ms-1">Healthy</span>
+                {% else %}<span class="badge bg-danger ms-1">Down</span>
+                {% endif %}
+                <br>
+                <small style="opacity:0.6;">
+                    {%- if ob.type == 'direct' -%}
+                        Interface: {{ ob.bind_interface or '(default)' }}
+                    {%- elif ob.type == 'wireguard' -%}
+                        Peer: {{ ob.server }}:{{ ob.server_port }}
+                    {%- elif ob.type == 'openvpn' -%}
+                        OpenVPN tunnel (tun-lb-{{ ovpn_indices.get(ob.index, '?') }})
+                    {%- elif ob.type == 'socks' -%}
+                        {{ ob.server }}:{{ ob.server_port }} (SOCKS{{ ob.socks_version or '5' }})
+                    {%- else -%}
+                        {{ ob.server }}:{{ ob.server_port }}
+                    {%- endif -%}
+                </small>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                {% if h and ob.enabled %}
+                <div class="text-end" style="font-size:12px; min-width:90px; opacity:0.7;">
+                    <span>ping: {{ '%d ms' % h.ping if h.ping is not none else '?' }}</span><br>
+                    <span>loss: {{ '%.0f%%' % h.loss if h.loss is not none else '?' }}</span>
+                </div>
+                {% endif %}
+                <i class="fa-solid fa-chevron-right list-item-arrow"></i>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>No outbounds configured. Traffic will exit directly from this server's default network interface.</span>
+    </div>
+
+    {% endif %}
+
+    <div class="d-grid">
+        <a href="/{{ admin_uuid }}/outbounds/new/" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Add Outbound
+        </a>
+    </div>
+
+    <!-- ── Remote Relay ── -->
+    <div class="mx-3 mt-5">
+        <h6 class="bordered">Encrypted Exit Node Relay</h6>
+    </div>
+    <div class="route-section-text mt-2 mx-3">
+        Route all outbound traffic through an additional remote server via an encrypted connection before it reaches the internet.
+        <strong>Recommended</strong> when you don't fully trust your outbound servers, or you want to easily change your exit node IP.
+    </div>
+
+    {% if relay_config and relay_config.error %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ relay_config.error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/{{ admin_uuid }}/outbounds/relay/" id="relay-form">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" name="relay_enabled" id="relay_enabled"
+                           onchange="toggleRelayFields()" {% if relay_config and relay_config.enabled %}checked{% endif %}>
+                    <label class="form-check-label" for="relay_enabled">Enable remote relay</label>
+                </div>
+
+                <div id="relay-fields">
+                    <!-- Step 1: server details -->
+                    <p class="text-muted small mb-3">
+                        Enter the IP and port of your relay server below. If you haven't set it up yet,
+                        a ready-to-paste setup command will appear so you can get it running in one step.
+                    </p>
+                    <div class="row">
+                        <div class="col-8 mb-3">
+                            <label class="form-label">Relay Server IP or Hostname</label>
+                            <input type="text" class="form-control" name="relay_server" id="relay_server"
+                                   value="{{ relay_config.server if relay_config else '' }}"
+                                   placeholder="1.2.3.4" oninput="refreshCommand()">
+                        </div>
+                        <div class="col-4 mb-3">
+                            <label class="form-label">Port</label>
+                            <input type="number" class="form-control" name="relay_port" id="relay_port"
+                                   value="{{ relay_config.port if relay_config else 8080 }}"
+                                   min="1" max="65535" oninput="refreshCommand()">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace" name="relay_password" id="relay_password"
+                                   value="{{ relay_config.password if relay_config else '' }}"
+                                   placeholder="" oninput="refreshCommand()">
+                            <button type="button" class="btn btn-outline-secondary" onclick="generatePassword()">
+                                <i class="fa-solid fa-rotate"></i> Generate
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            Must be a base64-encoded 32-byte key (use Generate).
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Default Relay Protocol</label>
+                        <select class="form-select" name="relay_protocol" id="relay_protocol">
+                            <option value="hysteria2"
+                                {% if not relay_config or relay_config.get('protocol', 'hysteria2') == 'hysteria2' %}selected{% endif %}>
+                                Hysteria2 (QUIC / UDP)
+                            </option>
+                            <option value="shadowsocks"
+                                {% if relay_config and relay_config.get('protocol') == 'shadowsocks' %}selected{% endif %}>
+                                Shadowsocks (TCP)
+                            </option>
+                        </select>
+                        <div class="form-text">
+                            Protocol used for all outbounds unless overridden per-outbound. Both run on the same port — Hysteria2 on UDP, Shadowsocks on TCP.
+                        </div>
+                    </div>
+
+                    <!-- Step 2: setup command -->
+                    <div id="relay-setup-box" style="display:none;">
+                        <hr class="my-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-semibold" style="font-size:14px;">
+                                <i class="fa-solid fa-terminal me-1 text-secondary"></i>
+                                Setup command — run this on your relay server
+                            </span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyCommand()">
+                                <i class="fa-regular fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <pre id="relay-command-box"
+                             style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px;font-size:12px;
+                                    max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;"></pre>
+                        <div class="text-muted small mt-1">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            SSH into your relay server and paste this command. It installs sing-box, configures TLS, and starts the service automatically.
+                            The relay listens on one port: <strong>Shadowsocks on TCP</strong> and <strong>Hysteria2 on UDP</strong> simultaneously.
+                            <br>
+                            <b>ONLY click on the button below <i>AFTER</i> you ran the command into the remote server SSH shell.</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mb-5">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Save Relay Settings
+        </button>
+    </form>
+</div>
+
+<script>
+const SETUP_CMD_URL = '/{{ admin_uuid }}/outbounds/relay/setup-command/';
+
+// Template is fetched once and cached; substitution happens entirely in JS.
+let _cmdTemplate = null;
+let _cmdFetchPromise = null;
+
+function _fetchTemplate() {
+    if (_cmdFetchPromise) return _cmdFetchPromise;
+    _cmdFetchPromise = fetch(SETUP_CMD_URL)
+        .then(r => r.ok ? r.text() : Promise.reject('fetch failed'))
+        .then(t => { _cmdTemplate = t; return t; });
+    return _cmdFetchPromise;
+}
+
+function toggleRelayFields() {
+    const on = document.getElementById('relay_enabled').checked;
+    document.getElementById('relay-fields').style.display = on ? '' : 'none';
+    if (on) { _fetchTemplate(); refreshCommand(); }
+}
+
+function refreshCommand() {
+    const password = document.getElementById('relay_password').value.trim();
+    const port     = document.getElementById('relay_port').value.trim();
+    const box      = document.getElementById('relay-setup-box');
+    const pre      = document.getElementById('relay-command-box');
+
+    if (!password || !port) {
+        box.style.display = 'none';
+        return;
+    }
+    box.style.display = '';
+
+    if (_cmdTemplate) {
+        pre.textContent = _cmdTemplate
+            .replaceAll('__RELAY_PORT__', port)
+            .replaceAll('__RELAY_PASSWORD__', password);
+    } else {
+        // Template not ready yet — fetch and then render
+        _fetchTemplate().then(() => refreshCommand()).catch(() => {
+            pre.textContent = 'Error loading setup command template.';
+        });
+    }
+}
+
+function copyCommand() {
+    const text = document.getElementById('relay-command-box').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.currentTarget;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i>Copied!';
+        setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+}
+
+function generatePassword() {
+    // 32 random bytes → base64 (44 chars) — valid for both Shadowsocks 2022 and Hysteria2
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    const pw = btoa(String.fromCharCode(...bytes));
+    document.getElementById('relay_password').value = pw;
+    refreshCommand();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    _fetchTemplate().then(() => refreshCommand());
+    toggleRelayFields();
+});
+</script>
+{% endblock %}

@@ -9,6 +9,7 @@ from . import certbot
 from . import health_check
 from . import settings
 from . import sysops
+from . import outbounds
 from . import welcome
 from . import admin
 from . import user
@@ -143,6 +144,12 @@ def create_app():
     except:
         traceback.print_exc()
         pass
+
+    print("Starting outbound health agents")
+    outbounds.start_health_agents()
+
+    print("Updating singbox outbound config")
+    sysops.apply_outbound_config()
 
     print("Starting the app")
     app.register_blueprint(admin.blueprint)

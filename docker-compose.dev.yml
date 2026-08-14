@@ -159,28 +159,29 @@ services:
   #     - './providers/shadowsocks-grpc/config.json:/etc/xray/config.json'
   #     - './data/certs/selfsigned/cert.pem:/etc/xray/cert.pem:ro'
   #     - './data/certs/selfsigned/privkey.pem:/etc/xray/privkey.pem:ro'
-  provider-outbound-warp:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-      - FIREWALL_BITTORRENT_ENABLE=${FIREWALL_BITTORRENT_ENABLE}
-    build: ./providers/outbound-warp
-    privileged: true
-    ports:
-      - "127.0.0.1:2997:2997"
-    container_name: libertea-provider-outbound-warp
-    restart: always
-    volumes:
-      - './providers/outbound-warp/config.json:/etc/xray/config.json'
-  provider-outbound-direct:
-    environment:
-      - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
-      - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
-      - FIREWALL_BITTORRENT_ENABLE=${FIREWALL_BITTORRENT_ENABLE}
-    build: ./providers/outbound-direct
-    ports:
-      - "127.0.0.1:2998:2998"
-    container_name: libertea-provider-outbound-direct
-    restart: always
-    volumes:
-      - './providers/outbound-direct/config.json:/etc/xray/config.json'
+  # Replaced by host sing-box (libertea-outbound-direct.service) on 13000+/13100+
+  # provider-outbound-warp:
+  #   environment:
+  #     - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+  #     - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+  #     - FIREWALL_BITTORRENT_ENABLE=${FIREWALL_BITTORRENT_ENABLE}
+  #   build: ./providers/outbound-warp
+  #   privileged: true
+  #   ports:
+  #     - "127.0.0.1:2997:2997"
+  #   container_name: libertea-provider-outbound-warp
+  #   restart: always
+  #   volumes:
+  #     - './providers/outbound-warp/config.json:/etc/xray/config.json'
+  # provider-outbound-direct:
+  #   environment:
+  #     - FIREWALL_OUTBOUND_UDP_PORTS=${FIREWALL_OUTBOUND_UDP_PORTS}
+  #     - FIREWALL_OUTBOUND_TCP_PORTS=${FIREWALL_OUTBOUND_TCP_PORTS}
+  #     - FIREWALL_BITTORRENT_ENABLE=${FIREWALL_BITTORRENT_ENABLE}
+  #   build: ./providers/outbound-direct
+  #   ports:
+  #     - "127.0.0.1:2998:2998"
+  #   container_name: libertea-provider-outbound-direct
+  #   restart: always
+  #   volumes:
+  #     - './providers/outbound-direct/config.json:/etc/xray/config.json'

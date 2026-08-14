@@ -1,0 +1,15 @@
+[Unit]
+Description=Libertea Outbound Direct (sing-box)
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/libertea-sing-box run -c {rootpath}/data/outbound.json
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

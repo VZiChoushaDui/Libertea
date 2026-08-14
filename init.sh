@@ -141,6 +141,11 @@ if [[ $(docker --version | cut -d ' ' -f 3 | cut -d '.' -f 1) == "23" ]]; then
     service docker restart
 fi
 
+if ! command -v openvpn >/dev/null 2>&1; then
+    echo "    - Installing openvpn (optional, for OpenVPN outbounds)..."
+    apt-get install -q -y openvpn | sed 's/^/        /' || echo "       WARNING: openvpn install failed; OpenVPN outbounds will be unavailable."
+fi
+
 echo "    - Initializing firewall..."
 set +e
 SSH_PORT=$(ss -tlpn 2>/dev/null | grep sshd | grep -oP '(?<=:)\d+(?=\s)' | head -n 1)
@@ -475,8 +480,8 @@ mtu="1280"
 ./providers/outbound-warp/init.sh 2997 "$endpoint" "$private_key" "$addresses" "$public_key" "$mtu" "$reserved_array"
 set -e
 
-echo "    - outbound-direct..."
-./providers/outbound-direct/init.sh 2998
+echo "    - outbound-direct (sing-box 1.13.1)..."
+./providers/outbound-direct/init.sh
 
 echo " ** Installing web panel..."
 mkdir -p ./data
