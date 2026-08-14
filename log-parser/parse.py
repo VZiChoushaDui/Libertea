@@ -17,28 +17,7 @@ except:
     pass
 print("all_domains_ever:", all_domains_ever)
 
-pattern = re.compile(r"(?P<log_date>[0-9\-T\:\+]+) (?P<server_addr>[a-zA-Z0-9\.\-]*) haproxy\[[0-9\-]+\]\: (?P<remote_conn_addr>[0-9\.\:]+) \[(?P<request_date>[^\]]*)\] (?P<frontend_name>[^\s]*) (?P<backend_name>[^\s\/]*)\/(?P<server_name>[^\s\/]*) (?P<ms_wait>[0-9\-]+)\/(?P<ms_queue>[0-9\-]+)\/(?P<ms_backend_connect_wait>[0-9\-]+)\/(?P<ms_backend_wait>[0-9\-]+)\/(?P<ms_active>[0-9\-]+) (?P<http_status_code>[0-9\-]+) (?P<bytes_server_to_client>[0-9\-]+) [^\s]* [^\s]* [^\s]* [^\s]*\/[^\s]*\/[^\s]*\/[^\s]*\/[^\s]* [^\s]*\/[^\s]* \{((?P<cdn_server_type>[0-9a-zA-Z\.\-]+)\|)?(?P<remote_fwd_ip>[0-9.]*)(\|(?P<domain_name>[0-9a-zA-Z\.\-]+))?(\:)?\} \"(?P<http_req_type>[A-Z]*) (?P<endpoint>[a-zA-Z0-9\-\.\/\:]*) [a-zA-Z0-9\.\/]*\" (?P<bytes_client_to_server>[0-9\-]+)")
-
-#### EXAMPLE:
-#### log_date : 2022-10-19T16:17:22+00:00
-#### server_addr : static.141.61.21.65.clients.your-server.de
-#### remote_conn_addr : 89.45.48.75:54656
-#### request_date : 19/Oct/2022:16:17:01.523
-#### frontend_name : main~
-#### backend_name : snapp
-#### server_name : sp
-#### ms_wait : 0
-#### ms_queue : 0
-#### ms_backend_connect_wait : 1
-#### ms_backend_wait : 1
-#### ms_active : 21211
-#### http_status_code : 101
-#### bytes_server_to_client : 9989
-#### remote_fwd_ip : 5.210.196.222
-#### domain_name (optional): mydomain.com
-#### http_req_type : GET
-#### endpoint : /llama
-#### bytes_client_to_server : 3310
+pattern = re.compile(r"(?P<log_date>[0-9\-T\:\+]+) (?P<server_addr>[a-zA-Z0-9\.\-]*) haproxy\[[0-9\-]+\]\: (?P<remote_conn_addr>[0-9\.\:]+) \[(?P<request_date>[^\]]*)\] (?P<frontend_name>[^\s]*) (?P<backend_name>[^\s\/]*)\/(?P<server_name>[^\s\/]*) (?P<ms_wait>[0-9\-]+)\/(?P<ms_queue>[0-9\-]+)\/(?P<ms_backend_connect_wait>[0-9\-]+)\/(?P<ms_backend_wait>[0-9\-]+)\/(?P<ms_active>[0-9\-]+) (?P<http_status_code>[0-9\-]+) (?P<bytes_server_to_client>[0-9\-]+) [^\s]* [^\s]* [^\s]* [^\s]*\/[^\s]*\/[^\s]*\/[^\s]*\/[^\s]* [^\s]*\/[^\s]* \{((?P<cdn_server_type>[0-9a-zA-Z\.\-]+)\|)?(?P<remote_fwd_ip>[0-9.]*)(\|(?P<domain_name>[0-9a-zA-Z\.\-]+))?(\:)?\} \"(?P<http_req_type>[A-Z]*) (?P<endpoint>[a-zA-Z0-9\-\.\/\:\_]*) [a-zA-Z0-9\.\/]*\" (?P<bytes_client_to_server>[0-9\-]+)")
 
 # find files that end with '.log' in logs_path
 for file in os.listdir(logs_path):
@@ -63,6 +42,7 @@ for file in os.listdir(logs_path):
                     items = dict(match.groupdict())
 
                     item_key = items['endpoint']
+
                     if item_key.startswith('https://') or item_key.startswith('http://'):
                         # remove protocol://[domain] from endpoint
                         item_key = item_key[item_key.find('://') + 3:]
@@ -71,6 +51,8 @@ for file in os.listdir(logs_path):
                         else:
                             item_key = '/'
                     
+                    item_key = item_key.replace("___", "/")
+
                     if items['domain_name'] is not None:
                         # if items['domain_name'] == 'google.com':
                         if items['domain_name'] not in all_domains_ever:

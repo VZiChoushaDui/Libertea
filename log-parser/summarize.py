@@ -14,16 +14,6 @@ parsed_path = '/data/parsed-logs/'
 output_root_path = '/data/usages/'
 
 users = {}
-try:
-    users_path = '/root/vless/clash-conf/users.csv'
-    with open(users_path, 'r') as f:
-        for line in f:
-            parts = line.split(',')
-            users[parts[1]] = parts[2].strip()
-            if len(parts) > 3 and parts[3].strip() != '':
-                users[parts[1]] += ' (' + parts[3].strip() + ')'
-except:
-    pass
 
 def get_user(url):
     if not url in users:
