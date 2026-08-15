@@ -47,6 +47,19 @@ compose() {
     fi
 }
 
+# A build-cache record whose snapshot is no longer on disk (interrupted build,
+# full disk, unclean shutdown) makes the same layer fail on every run, and one
+# failed image cancels the rest of the build. Dropping the cache is the only
+# way out, so do it here instead of leaving the install half-finished.
+compose_build() {
+    if compose build "$@"; then
+        return 0
+    fi
+    echo "    - Build failed. Clearing the Docker build cache and retrying once..."
+    docker builder prune -af >/dev/null 2>&1 || true
+    compose build --no-cache "$@"
+}
+
 echo ""
 echo " _      _ _               _              "
 echo "| |    (_) |             | |             "
@@ -556,7 +569,7 @@ if [ "$ENVIRONMENT" == "dev" ]; then
         COMPOSE_FILE_ARGS="$COMPOSE_FILE_ARGS -f docker-compose.iran.yml"
     fi
     echo " ** Building docker containers..."
-    compose build $COMPOSE_BUILD_ARGS
+    compose_build $COMPOSE_BUILD_ARGS
 else
     COMPOSE_FILE_ARGS=""
     if [ "$LIBERTEA_IRAN" = "1" ]; then
@@ -564,11 +577,11 @@ else
     fi
     if [ "$LIBERTEA_IRAN" = "1" ]; then
         echo " ** Building docker containers (restricted network, no Docker Hub pull)..."
-        compose build $COMPOSE_BUILD_ARGS
+        compose_build $COMPOSE_BUILD_ARGS
     else
         echo " ** Pulling docker containers..."
         compose pull
-        compose build
+        compose_build
     fi
 fi
 

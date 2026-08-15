@@ -239,6 +239,19 @@ proxy_compose() {
     fi
 }
 
+# A build-cache record whose snapshot is no longer on disk (interrupted build,
+# full disk, unclean shutdown) makes the same layer fail on every run, and one
+# failed image cancels the rest of the build. Dropping the cache is the only
+# way out, so do it here instead of leaving the install half-finished.
+proxy_compose_build() {
+    if proxy_compose build "$@"; then
+        return 0
+    fi
+    echo " ** Build failed. Clearing the Docker build cache and retrying once..."
+    docker builder prune -af >/dev/null 2>&1 || true
+    proxy_compose build --no-cache "$@"
+}
+
 if [ "$DOCKERIZED_PROXY" == "1" ]; then
     PROXY_COMPOSE_BUILD_ARGS=""
     if [ "$LIBERTEA_IRAN" = "1" ]; then
@@ -250,7 +263,7 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
             PROXY_COMPOSE_FILE_ARGS="$PROXY_COMPOSE_FILE_ARGS -f proxy-docker-compose.iran.yml"
         fi
         echo " ** Building docker images..."
-        proxy_compose build $PROXY_COMPOSE_BUILD_ARGS
+        proxy_compose_build $PROXY_COMPOSE_BUILD_ARGS
 
         echo " ** Starting docker containers..."
         proxy_compose down >/dev/null
@@ -262,11 +275,11 @@ if [ "$DOCKERIZED_PROXY" == "1" ]; then
         fi
         if [ "$LIBERTEA_IRAN" = "1" ]; then
             echo " ** Building docker images (restricted network, no Docker Hub pull)..."
-            proxy_compose build $PROXY_COMPOSE_BUILD_ARGS
+            proxy_compose_build $PROXY_COMPOSE_BUILD_ARGS
         else
             echo " ** Pulling docker images..."
             proxy_compose pull
-            proxy_compose build
+            proxy_compose_build
         fi
 
         echo " ** Starting docker containers..."
