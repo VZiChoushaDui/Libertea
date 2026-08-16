@@ -18,6 +18,20 @@ CLASH_CUSTOM_RULES_PATH     = _ROOT + 'data/clash-custom-rules.txt'
 MAX_OUTBOUNDS = 20
 BASE_PORT        = 13000   # normal SOCKS ports:  13000-13019
 BACKUP_BASE_PORT = 13100   # backup SOCKS ports:  13100-13119
+# Stored on a Direct outbound when it should use the host default route.
+# sing-box gets no bind_interface in that case.
+DEFAULT_BIND_INTERFACE = 'DEFAULT'
+# Backup ordering. HAProxy engages the first healthy backup in haproxy.cfg
+# declaration order, so the backup SOCKS ports are handed out by priority rank
+# rather than by slot: the lowest number listens on BACKUP_BASE_PORT, which is
+# socks-bak-0. Backups therefore get their own agent port range, since
+# socks-bak-<rank> and socks-out-<slot> no longer describe the same outbound.
+MAX_BACKUP_PRIORITY = 20
+DEFAULT_BACKUP_PRIORITY = 1
+# The last number belongs to the Direct fallback ensure_default_direct() adds.
+# The admin can move that outbound down to an ordinary number, but nothing can
+# be moved onto the reserved one, so it stays the true last resort.
+RESERVED_BACKUP_PRIORITY = MAX_BACKUP_PRIORITY
 
 RESTRICTED_NETWORK_MARKER = _ROOT + '.libertea.iran'
 # Domestic resolvers, used only on restricted-network installs. Mirrors
@@ -81,7 +95,111 @@ def _db():
     client = config.get_mongo_client()
     return client[config.MONGODB_DB_NAME]
 
+def _is_default_bind_interface(iface):
+    return not (iface or '').strip() or (iface or '').strip().upper() == DEFAULT_BIND_INTERFACE
+
+def normalize_bind_interface(iface):
+    """Store DEFAULT in canonical form; leave a real NIC name as typed."""
+    iface = (iface or '').strip()
+    if not iface:
+        return ''
+    if iface.upper() == DEFAULT_BIND_INTERFACE:
+        return DEFAULT_BIND_INTERFACE
+    return iface
+
+def ensure_default_direct():
+    """If the outbound list is empty, insert a backup Direct on DEFAULT.
+
+    First install and 'user deleted the last outbound' both land here, so the
+    panel always has a visible row and HAProxy has a backup SOCKS to use.
+    Installs that already have any outbound are left alone.
+    """
+    db = _db()
+    if db.outbounds.count_documents({}, limit=1) > 0:
+        return False
+    create({
+        'name':            'Direct',
+        'enabled':          True,
+        'backup':           True,
+        'backup_priority':  RESERVED_BACKUP_PRIORITY,
+        'weight':           100,
+        'type':             'direct',
+        'bind_interface':   DEFAULT_BIND_INTERFACE,
+    })
+    return True
+
+def backup_priority(ob):
+    """Backup order for this outbound, clamped to 1..MAX_BACKUP_PRIORITY."""
+    try:
+        value = int(ob.get('backup_priority', DEFAULT_BACKUP_PRIORITY))
+    except (TypeError, ValueError):
+        value = DEFAULT_BACKUP_PRIORITY
+    return max(1, min(MAX_BACKUP_PRIORITY, value))
+
+def taken_backup_priorities(exclude_index=None):
+    """Backup numbers already spoken for, ignoring the outbound at exclude_index.
+
+    Only outbounds still marked as backup count, so a number left behind on an
+    outbound the admin demoted is free again.
+    """
+    taken = set()
+    for ob in _db().outbounds.find({'backup': True},
+                                   {'index': 1, 'backup_priority': 1}):
+        if exclude_index is not None and ob.get('index') == exclude_index:
+            continue
+        taken.add(backup_priority(ob))
+    return taken
+
+def available_backup_priorities(outbound=None):
+    """Numbers the admin may pick for this outbound, ascending.
+
+    Every free ordinary number, plus the one this outbound already holds. That
+    exception is the only way the reserved number appears at all: the Direct
+    fallback keeps showing its own, and moving off it is a one-way trip.
+    """
+    exclude = outbound.get('index') if outbound else None
+    taken   = taken_backup_priorities(exclude)
+    choices = [n for n in range(1, RESERVED_BACKUP_PRIORITY) if n not in taken]
+    if outbound:
+        keep = backup_priority(outbound)
+        if keep not in taken and keep not in choices:
+            choices.append(keep)
+    return sorted(choices)
+
+def resolve_backup_priority(requested, outbound=None):
+    """Validate a submitted backup number against what is actually on offer.
+
+    outbound is the stored document when editing, None when creating. Anything
+    unavailable falls back to the current number, then to the lowest free one,
+    so a save can never duplicate a number or claim the reserved one.
+    """
+    choices = available_backup_priorities(outbound)
+    try:
+        value = int(requested)
+    except (TypeError, ValueError):
+        value = None
+    if value in choices:
+        return value
+    if outbound and backup_priority(outbound) in choices:
+        return backup_priority(outbound)
+    return choices[0] if choices else DEFAULT_BACKUP_PRIORITY
+
+def backup_ranks(outbounds):
+    """Map slot -> backup rank (0-based) for the enabled backups.
+
+    Rank 0 is the backup HAProxy tries first, so it takes BACKUP_BASE_PORT and
+    is checked by socks-bak-0. Ties on the number fall back to slot order.
+    """
+    backups = [ob for ob in outbounds
+               if ob.get('backup') and ob.get('enabled', True)]
+    backups.sort(key=lambda ob: (backup_priority(ob), ob['index']))
+    return {ob['index']: rank for rank, ob in enumerate(backups)}
+
+def backup_socks_port(rank):
+    return BACKUP_BASE_PORT + rank
+
 def get_all():
+    ensure_default_direct()
     return list(_db().outbounds.find().sort('index', 1))
 
 def _object_id(outbound_id):
@@ -451,8 +569,9 @@ def _build_proxy_outbound(ob, tag, ovpn_indices=None):
     # Direct outbound bound to a specific network interface
     if ob_type == 'direct':
         result = {'tag': tag, 'type': 'direct'}
-        if ob.get('bind_interface'):
-            result['bind_interface'] = ob['bind_interface']
+        iface = ob.get('bind_interface')
+        if iface and not _is_default_bind_interface(iface):
+            result['bind_interface'] = iface
         return result
 
     # OpenVPN — sing-box routes through the tun interface that openvpn creates
@@ -560,6 +679,7 @@ def generate_config(outbounds, relay_config=None):
     relay_protocol_default = relay_config.get('protocol', 'hysteria2')
 
     ovpn_indices  = _compute_ovpn_indices(outbounds)
+    ranks         = backup_ranks(outbounds)
     inbounds      = []
     outbound_cfgs = []
     endpoints     = []
@@ -575,7 +695,7 @@ def generate_config(outbounds, relay_config=None):
         socks_tag = f'socks-in-{i}'
         proxy_tag = f'proxy-{i}'
         is_backup = ob.get('backup', False)
-        out_port  = BACKUP_BASE_PORT + i if is_backup else BASE_PORT + i
+        out_port  = backup_socks_port(ranks[i]) if is_backup else BASE_PORT + i
 
         inbounds.append({
             'type': 'socks',
@@ -1038,8 +1158,13 @@ echo "✓ Libertea relay is running on port __RELAY_PORT__ (Shadowsocks/TCP + Hy
 # HAProxy connects periodically (agent-check) and reads "up\n" or "down\n".
 # A background thread probes each SOCKS proxy by making a real HTTP request
 # through it.
+#
+# Backups are addressed by priority rank instead of slot, so socks-bak-<rank>
+# reads BACKUP_AGENT_BASE_PORT+<rank> and gets the health of whichever outbound
+# currently holds that rank.
 
 AGENT_BASE_PORT = 13900
+BACKUP_AGENT_BASE_PORT = 14000   # backup agent ports: 14000-14019, keyed by rank
 CTRL_BASE_PORT  = 13800   # control port per slot: panel sends RESET, health worker clears state
 HEALTH_CHECK_URL = 'http://cp.cloudflare.com/generate_204'
 HEALTH_CHECK_INTERVAL = 10      # seconds between probes
@@ -1065,6 +1190,8 @@ _health_status  = {}
 _health_fails   = {}
 _health_history = {}
 _health_weight  = {}
+# _backup_slot_of_rank: {rank: slot} — which outbound socks-bak-<rank> describes
+_backup_slot_of_rank = {}
 _health_lock    = threading.Lock()
 _reset_event    = threading.Event()   # wakes the probe loop after a reset
 
@@ -1079,6 +1206,16 @@ def set_weight(slot, weight):
     """Set the HAProxy weight for a slot (1-100). Communicated via agent response."""
     with _health_lock:
         _health_weight[slot] = max(1, min(100, int(weight or 100)))
+
+def _set_backup_ranks(ranks):
+    """Publish the slot -> rank map as rank -> slot for the backup agents."""
+    with _health_lock:
+        _backup_slot_of_rank.clear()
+        _backup_slot_of_rank.update({rank: slot for slot, rank in ranks.items()})
+
+def _slot_of_backup_rank(rank):
+    with _health_lock:
+        return _backup_slot_of_rank.get(rank)
 
 def reset_health(slot):
     """Tell the health worker process to reset state for this slot via TCP,
@@ -1220,22 +1357,26 @@ class _CtrlServer(socketserver.ThreadingTCPServer):
         super().__init__(('127.0.0.1', CTRL_BASE_PORT + slot), _CtrlHandler)
 
 
+def _send_agent_status(request, slot):
+    """Write one HAProxy agent-check reply for this slot.
+    'up <weight>%' sets state and weight, 'down' takes the server out.
+    HAProxy parses space-separated tokens."""
+    up = _get_health(slot)
+    with _health_lock:
+        weight = _health_weight.get(slot, 100)
+    try:
+        if up:
+            request.sendall(f'up {weight}%\n'.encode())
+        else:
+            request.sendall(b'down\n')
+    except OSError:
+        pass
+
+
 class _AgentHandler(socketserver.BaseRequestHandler):
-    """Respond to HAProxy agent-check.
-    Format: 'up <weight>%\\n' when healthy, 'down\\n' when not.
-    HAProxy parses space-separated tokens — 'up' sets state, '<n>%' sets weight."""
+    """Agent-check for socks-out-<slot>, addressed by slot."""
     def handle(self):
-        slot = self.server.slot_index
-        up = _get_health(slot)
-        try:
-            if up:
-                with _health_lock:
-                    weight = _health_weight.get(slot, 100)
-                self.request.sendall(f'up {weight}%\n'.encode())
-            else:
-                self.request.sendall(b'down\n')
-        except OSError:
-            pass
+        _send_agent_status(self.request, self.server.slot_index)
 
 
 class _AgentServer(socketserver.ThreadingTCPServer):
@@ -1248,11 +1389,36 @@ class _AgentServer(socketserver.ThreadingTCPServer):
         super().__init__(('127.0.0.1', port), _AgentHandler)
 
 
-def _probe_slot(slot, is_backup=False):
-    """Try an HTTP request through the SOCKS proxy for this slot.
-    Uses BACKUP_BASE_PORT for backup outbounds, BASE_PORT otherwise.
+class _BackupAgentHandler(socketserver.BaseRequestHandler):
+    """agent-check for socks-bak-<rank>: report the outbound at that rank.
+
+    Ranks are assigned by backup order, so rank 0 is the backup HAProxy should
+    engage first. The outbound behind a rank changes when those numbers are
+    edited, so resolve it per check. A rank nobody occupies reports down.
+    """
+    def handle(self):
+        slot = _slot_of_backup_rank(self.server.rank)
+        if slot is None:
+            try:
+                self.request.sendall(b'down\n')
+            except OSError:
+                pass
+            return
+        _send_agent_status(self.request, slot)
+
+
+class _BackupAgentServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+    def __init__(self, rank):
+        self.rank = rank
+        super().__init__(('127.0.0.1', BACKUP_AGENT_BASE_PORT + rank), _BackupAgentHandler)
+
+
+def _probe_port(socks_port):
+    """Try an HTTP request through the SOCKS proxy on this port.
     Returns response time in ms on success, -1 on failure."""
-    socks_port = BACKUP_BASE_PORT + slot if is_backup else BASE_PORT + slot
     proxies = {
         'http':  f'socks5h://127.0.0.1:{socks_port}',
         'https': f'socks5h://127.0.0.1:{socks_port}',
@@ -1288,6 +1454,10 @@ def _health_check_loop():
         try:
             all_obs = get_all()
             ovpn_indices = _compute_ovpn_indices(all_obs)
+            # Same ranking generate_config() used for the backup SOCKS ports, so
+            # socks-bak-<rank> and the port we probe describe one outbound.
+            ranks = backup_ranks(all_obs)
+            _set_backup_ranks(ranks)
             active_slots = set()
 
             if not any(ob.get('enabled', True) for ob in all_obs):
@@ -1311,7 +1481,19 @@ def _health_check_loop():
                 if not ob.get('enabled', True):
                     _record_probe(slot, -1)
                     continue
-                ms = _probe_slot(slot, is_backup=ob.get('backup', False))
+                # Direct is "up" if sing-box is listening (HAProxy's TCP check).
+                # Probing Cloudflare through it fails on a blocked network and
+                # would take down the only remaining exit.
+                if ob.get('type') == 'direct':
+                    _record_probe(slot, 0)
+                    continue
+                if ob.get('backup'):
+                    if slot not in ranks:
+                        continue
+                    socks_port = backup_socks_port(ranks[slot])
+                else:
+                    socks_port = BASE_PORT + slot
+                ms = _probe_port(socks_port)
                 _record_probe(slot, ms)
 
                 # Auto-restart OpenVPN if persistently failing
@@ -1367,7 +1549,7 @@ def start_health_agents():
 
     failed = []
     for slot in range(MAX_OUTBOUNDS):
-        for server_class in (_AgentServer, _CtrlServer):
+        for server_class in (_AgentServer, _CtrlServer, _BackupAgentServer):
             try:
                 srv = server_class(slot)
             except OSError as e:
@@ -1382,6 +1564,7 @@ def start_health_agents():
     # Started even if some ports are missing: the agents that did bind report
     # every slot down until this loop has a probe result for it.
     threading.Thread(target=_health_check_loop, daemon=True).start()
-    print(f"Outbound health agents started on ports {AGENT_BASE_PORT}-{AGENT_BASE_PORT + MAX_OUTBOUNDS - 1}")
+    print(f"Outbound health agents started on ports {AGENT_BASE_PORT}-{AGENT_BASE_PORT + MAX_OUTBOUNDS - 1}"
+          f" (backup ranks {BACKUP_AGENT_BASE_PORT}-{BACKUP_AGENT_BASE_PORT + MAX_OUTBOUNDS - 1})")
     if failed:
         print('  - Could not bind ' + str(len(failed)) + ' health port(s): ' + '; '.join(failed[:4]))

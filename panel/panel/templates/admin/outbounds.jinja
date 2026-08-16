@@ -34,8 +34,8 @@
                     {% elif ob.tls %}<span class="badge bg-success ms-1">TLS</span>{% endif %}
                     {% if ob.get('vless_flow') %}<span class="badge bg-info text-dark ms-1">Flow</span>{% endif %}
                 {% endif %}
-                {% if ob.backup %}<span class="badge bg-secondary ms-1">Backup</span>{% endif %}
-                {% if ob.get('weight', 100) != 100 %}<span class="badge bg-info text-light ms-1">{{ ob.weight }}%</span>{% endif %}
+                {% if ob.backup %}<span class="badge bg-secondary ms-1">Backup #{{ ob.get('backup_priority', 1) }}</span>{% endif %}
+                {% if not ob.backup and ob.get('weight', 100) != 100 %}<span class="badge bg-info text-light ms-1">{{ ob.weight }}%</span>{% endif %}
                 {% set h = health.get(ob.index) %}
                 {% if not ob.enabled %}<span class="badge bg-warning text-dark ms-1">Disabled</span>
                 {% elif not h or h.get('display_status') == 'checking' %}<span class="badge bg-light text-dark ms-1">Checking…</span>

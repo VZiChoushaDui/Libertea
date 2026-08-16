@@ -43,15 +43,32 @@
 
         <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" name="backup" id="backup"
-                   {% if outbound and outbound.backup %}checked{% endif %}>
+                   {% if outbound and outbound.backup %}checked{% endif %} onchange="updateBackupFields()">
             <label class="form-check-label" for="backup">Backup</label>
             <div class="form-text">
                 Backup outbounds are only used when <strong>all</strong> non-backup outbounds are unhealthy.
             </div>
         </div>
 
+        <div class="mb-3" id="backup-order-section">
+            <label class="form-label" for="backup_priority">Backup order</label>
+            <select class="form-select" name="backup_priority" id="backup_priority"
+                    style="max-width: 110px;">
+                {% for n in backup_priority_choices %}
+                <option value="{{ n }}" {% if n == backup_priority_selected %}selected{% endif %}>{{ n }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-text">
+                1 is tried first, then 2, and so on. Only one backup carries traffic
+                at a time, so this decides which one takes over when every normal
+                outbound is down. Numbers another backup already uses are not listed,
+                and {{ reserved_backup_priority }} is kept for the Direct fallback the
+                panel adds by itself — an outbound can be moved off it, but not back on.
+            </div>
+        </div>
+
         <!-- ── Advanced ── -->
-        <div class="mb-3">
+        <div class="mb-3" id="weight-section">
             <a class="text-secondary small" data-bs-toggle="collapse" href="#advanced-options" role="button"
                aria-expanded="{{ 'true' if outbound and outbound.get('weight', 100) != 100 else 'false' }}">
                 <i class="fa-solid fa-sliders me-1"></i> Advanced options
@@ -139,8 +156,11 @@
         <div class="mb-3 field-direct">
             <label class="form-label">Network Interface</label>
             <input type="text" class="form-control" name="bind_interface"
-                   value="{{ outbound.bind_interface if outbound else '' }}" placeholder="e.g. eth0, wg0, tun0">
-            <div class="form-text">Traffic exits through this interface directly.</div>
+                   value="{{ outbound.bind_interface if outbound else 'DEFAULT' }}" placeholder="DEFAULT, eth0, wg0, tun0">
+            <div class="form-text">
+                Traffic exits through this interface directly.
+                Use <code>DEFAULT</code> for the host's default network interface (no bind in sing-box).
+            </div>
         </div>
 
         <!-- UUID (vless / vmess) -->
@@ -514,7 +534,17 @@ function updateFields() {
         }
     }
 }
+// Weight only means something where HAProxy balances between servers, which is
+// the non-backup pool; backups are strictly ordered instead.
+function updateBackupFields() {
+    const isBackup = document.getElementById('backup').checked;
+    const order    = document.getElementById('backup-order-section');
+    const weight   = document.getElementById('weight-section');
+    if (order)  order.style.display  = isBackup ? '' : 'none';
+    if (weight) weight.style.display = isBackup ? 'none' : '';
+}
 document.addEventListener('DOMContentLoaded', updateFields);
+document.addEventListener('DOMContentLoaded', updateBackupFields);
 
 // ---------------------------------------------------------------------------
 // URI import

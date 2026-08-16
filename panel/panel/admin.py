@@ -845,9 +845,11 @@ def _render_outbounds_page(relay_config=None):
     def _sort_key(ob):
         enabled = ob.get('enabled', True)
         backup  = ob.get('backup', False)
-        weight  = ob.get('weight', 100)
         group = 2 if not enabled else (1 if backup else 0)
-        return (group, -weight)
+        # Backups are listed in the order HAProxy will try them; the rest by weight.
+        if backup:
+            return (group, outbounds_module.backup_priority(ob), ob.get('index', 0))
+        return (group, -ob.get('weight', 100), ob.get('index', 0))
 
     return render_template('admin/outbounds.jinja',
         page='outbounds',
@@ -888,12 +890,19 @@ def outbound_relay_setup_command():
     return Response(script, mimetype='text/plain')
 
 def _render_outbound_form(outbound=None, error=None):
+    choices = outbounds_module.available_backup_priorities(outbound)
+    selected = outbounds_module.backup_priority(outbound) if outbound else None
+    if selected not in choices:
+        selected = choices[0] if choices else outbounds_module.DEFAULT_BACKUP_PRIORITY
     return render_template('admin/outbound_edit.jinja',
         page='outbounds',
         libertea_version=config.LIBERTEA_VERSION,
         admin_uuid=config.get_admin_uuid(),
         outbound=outbound,
         ss_methods=outbounds_module.SS_METHODS,
+        backup_priority_choices=choices,
+        backup_priority_selected=selected,
+        reserved_backup_priority=outbounds_module.RESERVED_BACKUP_PRIORITY,
         error=error,
     )
 
@@ -940,7 +949,7 @@ def outbound_update(outbound_id):
     old_ob = outbounds_module.get_one(outbound_id)
     if old_ob is None:
         return redirect(url_for('admin.outbounds'))
-    data = _parse_outbound_form(request.form)
+    data = _parse_outbound_form(request.form, old_ob)
     data['type'] = old_ob['type']
     outbounds_module.update(outbound_id, data)
     outbounds_module.reset_health(old_ob['index'])
@@ -969,12 +978,14 @@ def _form_int(form, field, default, minimum, maximum):
         value = default
     return max(minimum, min(maximum, value))
 
-def _parse_outbound_form(form):
+def _parse_outbound_form(form, current=None):
     tls_enabled = form.get('tls') == 'on'
     return {
         'name':                   form.get('name', '').strip(),
         'enabled':                form.get('enabled') == 'on',
         'backup':                 form.get('backup') == 'on',
+        'backup_priority':        outbounds_module.resolve_backup_priority(
+                                      form.get('backup_priority'), current),
         'weight':                 _form_int(form, 'weight', 100, 1, 100),
         'type':                   form.get('type', 'vless'),
         'server':                 form.get('server', '').strip(),
@@ -1000,7 +1011,7 @@ def _parse_outbound_form(form):
         'wg_local_address':       form.get('wg_local_address', '').strip(),
         'wg_mtu':                 form.get('wg_mtu', '').strip(),
         'wg_reserved':            form.get('wg_reserved', '').strip(),
-        'bind_interface':         form.get('bind_interface', '').strip(),
+        'bind_interface':         outbounds_module.normalize_bind_interface(form.get('bind_interface', '')),
         'ovpn_config':            form.get('ovpn_config', ''),
         'ovpn_username':          form.get('ovpn_username', '').strip(),
         'ovpn_password':          form.get('ovpn_password', '').strip(),
