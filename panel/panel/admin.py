@@ -19,6 +19,23 @@ blueprint = Blueprint('admin', __name__)
 
 root_url = '/' + config.get_admin_uuid() + '/'
 
+# How long the interim "applying changes" page waits before redirecting.
+# Must outlast the background restart it's covering for, since the panel
+# itself is reached through the same HAProxy/sing-box being restarted.
+OUTBOUND_RESTART_WAIT_SECONDS = 7   # apply_outbound_config: sing-box restart + haproxy_reload(5)
+HAPROXY_RELOAD_WAIT_SECONDS = 4     # plain haproxy_reload(): default 2s delay
+
+def _reloading_page(target_url, wait_seconds, message='Applying changes, please wait…'):
+    """Interim page shown instead of an immediate redirect after an action that
+    restarts haproxy and/or sing-box. Redirecting right away can hit the brief
+    window where those restart, breaking the request if the admin reaches this
+    panel through the same instance (e.g. while connected to its VPN)."""
+    return render_template('admin/reloading.jinja',
+        target_url=target_url,
+        wait_seconds=wait_seconds,
+        message=message,
+    )
+
 @blueprint.route(root_url)
 def rootpage():
     users_count = len(utils.get_users())
@@ -817,8 +834,11 @@ def app_settings_save():
     if not settings.get_provider_enabled('trojanws') and not settings.get_provider_enabled('ssv2ray') and not settings.get_provider_enabled('trojangrpc') and not settings.get_provider_enabled('ssgrpc'):
         settings.set_provider_enabled('trojangrpc', True)
 
+    needs_haproxy_reload = False
     if camouflage_domain is not None:
         if camouflage_domain == '' or camouflage_domain == 'https://':
+            if settings.get_camouflage_domain():
+                needs_haproxy_reload = True
             settings.set_camouflage_domain("")
         else:
             # check if domain is reachable
@@ -828,6 +848,7 @@ def app_settings_save():
                 if prev_camouflage_domain != camouflage_domain:
                     settings.set_camouflage_domain(camouflage_domain)
                     sysops.regenerate_camouflage_cert()
+                    needs_haproxy_reload = True
             else:
                 return redirect(root_url + 'settings/?camouflage_error=' + camouflage_domain_status + '&camouflage_domain=' + urllib.parse.quote(camouflage_domain))
 
@@ -835,7 +856,12 @@ def app_settings_save():
         return app_settings(clash_rules_error=clash_rules_error,
                             clash_custom_rules_override=clash_custom_rules_text)
 
-    return redirect(url_for('admin.app_settings'))
+    target_url = url_for('admin.app_settings')
+    if needs_outbound_restart:
+        return _reloading_page(target_url, OUTBOUND_RESTART_WAIT_SECONDS)
+    if needs_haproxy_reload:
+        return _reloading_page(target_url, HAPROXY_RELOAD_WAIT_SECONDS)
+    return redirect(target_url)
 
 def _render_outbounds_page(relay_config=None):
     all_outbounds = outbounds_module.get_all()
@@ -879,7 +905,7 @@ def outbound_relay_save():
     if not success:
         relay_config['error'] = err
         return _render_outbounds_page(relay_config)
-    return redirect(url_for('admin.outbounds'))
+    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
 
 @blueprint.route(root_url + 'outbounds/relay/setup-command/')
 def outbound_relay_setup_command():
@@ -935,7 +961,7 @@ def outbound_create():
     if not success:
         outbounds_module.delete(new_id)
         return _render_outbound_form(data, err)
-    return redirect(url_for('admin.outbounds'))
+    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/', methods=['GET'])
 def outbound_edit(outbound_id):
@@ -958,7 +984,7 @@ def outbound_update(outbound_id):
         restore = {k: v for k, v in old_ob.items() if k != '_id'}
         outbounds_module.update(outbound_id, restore)
         return _render_outbound_form(old_ob, err)
-    return redirect(url_for('admin.outbounds'))
+    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/delete/', methods=['POST'])
 def outbound_delete(outbound_id):
@@ -967,7 +993,7 @@ def outbound_delete(outbound_id):
         outbounds_module.reset_health(ob['index'])
     outbounds_module.delete(outbound_id)
     sysops.apply_outbound_config()
-    return redirect(url_for('admin.outbounds'))
+    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
 
 def _form_int(form, field, default, minimum, maximum):
     """Read an integer form field, clamped to [minimum, maximum].
