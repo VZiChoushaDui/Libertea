@@ -148,7 +148,7 @@ def haproxy_update_cgnat_enabled_flag():
 
 SINGBOX_SERVICE = 'libertea-outbound-direct.service'
 
-def apply_outbound_config_later(sleep_secs=2, on_failure=None):
+def apply_outbound_config_later(sleep_secs=2, on_failure=None, on_success=None):
     """Run apply_outbound_config() after sleep_secs.
 
     Used so the HTTP response (the "applying changes" page) can reach the
@@ -157,11 +157,12 @@ def apply_outbound_config_later(sleep_secs=2, on_failure=None):
     def _run():
         time.sleep(sleep_secs)
         success, err = apply_outbound_config()
-        if not success and on_failure is not None:
+        callback = on_success if success else on_failure
+        if callback is not None:
             try:
-                on_failure(err)
+                callback() if success else callback(err)
             except Exception as e:
-                print('apply_outbound_config_later on_failure failed:', e)
+                print('apply_outbound_config_later callback failed:', e)
 
     th = threading.Thread(target=_run)
     th.start()

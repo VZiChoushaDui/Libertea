@@ -11,6 +11,7 @@ from . import sysops
 from . import settings
 from . import health_check
 from . import outbounds as outbounds_module
+from . import mullvad as mullvad_module
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response, make_response
@@ -28,7 +29,8 @@ HAPROXY_RELOAD_WAIT_SECONDS = 6     # plain haproxy_reload(): default 2s delay
 # Let the reloading HTML reach the browser before bouncing the tunnel.
 RELOAD_RESPONSE_DELAY_SECONDS = 2
 
-def _reloading_page(target_url, wait_seconds, apply_outbound=False, on_apply_failure=None):
+def _reloading_page(target_url, wait_seconds, apply_outbound=False, on_apply_failure=None,
+                    on_apply_success=None):
     """Return the interim "applying changes" page as the POST response.
 
     The restart is deferred so this HTML can be delivered before HAProxy /
@@ -39,6 +41,7 @@ def _reloading_page(target_url, wait_seconds, apply_outbound=False, on_apply_fai
         sysops.apply_outbound_config_later(
             RELOAD_RESPONSE_DELAY_SECONDS,
             on_failure=on_apply_failure,
+            on_success=on_apply_success,
         )
     response = make_response(render_template('admin/reloading.jinja',
         target_url=target_url,
@@ -925,6 +928,7 @@ def _render_outbounds_page(relay_config=None):
         health=outbounds_module.get_all_health(),
         max_outbounds=outbounds_module.MAX_OUTBOUNDS,
         can_add_outbound=outbounds_module.can_create(),
+        mullvad_rotate_label=mullvad_module.describe_rotate_schedule,
     )
 
 @blueprint.route(root_url + 'outbounds/')
@@ -966,6 +970,10 @@ def _render_outbound_form(outbound=None, error=None):
     selected = outbounds_module.backup_priority(outbound) if outbound else None
     if selected not in choices:
         selected = choices[0] if choices else outbounds_module.DEFAULT_BACKUP_PRIORITY
+    next_rotation = None
+    if outbound and outbound.get('type') == 'mullvad':
+        due = mullvad_module.next_rotation_at(outbound)
+        next_rotation = due.strftime('%Y-%m-%d %H:%M') if due else None
     return render_template('admin/outbound_edit.jinja',
         page='outbounds',
         libertea_version=config.LIBERTEA_VERSION,
@@ -975,8 +983,23 @@ def _render_outbound_form(outbound=None, error=None):
         backup_priority_choices=choices,
         backup_priority_selected=selected,
         reserved_backup_priority=outbounds_module.RESERVED_BACKUP_PRIORITY,
+        mullvad_rotate_day_choices=mullvad_module.ROTATE_DAY_CHOICES,
+        mullvad_rotate_days=mullvad_module.rotate_interval_days(outbound or {}),
+        mullvad_rotate_hour=mullvad_module.rotate_hour(outbound or {}),
+        mullvad_next_rotation=next_rotation,
         error=error,
     )
+
+@blueprint.route(root_url + 'outbounds/mullvad/relays/')
+def outbound_mullvad_relays():
+    """Mullvad server list for the picker. The form fetches this separately so a
+    slow or blocked api.mullvad.net cannot stall the outbound page itself."""
+    try:
+        body = json.dumps(mullvad_module.relay_tree())
+    except ValueError as e:
+        return Response(json.dumps({'error': str(e)}), status=502,
+                        mimetype='application/json')
+    return Response(body, mimetype='application/json')
 
 @blueprint.route(root_url + 'outbounds/new/', methods=['GET'])
 def outbound_new():
@@ -1002,16 +1025,29 @@ def outbound_create():
             return _render_outbound_form(None, str(e))
         if not data['name']:
             data['name'] = 'Cloudflare WARP'
+    elif request.form.get('type') == 'mullvad':
+        try:
+            data = mullvad_module.apply_form(data)
+        except ValueError as e:
+            return _render_outbound_form(data, str(e))
 
     try:
         new_id = outbounds_module.create(data)
     except ValueError as e:
-        return _render_outbound_form(None, str(e))
+        if data.get('mullvad_device_id'):
+            mullvad_module.delete_device(data.get('mullvad_account'), data['mullvad_device_id'])
+        return _render_outbound_form(data if request.form.get('type') == 'mullvad' else None, str(e))
     new_ob = outbounds_module.get_one(new_id)
     if new_ob:
         outbounds_module.reset_health(new_ob['index'])
 
     def _revert_create(_err):
+        ob = outbounds_module.get_one(new_id)
+        if ob and ob.get('type') == 'mullvad':
+            mullvad_module.delete_device(
+                mullvad_module.normalize_account(ob.get('mullvad_account')),
+                ob.get('mullvad_device_id'),
+            )
         outbounds_module.delete(new_id)
 
     return _reloading_page(
@@ -1035,18 +1071,36 @@ def outbound_update(outbound_id):
         return redirect(url_for('admin.outbounds'))
     data = _parse_outbound_form(request.form, old_ob)
     data['type'] = old_ob['type']
+    if old_ob.get('type') == 'mullvad':
+        try:
+            data = mullvad_module.apply_form(data, old_ob)
+        except ValueError as e:
+            merged = dict(old_ob)
+            merged.update(data)
+            return _render_outbound_form(merged, str(e))
     outbounds_module.update(outbound_id, data)
     outbounds_module.reset_health(old_ob['index'])
     restore = {k: v for k, v in old_ob.items() if k != '_id'}
 
     def _revert_update(_err):
-        outbounds_module.update(outbound_id, restore)
+        restored = dict(restore)
+        if old_ob.get('type') == 'mullvad':
+            restored.update(mullvad_module.rollback_device_swap(data, old_ob))
+        outbounds_module.update(outbound_id, restored)
+
+    def _commit_update():
+        if old_ob.get('type') == 'mullvad':
+            # A save that provisioned nothing can still be carrying a device
+            # left recorded by an earlier failed apply.
+            pending = data if data.get('mullvad_stale_device') else old_ob
+            outbounds_module.update(outbound_id, mullvad_module.commit_device_swap(pending))
 
     return _reloading_page(
         url_for('admin.outbounds'),
         OUTBOUND_RESTART_WAIT_SECONDS,
         apply_outbound=True,
         on_apply_failure=_revert_update,
+        on_apply_success=_commit_update,
     )
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/delete/', methods=['POST'])
@@ -1054,6 +1108,11 @@ def outbound_delete(outbound_id):
     ob = outbounds_module.get_one(outbound_id)
     if ob:
         outbounds_module.reset_health(ob['index'])
+        if ob.get('type') == 'mullvad':
+            mullvad_module.delete_device(
+                mullvad_module.normalize_account(ob.get('mullvad_account')),
+                ob.get('mullvad_device_id'),
+            )
     outbounds_module.delete(outbound_id)
     return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS, apply_outbound=True)
 
@@ -1065,6 +1124,10 @@ def _form_int(form, field, default, minimum, maximum):
     except (TypeError, ValueError):
         value = default
     return max(minimum, min(maximum, value))
+
+def _form_list(form, field):
+    values = form.getlist(field)
+    return [str(v).strip() for v in values if str(v).strip()]
 
 def _parse_outbound_form(form, current=None):
     tls_enabled = form.get('tls') == 'on'
@@ -1106,7 +1169,33 @@ def _parse_outbound_form(form, current=None):
         'socks_version':          form.get('socks_version', '5'),
         'socks_username':         form.get('socks_username', '').strip(),
         'socks_password':         form.get('socks_password', '').strip(),
+        **(_parse_mullvad_form(form) if (form.get('type') or (current or {}).get('type')) == 'mullvad' else {}),
         **_parse_relay_override(form),
+    }
+
+def _parse_mullvad_form(form):
+    http_method = (form.get('mullvad_http_method') or 'GET').strip().upper()
+    if http_method not in ('GET', 'POST', 'HEAD'):
+        http_method = 'GET'
+    rotate_days = mullvad_module.rotate_interval_days(
+        {'mullvad_rotate_days': form.get('mullvad_rotate_days')})
+    rotate_hour = mullvad_module.rotate_hour(
+        {'mullvad_rotate_hour': form.get('mullvad_rotate_hour')})
+    return {
+        'mullvad_account': form.get('mullvad_account', '').strip(),
+        'mullvad_countries': _form_list(form, 'mullvad_countries'),
+        'mullvad_cities': _form_list(form, 'mullvad_cities'),
+        'mullvad_servers': _form_list(form, 'mullvad_servers'),
+        'mullvad_rotate': form.get('mullvad_rotate') == 'on',
+        'mullvad_rotate_days': rotate_days,
+        'mullvad_rotate_hour': rotate_hour,
+        'mullvad_rotate_keys': form.get('mullvad_rotate_keys') == 'on',
+        'mullvad_http_check': form.get('mullvad_http_check') == 'on',
+        'mullvad_http_method': http_method,
+        'mullvad_http_url': form.get('mullvad_http_url', '').strip(),
+        'mullvad_http_code': _form_int(form, 'mullvad_http_code', 403, 100, 599),
+        'mullvad_http_interval_minutes': _form_int(
+            form, 'mullvad_http_interval_minutes', 10, 1, 1440),
     }
 
 def _parse_relay_override(form):

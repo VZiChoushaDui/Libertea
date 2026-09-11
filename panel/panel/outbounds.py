@@ -711,7 +711,7 @@ def generate_config(outbounds, relay_config=None):
 
         ob_type = ob.get('type', 'vless')
 
-        if ob_type == 'wireguard':
+        if ob_type in ('wireguard', 'mullvad'):
             endpoints.append(_build_wg_endpoint(ob, proxy_tag))
         else:
             outbound_cfgs.append(_build_proxy_outbound(ob, proxy_tag, ovpn_indices))
@@ -746,7 +746,7 @@ def generate_config(outbounds, relay_config=None):
                 if iface:
                     relay_ob['bind_interface'] = iface
             else:
-                # Remote outbounds (proxy / wireguard): relay chains via detour
+                # Remote outbounds (proxy / wireguard / mullvad): relay chains via detour
                 relay_ob['detour'] = proxy_tag
             outbound_cfgs.append(relay_ob)
             final_tag = relay_tag

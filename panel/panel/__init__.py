@@ -109,6 +109,11 @@ def start_outbound_health_agents():
         outbounds.start_health_agents()
     except Exception:
         traceback.print_exc()
+    try:
+        from . import mullvad as mullvad_module
+        mullvad_module.start_agent()
+    except Exception:
+        traceback.print_exc()
 
 def create_app():
     static_uuid = config.get_static_resource_uuid()
@@ -181,6 +186,11 @@ def create_app():
         try:
             print("Starting outbound health agents")
             outbounds.start_health_agents()
+        except Exception:
+            traceback.print_exc()
+        try:
+            from . import mullvad as mullvad_module
+            mullvad_module.start_agent()
         except Exception:
             traceback.print_exc()
 

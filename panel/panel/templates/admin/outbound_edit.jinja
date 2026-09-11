@@ -102,6 +102,7 @@
                     {%- if outbound.type == 'direct' %}Direct (bind interface)
                     {%- elif outbound.type == 'openvpn' %}OpenVPN
                     {%- elif outbound.type == 'socks' %}SOCKS
+                    {%- elif outbound.type == 'mullvad' %}Mullvad VPN
                     {%- else %}{{ outbound.type | upper }}
                     {%- endif %}
                     <small class="text-muted ms-2">(delete and recreate to change type)</small>
@@ -111,12 +112,13 @@
                 </select>
             {% else %}
                 <select class="form-select" name="type" id="ob-type" onchange="updateFields()">
-                    {% for t in ['vless','vmess','shadowsocks','trojan','socks','wireguard','warp','openvpn','direct'] %}
+                    {% for t in ['vless','vmess','shadowsocks','trojan','socks','wireguard','warp','mullvad','openvpn','direct'] %}
                     <option value="{{ t }}" {% if outbound and outbound.type == t %}selected{% endif %}>
                         {%- if t == 'direct' %}Direct (bind interface)
                         {%- elif t == 'openvpn' %}OpenVPN
                         {%- elif t == 'socks' %}SOCKS
                         {%- elif t == 'warp' %}Cloudflare WARP
+                        {%- elif t == 'mullvad' %}Mullvad VPN
                         {%- else %}{{ t | upper }}
                         {%- endif %}
                     </option>
@@ -133,6 +135,135 @@
                 WireGuard outbound, so websites see a Cloudflare IP instead of this
                 server's. There is nothing to configure; it may take a few seconds.
                 Afterwards it is an ordinary WireGuard outbound you can edit.
+            </div>
+        </div>
+
+        <!-- Mullvad VPN -->
+        <div id="mullvad-fields">
+            <h6 class="bordered mt-4">Mullvad VPN</h6>
+            <div id="mullvad-relays-status" class="form-text mb-2"></div>
+            <div class="mb-3">
+                <label class="form-label">Account number <span class="text-danger">*</span></label>
+                <input type="text" class="form-control font-monospace" name="mullvad_account"
+                       value="{{ outbound.mullvad_account if outbound else '' }}"
+                       placeholder="16-digit Mullvad account number" autocomplete="off">
+                <div class="form-text">
+                    Saving registers a WireGuard device on this account. Mullvad allows 5 devices.
+                </div>
+            </div>
+            {% if outbound and outbound.get('mullvad_hostname') %}
+            <div class="alert alert-secondary">
+                Current server:
+                <strong>{{ outbound.mullvad_city_name or '' }}{% if outbound.mullvad_city_name and outbound.mullvad_country_name %}, {% endif %}{{ outbound.mullvad_country_name or '' }}</strong>
+                <span class="font-monospace">({{ outbound.mullvad_hostname }})</span>
+                {% if mullvad_next_rotation %}
+                <div class="small mt-1">Next rotation: {{ mullvad_next_rotation }} UTC</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                <label class="form-label">Countries <span class="text-danger">*</span></label>
+                <select class="form-select" name="mullvad_countries" id="mullvad-countries" multiple size="8"
+                        onchange="updateMullvadLocation()">
+                </select>
+                <div class="form-text">
+                    Hold Ctrl/Cmd to select more than one. If you pick several countries, a random
+                    server in those countries is used. City and server lists appear only when a
+                    single country (then a single city) is selected.
+                </div>
+            </div>
+            <div class="mb-3" id="mullvad-cities-wrap" style="display:none;">
+                <label class="form-label">Cities</label>
+                <select class="form-select" name="mullvad_cities" id="mullvad-cities" multiple size="6"
+                        onchange="updateMullvadServers()">
+                </select>
+                <div class="form-text">Leave empty for every city in the selected country.</div>
+            </div>
+            <div class="mb-3" id="mullvad-servers-wrap" style="display:none;">
+                <label class="form-label">Servers</label>
+                <select class="form-select" name="mullvad_servers" id="mullvad-servers" multiple size="6">
+                </select>
+                <div class="form-text">Leave empty for every server in the selected city.</div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="mullvad_rotate" id="mullvad_rotate"
+                       {% if not outbound or outbound.get('mullvad_rotate') %}checked{% endif %}
+                       onchange="updateMullvadRotateFields()">
+                <label class="form-check-label" for="mullvad_rotate">Rotate server automatically</label>
+            </div>
+            <div id="mullvad-rotate-fields">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Rotate every</label>
+                        <select class="form-select" name="mullvad_rotate_days">
+                            {% for d in mullvad_rotate_day_choices %}
+                            <option value="{{ d }}" {% if d == mullvad_rotate_days %}selected{% endif %}>
+                                {{ 'Daily' if d == 1 else 'Every ' ~ d ~ ' days' }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">At hour (UTC)</label>
+                        <select class="form-select" name="mullvad_rotate_hour">
+                            {% for h in range(24) %}
+                            <option value="{{ h }}" {% if h == mullvad_rotate_hour %}selected{% endif %}>{{ '%02d:00' % h }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-text mb-3">
+                    Rotating restarts the tunnel for a few seconds, so pick a quiet hour.
+                </div>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="mullvad_rotate_keys" id="mullvad_rotate_keys"
+                       {% if not outbound or outbound.get('mullvad_rotate_keys', True) %}checked{% endif %}>
+                <label class="form-check-label" for="mullvad_rotate_keys">Rotate WireGuard keys on each server rotate</label>
+                <div class="form-text">
+                    Registers a new key on the same Mullvad device so the exit IP can change even on the same server.
+                </div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="mullvad_http_check" id="mullvad_http_check"
+                       {% if outbound and outbound.get('mullvad_http_check') %}checked{% endif %}
+                       onchange="updateMullvadRotateFields()">
+                <label class="form-check-label" for="mullvad_http_check">Rotate when an HTTP check returns a given status</label>
+            </div>
+            <div id="mullvad-http-fields">
+                <div class="row">
+                    <div class="col-3 mb-3">
+                        <label class="form-label">Method</label>
+                        <select class="form-select" name="mullvad_http_method">
+                            {% for m in ['GET','POST','HEAD'] %}
+                            <option value="{{ m }}" {% if outbound and outbound.get('mullvad_http_method') == m %}selected{% elif not outbound and m == 'GET' %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">URL</label>
+                        <input type="text" class="form-control" name="mullvad_http_url"
+                               value="{{ outbound.mullvad_http_url if outbound else '' }}"
+                               placeholder="https://example.com/">
+                    </div>
+                    <div class="col-3 mb-3">
+                        <label class="form-label">Status</label>
+                        <input type="number" class="form-control" name="mullvad_http_code"
+                               value="{{ outbound.mullvad_http_code if outbound and outbound.mullvad_http_code else 403 }}"
+                               min="100" max="599">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Check every (minutes)</label>
+                    <input type="number" class="form-control" name="mullvad_http_interval_minutes"
+                           value="{{ outbound.mullvad_http_interval_minutes if outbound and outbound.mullvad_http_interval_minutes else 10 }}"
+                           min="1" max="1440" style="max-width: 140px;">
+                    <div class="form-text">
+                        The request is sent through this outbound. A matching status code rotates immediately.
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -465,6 +596,7 @@ function updateFields() {
     const isSocks  = type === 'socks';
     const isWg     = type === 'wireguard';
     const isWarp   = type === 'warp';
+    const isMullvad = type === 'mullvad';
     const isDirect = type === 'direct';
     const isOvpn   = type === 'openvpn';
 
@@ -490,6 +622,16 @@ function updateFields() {
 
     // WireGuard section
     document.getElementById('wg-fields').style.display = isWg ? '' : 'none';
+
+    const mullvadFields = document.getElementById('mullvad-fields');
+    if (mullvadFields) {
+        mullvadFields.style.display = isMullvad ? '' : 'none';
+        mullvadFields.querySelectorAll('input, select').forEach(el => { el.disabled = !isMullvad; });
+    }
+    if (isMullvad) {
+        updateMullvadRotateFields();
+        loadMullvadRelays();
+    }
 
     // OpenVPN section
     document.getElementById('ovpn-fields').style.display = isOvpn ? '' : 'none';
@@ -543,6 +685,121 @@ function updateBackupFields() {
 }
 document.addEventListener('DOMContentLoaded', updateFields);
 document.addEventListener('DOMContentLoaded', updateBackupFields);
+
+const MULLVAD_RELAYS_URL = "{{ url_for('admin.outbound_mullvad_relays') }}";
+const MULLVAD_SELECTED = {
+    countries: {{ (outbound.mullvad_countries if outbound and outbound.mullvad_countries else []) | tojson }},
+    cities: {{ (outbound.mullvad_cities if outbound and outbound.mullvad_cities else []) | tojson }},
+    servers: {{ (outbound.mullvad_servers if outbound and outbound.mullvad_servers else []) | tojson }},
+};
+let MULLVAD_RELAYS = [];
+let mullvadRelaysRequested = false;
+
+function loadMullvadRelays() {
+    if (mullvadRelaysRequested) return;
+    mullvadRelaysRequested = true;
+    const status = document.getElementById('mullvad-relays-status');
+    if (status) {
+        status.className = 'form-text mb-2';
+        status.textContent = 'Loading the Mullvad server list…';
+    }
+    fetch(MULLVAD_RELAYS_URL, {credentials: 'same-origin'})
+        .then(resp => resp.json().then(body => {
+            if (!resp.ok) throw new Error(body.error || ('HTTP ' + resp.status));
+            return body;
+        }))
+        .then(data => {
+            MULLVAD_RELAYS = data.countries || [];
+            if (status) status.textContent = '';
+            initMullvadLocation();
+        })
+        .catch(err => {
+            mullvadRelaysRequested = false;
+            if (status) {
+                status.className = 'form-text mb-2 text-danger';
+                status.textContent = 'Could not load the Mullvad server list: ' + err.message;
+            }
+        });
+}
+
+function _fillSelect(select, items, selected, valueKey, labelFn) {
+    const chosen = selected == null
+        ? new Set(Array.from(select.selectedOptions).map(o => o.value))
+        : new Set(selected);
+    select.innerHTML = '';
+    for (const item of items) {
+        const value = item[valueKey];
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = labelFn(item);
+        opt.selected = chosen.has(value);
+        select.appendChild(opt);
+    }
+}
+
+function initMullvadLocation() {
+    const countrySelect = document.getElementById('mullvad-countries');
+    if (!countrySelect) return;
+    _fillSelect(countrySelect, MULLVAD_RELAYS, MULLVAD_SELECTED.countries, 'code',
+        c => c.name + ' (' + c.code.toUpperCase() + ')');
+    updateMullvadLocation(true);
+}
+
+function updateMullvadLocation(initial) {
+    const countrySelect = document.getElementById('mullvad-countries');
+    const citySelect = document.getElementById('mullvad-cities');
+    const citiesWrap = document.getElementById('mullvad-cities-wrap');
+    if (!countrySelect || !citySelect) return;
+
+    const selectedCountries = Array.from(countrySelect.selectedOptions).map(o => o.value);
+    const country = selectedCountries.length === 1
+        ? MULLVAD_RELAYS.find(c => c.code === selectedCountries[0])
+        : null;
+
+    if (country) {
+        citiesWrap.style.display = '';
+        _fillSelect(citySelect, country.cities, initial ? MULLVAD_SELECTED.cities : [], 'key',
+            c => c.name);
+    } else {
+        citiesWrap.style.display = 'none';
+        citySelect.innerHTML = '';
+    }
+    updateMullvadServers(initial);
+}
+
+function updateMullvadServers(initial) {
+    const countrySelect = document.getElementById('mullvad-countries');
+    const citySelect = document.getElementById('mullvad-cities');
+    const serverSelect = document.getElementById('mullvad-servers');
+    const serversWrap = document.getElementById('mullvad-servers-wrap');
+    if (!countrySelect || !citySelect || !serverSelect) return;
+
+    const selectedCountries = Array.from(countrySelect.selectedOptions).map(o => o.value);
+    const country = selectedCountries.length === 1
+        ? MULLVAD_RELAYS.find(c => c.code === selectedCountries[0])
+        : null;
+    const selectedCities = Array.from(citySelect.selectedOptions).map(o => o.value);
+    const city = country && selectedCities.length === 1
+        ? country.cities.find(c => c.key === selectedCities[0])
+        : null;
+    if (city) {
+        serversWrap.style.display = '';
+        _fillSelect(serverSelect, city.servers, initial ? MULLVAD_SELECTED.servers : [], 'hostname',
+            s => s.hostname);
+    } else {
+        serversWrap.style.display = 'none';
+        serverSelect.innerHTML = '';
+    }
+}
+
+function updateMullvadRotateFields() {
+    const rotate = document.getElementById('mullvad_rotate');
+    const http = document.getElementById('mullvad_http_check');
+    const rotateFields = document.getElementById('mullvad-rotate-fields');
+    const httpFields = document.getElementById('mullvad-http-fields');
+    if (rotateFields) rotateFields.style.display = (rotate && rotate.checked) ? '' : 'none';
+    if (httpFields) httpFields.style.display = (http && http.checked) ? '' : 'none';
+}
 
 // ---------------------------------------------------------------------------
 // URI import

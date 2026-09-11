@@ -45,8 +45,8 @@
            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
             <div>
                 <span style="font-weight:600;">{{ ob.name or '(unnamed)' }}</span>
-                <span class="badge bg-secondary ms-2">{{ ob.type | upper }}</span>
-                {% if ob.type not in ('wireguard', 'direct', 'openvpn', 'socks') %}
+                <span class="badge bg-secondary ms-2">{% if ob.type == 'mullvad' %}Mullvad{% else %}{{ ob.type | upper }}{% endif %}</span>
+                {% if ob.type not in ('wireguard', 'direct', 'openvpn', 'socks', 'mullvad') %}
                     <span class="badge bg-light text-dark ms-1">{{ (ob.transport or 'tcp') | upper }}</span>
                     {% if ob.get('tls_reality') %}<span class="badge bg-primary ms-1">REALITY</span>
                     {% elif ob.tls %}<span class="badge bg-success ms-1">TLS</span>{% endif %}
@@ -66,6 +66,10 @@
                         Interface: {{ ob.bind_interface or '(default)' }}
                     {%- elif ob.type == 'wireguard' -%}
                         Peer: {{ ob.server }}:{{ ob.server_port }}
+                    {%- elif ob.type == 'mullvad' -%}
+                        {{ ob.mullvad_city_name or '' }}{% if ob.mullvad_city_name and ob.mullvad_country_name %}, {% endif %}{{ ob.mullvad_country_name or '' }}
+                        {%- if ob.mullvad_hostname %} ({{ ob.mullvad_hostname }}){% endif -%}
+                        {%- if ob.get('mullvad_rotate') %} · rotate {{ mullvad_rotate_label(ob) }}{% endif -%}
                     {%- elif ob.type == 'openvpn' -%}
                         OpenVPN tunnel (tun-lb-{{ ovpn_indices.get(ob.index, '?') }})
                     {%- elif ob.type == 'socks' -%}
