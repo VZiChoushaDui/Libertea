@@ -39,6 +39,13 @@
         font-weight: 600;
         opacity: 1;
     }
+    .traffic-legend {
+        font-size: 0.82em;
+        color: #666;
+    }
+    html.dark-mode .traffic-legend {
+        color: #aeb2ba;
+    }
 </style>
 <div class="w-100 mt-4 px-3">
     <div class="float-start mb-2">
@@ -68,7 +75,7 @@
 {% endif %}
 
 <!-- Legend -->
-<div class="w-100 px-3 mb-1 mt-1" style="font-size: 0.82em; color: #666;">
+<div class="w-100 px-3 mb-1 mt-1 traffic-legend">
     <span style="display:inline-block; width:10px; height:10px; background:#dc3545; border-radius:2px; margin-right:4px;"></span>Expired &nbsp;
     <span style="display:inline-block; width:10px; height:10px; background:#fd7e14; border-radius:2px; margin-right:4px;"></span>Traffic limit reached
 </div>

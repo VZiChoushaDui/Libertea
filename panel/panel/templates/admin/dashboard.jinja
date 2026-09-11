@@ -83,7 +83,7 @@
 <script>
     var myProgress = new ProgressBar.Circle('#securityRing', {
         color: '#007bff',
-        trailColor: '#eee',
+        trailColor: document.documentElement.classList.contains('dark-mode') ? '#333740' : '#eee',
         trailWidth: 1,
         duration: 1500,
         easing: 'easeOut',

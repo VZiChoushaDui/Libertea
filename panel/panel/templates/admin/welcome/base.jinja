@@ -2,6 +2,18 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script>
+            /* Applied before first paint to avoid a light-mode flash. */
+            (function() {
+                try {
+                    var stored = localStorage.getItem('libertea-theme');
+                    var dark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (dark) {
+                        document.documentElement.classList.add('dark-mode');
+                    }
+                } catch (e) {}
+            })();
+        </script>
         <title>Libertea</title>
         <link href="{{ static_prefix }}/vendor/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
         <script src="{{ static_prefix }}/vendor/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
@@ -227,12 +239,130 @@
                 width: 200px;
                 max-width: 60vw;
             }
+
+            .theme-toggle-btn {
+                position: fixed;
+                top: 16px;
+                right: 16px;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                background: rgba(0, 0, 0, 0.05);
+                color: #555;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 10;
+                transition: background-color 0.2s ease, color 0.2s ease;
+            }
+
+            .theme-toggle-btn:hover {
+                background: rgba(0, 0, 0, 0.1);
+            }
+
+            .theme-toggle-btn .icon-sun {
+                display: none;
+            }
+
+            /* Dark mode theme, toggled via the "dark-mode" class on <html> */
+            html.dark-mode {
+                color-scheme: dark;
+                --bs-tertiary-bg: #22252c;
+                --bs-secondary-bg: #2a2d35;
+                --bs-border-color: #383c45;
+            }
+
+            html.dark-mode body {
+                background-color: #16181b;
+                color: #d8dade;
+            }
+
+            html.dark-mode .theme-toggle-btn {
+                border-color: rgba(255, 255, 255, 0.12);
+                background: rgba(255, 255, 255, 0.08);
+                color: #d8dade;
+            }
+
+            html.dark-mode .theme-toggle-btn:hover {
+                background: rgba(255, 255, 255, 0.16);
+            }
+
+            html.dark-mode .theme-toggle-btn .icon-moon {
+                display: none;
+            }
+
+            html.dark-mode .theme-toggle-btn .icon-sun {
+                display: inline-block;
+            }
+
+            html.dark-mode a:not(.btn),
+            html.dark-mode .btn-link {
+                color: #FF8FA3;
+            }
+
+            html.dark-mode a:not(.btn):hover,
+            html.dark-mode .btn-link:hover {
+                color: #ffb6c4;
+            }
+
+            html.dark-mode .btn-outline-primary {
+                border-color: #E55977;
+                color: #FF8FA3;
+            }
+
+            html.dark-mode .btn-outline-primary:hover {
+                background: rgba(229, 89, 119, 0.15);
+                color: #FF8FA3;
+            }
+
+            html.dark-mode .form-control,
+            html.dark-mode .form-select {
+                background-color: #1e2127;
+                color: #d8dade;
+                border-color: #3a3f4a;
+            }
+
+            html.dark-mode .form-control:focus,
+            html.dark-mode .form-select:focus {
+                background-color: #1e2127;
+                color: #d8dade;
+                border-color: #E55977;
+                box-shadow: 0 0 0 0.25rem rgba(229, 89, 119, 0.25);
+            }
+
+            html.dark-mode .form-check-input {
+                background-color: #1e2127;
+                border-color: #5a5f6a;
+            }
+
+            html.dark-mode h6.bordered {
+                border-bottom-color: #3a3f4a;
+            }
         </style>
     </head>
     <body>
+        <button type="button" id="theme-toggle" class="theme-toggle-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <i class="fa-solid fa-moon icon-moon"></i>
+            <i class="fa-solid fa-sun icon-sun"></i>
+        </button>
         <div class="main-content" style="max-width: 600px; margin: 0 auto; padding: 0 30px;">
             {% block content %}
             {% endblock %}
         </div>
+        <script>
+            (function() {
+                var toggle = document.getElementById('theme-toggle');
+                if (!toggle) return;
+                toggle.addEventListener('click', function() {
+                    var isDark = document.documentElement.classList.contains('dark-mode');
+                    try {
+                        localStorage.setItem('libertea-theme', isDark ? 'light' : 'dark');
+                    } catch (e) {}
+                    location.reload();
+                });
+            })();
+        </script>
     </body>
 </html>

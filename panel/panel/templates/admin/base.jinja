@@ -2,6 +2,18 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script>
+            /* Applied before first paint to avoid a light-mode flash. */
+            (function() {
+                try {
+                    var stored = localStorage.getItem('libertea-theme');
+                    var dark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (dark) {
+                        document.documentElement.classList.add('dark-mode');
+                    }
+                } catch (e) {}
+            })();
+        </script>
         <title>Libertea</title>
         <link href="{{ static_prefix }}/vendor/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
         <script src="{{ static_prefix }}/vendor/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
@@ -9,11 +21,26 @@
         <script src="{{ static_prefix }}/vendor/js/qrcode.min.js"></script>
         <link href='{{ static_prefix }}/vendor/css/roboto.css' rel="stylesheet">
         <script src="{{ static_prefix }}/vendor/js/chart.umd.min.js" integrity="sha512-GCiwmzA0bNGVsp1otzTJ4LWQT2jjGJENLGyLlerlzckNI30moi2EQT0AfRI7fLYYYDKR+7hnuh35r3y1uJzugw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+            /* Give Chart.js theme-aware defaults before any page creates a chart. */
+            if (window.Chart) {
+                var isDarkForCharts = document.documentElement.classList.contains('dark-mode');
+                Chart.defaults.color = isDarkForCharts ? '#aeb2ba' : '#666';
+                Chart.defaults.borderColor = isDarkForCharts ? '#333740' : '#e5e5e5';
+                if (Chart.defaults.scale && Chart.defaults.scale.grid) {
+                    Chart.defaults.scale.grid.color = isDarkForCharts ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.1)';
+                }
+                if (Chart.defaults.scale && Chart.defaults.scale.border) {
+                    Chart.defaults.scale.border.color = isDarkForCharts ? '#383c45' : '#dee2e6';
+                }
+            }
+        </script>
         <script src="{{ static_prefix }}/vendor/js/hammer.min.js"></script>
         <script src="{{ static_prefix }}/vendor/js/chartjs-plugin-zoom.min.js" integrity="sha256-MWgfT8qLAHB0HjurfqDyahw+t9fzVXwbLWKVJ8uTaec=" crossorigin="anonymous"></script>
         <style> 
             body {
                 font-family: 'Roboto', sans-serif;
+                transition: background-color 0.2s ease, color 0.2s ease;
             }
             
             .btn-primary, .form-check-input:checked {
@@ -80,31 +107,54 @@
                 margin-top: 16px;
             }
 
-            .tabs .tab {
-                border-bottom: 3px solid transparent;
-                display: inline-block;
+            .header-nav {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 2px;
+                margin-left: auto;
+            }
+
+            .nav-link {
+                display: inline-flex;
+                align-items: center;
                 text-decoration: none;
-                font-size: 16px;
-                margin-right: 4px;
-                color: black;
-                font-weight: 400;
+                font-size: 15px;
+                font-weight: 500;
+                color: #444;
+                padding: 8px 14px;
+                border-radius: 8px;
+                transition: background-color 0.15s ease, color 0.15s ease;
             }
 
-            @media (min-width: 400px) {
-                .tabs .tab {
-                    margin-right: 16px;
-                }
+            .nav-link:hover {
+                background: rgba(0, 0, 0, 0.05);
+                color: #222;
             }
 
-            .tabs .tab.active {
-                border-bottom: 3px solid #CC4F6A;
+            .nav-link.active {
+                background: rgba(229, 89, 119, 0.12);
                 color: #CC4F6A;
-                font-weight: 600;
+                font-weight: 700;
             }
 
-            .tabs .tab.back {
-                color: #CC4F6A;
+            .nav-back {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                text-decoration: none;
+                font-size: 15px;
                 font-weight: 600;
+                color: #CC4F6A;
+                padding: 8px 4px;
+            }
+
+            .nav-back:hover {
+                color: #B5465E;
+            }
+
+            .header-spacer {
+                flex: 1 1 auto;
             }
 
             .list-item-title {
@@ -180,32 +230,52 @@
 
             .header {
                 width: 100%;
-                padding-top: 20px;
-                padding-left: 16px;
-                padding-right: 16px;
+                padding: 14px 16px;
                 background: #eee;
+                position: relative;
             }
 
-            .header > div {
+            .header-inner {
                 max-width: 900px;
                 margin: 0 auto;
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px 16px;
             }
 
-            .logo {
-                float: left;
-                margin-top: -18px;
+            .logo-link {
+                display: inline-flex;
+                line-height: 0;
+            }
+
+            .logo-img {
+                max-width: 130px;
+                display: block;
             }
 
             @media (max-width: 576px) {
-                .logo {
-                    float: none;
-                    text-align: center;
-                    margin-bottom: 16px;
+                .header-inner {
+                    justify-content: center;
                 }
-            }
 
-            .logo > img {
-                max-width: 140px;
+                .logo-link {
+                    flex: 1 1 100%;
+                    justify-content: center;
+                }
+
+                .header-nav {
+                    flex: 1 1 100%;
+                    justify-content: center;
+                    margin-left: 0;
+                }
+
+                .header .theme-toggle-btn {
+                    position: absolute;
+                    top: 14px;
+                    right: 16px;
+                    margin-left: 0;
+                }
             }
 
             h6 {
@@ -338,43 +408,386 @@
             .shield-icon {
                 color: #00a6ed;
             }
+
+            .theme-toggle-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                vertical-align: middle;
+                width: 32px;
+                height: 32px;
+                margin-left: 8px;
+                border-radius: 50%;
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                background: rgba(0, 0, 0, 0.05);
+                color: #555;
+                cursor: pointer;
+                transition: background-color 0.2s ease, color 0.2s ease;
+            }
+
+            .theme-toggle-btn:hover {
+                background: rgba(0, 0, 0, 0.1);
+            }
+
+            .theme-toggle-btn .icon-sun {
+                display: none;
+            }
+
+            /* Dark mode theme, toggled via the "dark-mode" class on <html> */
+            html.dark-mode {
+                color-scheme: dark;
+                --bs-tertiary-bg: #22252c;
+                --bs-secondary-bg: #2a2d35;
+                --bs-border-color: #383c45;
+            }
+
+            html.dark-mode body {
+                background-color: #16181b;
+                color: #d8dade;
+            }
+
+            html.dark-mode .header {
+                background: #1c1e23;
+            }
+
+            html.dark-mode .theme-toggle-btn {
+                border-color: rgba(255, 255, 255, 0.12);
+                background: rgba(255, 255, 255, 0.08);
+                color: #d8dade;
+            }
+
+            html.dark-mode .theme-toggle-btn:hover {
+                background: rgba(255, 255, 255, 0.16);
+            }
+
+            html.dark-mode .theme-toggle-btn .icon-moon {
+                display: none;
+            }
+
+            html.dark-mode .theme-toggle-btn .icon-sun {
+                display: inline-block;
+            }
+
+            html.dark-mode .nav-link {
+                color: #d8dade;
+            }
+
+            html.dark-mode .nav-link:hover {
+                background: rgba(255, 255, 255, 0.08);
+                color: #fff;
+            }
+
+            html.dark-mode .nav-link.active {
+                background: rgba(229, 89, 119, 0.18);
+                color: #FF8FA3;
+            }
+
+            html.dark-mode .nav-back {
+                color: #FF8FA3;
+            }
+
+            html.dark-mode .nav-back:hover {
+                color: #ffb6c4;
+            }
+
+            html.dark-mode a:not(.btn),
+            html.dark-mode .btn-link {
+                color: #FF8FA3;
+            }
+
+            html.dark-mode a:not(.btn):hover,
+            html.dark-mode .btn-link:hover {
+                color: #ffb6c4;
+            }
+
+            html.dark-mode .btn-outline-primary {
+                border-color: #E55977;
+                color: #FF8FA3;
+            }
+
+            html.dark-mode .btn-outline-primary:hover {
+                background: rgba(229, 89, 119, 0.15);
+                color: #FF8FA3;
+            }
+
+            html.dark-mode .btn-outline-dark {
+                color: #d8dade;
+                border-color: #4a4f59;
+            }
+
+            html.dark-mode .btn-outline-dark:hover {
+                background-color: #2a2d35;
+                color: #fff;
+                border-color: #4a4f59;
+            }
+
+            html.dark-mode .card,
+            html.dark-mode .list-group-item,
+            html.dark-mode .modal-content,
+            html.dark-mode .dropdown-menu {
+                background-color: #1e2127;
+                color: #d8dade;
+                border-color: #383c45;
+            }
+
+            html.dark-mode .list-group-item-action:hover,
+            html.dark-mode .list-group-item-action:focus {
+                background-color: #262a33;
+                color: #d8dade;
+            }
+
+            /* Anchor-based list/dropdown items must stay light, not link-pink */
+            html.dark-mode .list-group-item,
+            html.dark-mode .list-group-item-action,
+            html.dark-mode .dropdown-item {
+                color: #d8dade !important;
+            }
+
+            html.dark-mode .list-item-badge {
+                background: #3a3f4a;
+                color: #d8dade;
+            }
+
+            html.dark-mode .btn-light {
+                background-color: #2a2d35;
+                border-color: #3a3f4a;
+                color: #d8dade;
+            }
+
+            html.dark-mode .btn-light:hover {
+                background-color: #33363f;
+                border-color: #3a3f4a;
+                color: #fff;
+            }
+
+            html.dark-mode .modal-header,
+            html.dark-mode .modal-footer {
+                border-color: #383c45;
+            }
+
+            html.dark-mode .btn-close {
+                filter: invert(1) grayscale(100%) brightness(180%);
+            }
+
+            html.dark-mode .dropdown-item {
+                color: #d8dade;
+            }
+
+            html.dark-mode .dropdown-item:hover,
+            html.dark-mode .dropdown-item:focus {
+                background-color: #2a2d35;
+                color: #fff;
+            }
+
+            html.dark-mode .form-control,
+            html.dark-mode .form-select {
+                background-color: #1e2127;
+                color: #d8dade;
+                border-color: #3a3f4a;
+            }
+
+            html.dark-mode .form-control:focus,
+            html.dark-mode .form-select:focus {
+                background-color: #1e2127;
+                color: #d8dade;
+                border-color: #E55977;
+                box-shadow: 0 0 0 0.25rem rgba(229, 89, 119, 0.25);
+            }
+
+            html.dark-mode .form-control::placeholder {
+                color: #6c7280;
+            }
+
+            html.dark-mode .form-control:disabled,
+            html.dark-mode .form-control[readonly],
+            html.dark-mode input[readonly] {
+                background-color: #26292f !important;
+                color: #9a9fa8 !important;
+            }
+
+            html.dark-mode .bg-light {
+                background-color: #2a2d35 !important;
+                color: #d8dade !important;
+            }
+
+            html.dark-mode .badge.bg-light.text-dark {
+                color: #d8dade !important;
+            }
+
+            html.dark-mode .form-text {
+                color: #9a9fa8;
+            }
+
+            html.dark-mode .form-label,
+            html.dark-mode label {
+                color: #d8dade;
+            }
+
+            html.dark-mode h6.bordered {
+                border-bottom-color: #3a3f4a;
+            }
+
+            html.dark-mode .alert-danger {
+                background-color: rgba(220, 53, 69, 0.18);
+                color: #f5a9b0;
+                border-color: rgba(220, 53, 69, 0.35);
+            }
+
+            html.dark-mode .alert-warning {
+                background-color: rgba(255, 193, 7, 0.15);
+                color: #ffd970;
+                border-color: rgba(255, 193, 7, 0.35);
+            }
+
+            html.dark-mode .alert-info {
+                background-color: rgba(13, 202, 240, 0.15);
+                color: #7fdcf1;
+                border-color: rgba(13, 202, 240, 0.35);
+            }
+
+            html.dark-mode .alert-secondary {
+                background-color: rgba(108, 117, 125, 0.2);
+                color: #c7cbd1;
+                border-color: rgba(108, 117, 125, 0.35);
+            }
+
+            html.dark-mode .route-direct-countries-list,
+            html.dark-mode .add-proxy-instructions {
+                border-color: #3a3f4a !important;
+            }
+
+            html.dark-mode .input-group-text {
+                background-color: #2a2d35;
+                color: #d8dade;
+                border-color: #3a3f4a;
+            }
+
+            html.dark-mode .form-check-input {
+                background-color: #1e2127;
+                border-color: #5a5f6a;
+            }
+
+            html.dark-mode .form-check-input:focus {
+                border-color: #E55977;
+                box-shadow: 0 0 0 0.25rem rgba(229, 89, 119, 0.25);
+            }
+
+            html.dark-mode .flatpickr-calendar {
+                background: #1e2127;
+                border-color: #383c45;
+                box-shadow: 0 3px 13px rgba(0, 0, 0, 0.4);
+                color: #d8dade;
+            }
+
+            html.dark-mode .flatpickr-months .flatpickr-month,
+            html.dark-mode .flatpickr-current-month,
+            html.dark-mode .flatpickr-weekdays,
+            html.dark-mode span.flatpickr-weekday {
+                background: #1e2127;
+                color: #d8dade;
+                fill: #d8dade;
+            }
+
+            html.dark-mode .flatpickr-current-month input.cur-year,
+            html.dark-mode .flatpickr-current-month .flatpickr-monthDropdown-months,
+            html.dark-mode .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+                background: #1e2127;
+                color: #d8dade;
+            }
+
+            html.dark-mode .flatpickr-day {
+                color: #d8dade;
+            }
+
+            html.dark-mode .flatpickr-day.flatpickr-disabled,
+            html.dark-mode .flatpickr-day.prevMonthDay,
+            html.dark-mode .flatpickr-day.nextMonthDay {
+                color: #55595f;
+            }
+
+            html.dark-mode .flatpickr-day:hover,
+            html.dark-mode .flatpickr-day:focus {
+                background: #2a2d35;
+                border-color: #2a2d35;
+            }
+
+            html.dark-mode .flatpickr-day.today {
+                border-color: #E55977;
+            }
+
+            html.dark-mode .flatpickr-day.selected,
+            html.dark-mode .flatpickr-day.selected:hover {
+                background: #E55977;
+                border-color: #E55977;
+                color: #fff;
+            }
+
+            html.dark-mode .flatpickr-prev-month svg,
+            html.dark-mode .flatpickr-next-month svg {
+                fill: #d8dade;
+            }
+
+            html.dark-mode .numInputWrapper span.arrowUp:after {
+                border-bottom-color: #d8dade;
+            }
+
+            html.dark-mode .numInputWrapper span.arrowDown:after {
+                border-top-color: #d8dade;
+            }
+
+            html.dark-mode .flatpickr-calendar-extra {
+                background: #1e2127 !important;
+                color: #d8dade;
+                box-shadow: 1px 0 0 #383c45, -1px 0 0 #383c45, 0 1px 0 #383c45, 0 -1px 0 #383c45, 0 3px 13px rgba(0, 0, 0, 0.4) !important;
+            }
+
+            html.dark-mode ::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+
+            html.dark-mode ::-webkit-scrollbar-track {
+                background: #16181b;
+            }
+
+            html.dark-mode ::-webkit-scrollbar-thumb {
+                background: #3a3f4a;
+                border-radius: 6px;
+            }
             </style>
     </head>
     <body>
+        {% set theme_toggle %}<button type="button" id="theme-toggle" class="theme-toggle-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <i class="fa-solid fa-moon icon-moon"></i>
+            <i class="fa-solid fa-sun icon-sun"></i>
+        </button>{% endset %}
         <div class="header">
-            <div>
+            <div class="header-inner">
                 {% if back_to == 'domains' %}
-                <div class="tabs float-start">
-                    <a href="/{{ admin_uuid }}/domains/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Routes</a>
-                </div>
+                <a href="/{{ admin_uuid }}/domains/" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Back to Routes</a>
+                <div class="header-spacer"></div>
                 {% elif back_to == 'users' %}
-                <div class="tabs float-start">
-                    <a href="/{{ admin_uuid }}/users/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Users</a>
-                </div>
+                <a href="/{{ admin_uuid }}/users/" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Back to Users</a>
+                <div class="header-spacer"></div>
                 {% elif back_to == 'dashboard' %}
-                <div class="tabs float-start">
-                    <a href="/{{ admin_uuid }}/dashboard/" class="tab back"><i class="fa-solid fa-arrow-left mx-1"></i> Back to Dashboard</a>
-                </div>
+                <a href="/{{ admin_uuid }}/dashboard/" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+                <div class="header-spacer"></div>
                 {% else %}
 
-                <a href="/{{ admin_uuid }}/">
-                    <div class="logo">
-                        <img src="{{ static_prefix }}/img/logo.png" />
-                    </div>
+                <a href="/{{ admin_uuid }}/" class="logo-link">
+                    <img src="{{ static_prefix }}/img/logo.png" class="logo-img" />
                 </a>
 
-                <div style="clear: both;" class="d-block d-sm-none"></div>
-
-                <div class="tabs float-sm-end">
-                    <a href="/{{ admin_uuid }}/dashboard/" class="tab {% if page=='dashboard' %}active{% endif %}">Dashboard</a>
-                    <a href="/{{ admin_uuid }}/users/" class="tab {% if page=='users' %}active{% endif %}">Users</a>
-                    <a href="/{{ admin_uuid }}/domains/" class="tab {% if page=='domains' %}active{% endif %}">Routes</a>
-                    <a href="/{{ admin_uuid }}/outbounds/" class="tab {% if page=='outbounds' %}active{% endif %}">Outbounds</a>
-                    <a href="/{{ admin_uuid }}/settings/" class="tab {% if page=='settings' %}active{% endif %}">Settings</a>
-                </div>
+                <nav class="header-nav">
+                    <a href="/{{ admin_uuid }}/dashboard/" class="nav-link {% if page=='dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="/{{ admin_uuid }}/users/" class="nav-link {% if page=='users' %}active{% endif %}">Users</a>
+                    <a href="/{{ admin_uuid }}/domains/" class="nav-link {% if page=='domains' %}active{% endif %}">Routes</a>
+                    <a href="/{{ admin_uuid }}/outbounds/" class="nav-link {% if page=='outbounds' %}active{% endif %}">Outbounds</a>
+                    <a href="/{{ admin_uuid }}/settings/" class="nav-link {% if page=='settings' %}active{% endif %}">Settings</a>
+                </nav>
                 {% endif %}
 
-                <div style="clear: both;"></div>
+                {{ theme_toggle }}
             </div>
         </div>
         <div class="main-content">
@@ -384,5 +797,18 @@
         <div class="mt-5 mb-3 section" style="opacity: 0.5; font-size: 12px; margin: 0 auto; max-width: 900px;">
             Libertea, version {{ libertea_version }}
         </div>
+        <script>
+            (function() {
+                var toggle = document.getElementById('theme-toggle');
+                if (!toggle) return;
+                toggle.addEventListener('click', function() {
+                    var isDark = document.documentElement.classList.contains('dark-mode');
+                    try {
+                        localStorage.setItem('libertea-theme', isDark ? 'light' : 'dark');
+                    } catch (e) {}
+                    location.reload();
+                });
+            })();
+        </script>
     </body>
 </html>
