@@ -904,6 +904,8 @@ def _render_outbounds_page(relay_config=None):
         relay_config=relay_config,
         ovpn_indices=outbounds_module._compute_ovpn_indices(all_outbounds),
         health=outbounds_module.get_all_health(),
+        max_outbounds=outbounds_module.MAX_OUTBOUNDS,
+        can_add_outbound=outbounds_module.can_create(),
     )
 
 @blueprint.route(root_url + 'outbounds/')
@@ -953,10 +955,17 @@ def _render_outbound_form(outbound=None, error=None):
 
 @blueprint.route(root_url + 'outbounds/new/', methods=['GET'])
 def outbound_new():
+    if not outbounds_module.can_create():
+        return redirect(url_for('admin.outbounds'))
     return _render_outbound_form()
 
 @blueprint.route(root_url + 'outbounds/new/', methods=['POST'])
 def outbound_create():
+    if not outbounds_module.can_create():
+        return _render_outbound_form(
+            None,
+            f'Maximum number of outbounds reached ({outbounds_module.MAX_OUTBOUNDS})',
+        )
     data = _parse_outbound_form(request.form)
 
     if request.form.get('type') == 'warp':

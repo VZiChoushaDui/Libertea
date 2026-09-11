@@ -215,6 +215,11 @@ def get_one(outbound_id):
         return None
     return _db().outbounds.find_one({'_id': oid})
 
+def can_create():
+    """True when a free HAProxy SOCKS slot (0..MAX_OUTBOUNDS-1) is still unused."""
+    used = {o['index'] for o in _db().outbounds.find({}, {'index': 1})}
+    return any(i not in used for i in range(MAX_OUTBOUNDS))
+
 def create(data):
     db = _db()
     used = {o['index'] for o in db.outbounds.find({}, {'index': 1})}
