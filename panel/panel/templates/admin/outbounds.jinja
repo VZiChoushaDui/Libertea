@@ -11,13 +11,31 @@
 
     {% if outbounds %}
 
-    {# Warn if every configured outbound is disabled #}
+    {# Warn when nothing can carry traffic: all disabled, or every enabled
+       outbound is down. Skip while any enabled outbound is still Checking. #}
     {% set has_enabled = [] %}
-    {% for ob in outbounds %}{% if ob.enabled %}{% set _ = has_enabled.append(1) %}{% endif %}{% endfor %}
+    {% set has_healthy = [] %}
+    {% set has_checking = [] %}
+    {% for ob in outbounds %}
+        {% if ob.enabled %}
+            {% set _ = has_enabled.append(1) %}
+            {% set h = health.get(ob.index) %}
+            {% if not h or h.get('display_status') == 'checking' %}
+                {% set _ = has_checking.append(1) %}
+            {% elif h.get('display_status') == 'up' %}
+                {% set _ = has_healthy.append(1) %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
     {% if not has_enabled %}
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>All outbounds are disabled. Traffic will exit directly from this server's default network interface.</span>
+        <span>All outbounds are disabled. Traffic will not be routed until an outbound is enabled.</span>
+    </div>
+    {% elif not has_healthy and not has_checking %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>No healthy outbound is available. Traffic will not be routed until one is enabled and healthy.</span>
     </div>
     {% endif %}
 
@@ -74,7 +92,7 @@
 
     <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
         <i class="fa-solid fa-circle-info"></i>
-        <span>No outbounds configured. Traffic will exit directly from this server's default network interface.</span>
+        <span>No outbounds configured. Traffic will not be routed.</span>
     </div>
 
     {% endif %}

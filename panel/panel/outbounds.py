@@ -772,22 +772,10 @@ def generate_config(outbounds, relay_config=None):
                 'rewrite_ttl': 10800,
             })
 
-    if not any(ob.get('enabled', True) for ob in outbounds):
-        # No enabled outbounds — expose a single direct SOCKS on 13000 so
-        # HAProxy has something to connect to, but don't add a hidden 2998
-        # escape hatch that could leak when outbounds are present.
-        inbounds.append({
-            'type': 'socks',
-            'listen': '127.0.0.1',
-            'listen_port': BASE_PORT,
-            'tag': 'socks-direct',
-        })
-        outbound_cfgs.append({'type': 'direct', 'tag': 'direct'})
-        route_rules.append({'inbound': ['socks-direct'], 'outbound': 'direct'})
-    else:
-        # Outbounds exist — add a bare 'direct' outbound only so sing-box's
-        # route 'final' rule has a valid tag; no inbound is exposed for it.
-        outbound_cfgs.append({'type': 'direct', 'tag': 'direct'})
+    # A bare 'direct' tag is only for bypass-list rules and explicit Direct
+    # outbounds. Never expose a SOCKS inbound for it: if the admin deleted
+    # Direct, leftover HAProxy slots must not leak out this host.
+    outbound_cfgs.append({'type': 'direct', 'tag': 'direct'})
 
     # Always include a block outbound so block rules can reference it
     outbound_cfgs.append({'type': 'block', 'tag': 'block'})
@@ -884,7 +872,8 @@ def generate_config(outbounds, relay_config=None):
         'outbounds': outbound_cfgs,
         'route': {
             'rules': route_rules,
-            'final': 'direct',
+            # Fail closed: unmatched traffic is dropped, not sent Direct.
+            'final': 'block',
             'default_domain_resolver': 'dns-direct',
         },
     }
@@ -994,11 +983,10 @@ def write_config(outbounds=None):
         outbounds = get_all()
     cfg = generate_config(outbounds)
 
-    # Sanity-check: cfg must have exactly the inbounds we built.
-    # When outbounds exist: one inbound per enabled outbound.
-    # When no outbounds: one direct inbound on BASE_PORT.
+    # Sanity-check: one inbound per enabled outbound. Zero enabled means
+    # zero inbounds — do not invent a Direct SOCKS on BASE_PORT.
     enabled_obs = [o for o in outbounds if o.get('enabled', True)]
-    expected_inbounds = len(enabled_obs) if enabled_obs else 1
+    expected_inbounds = len(enabled_obs)
     if len(cfg.get('inbounds', [])) < expected_inbounds:
         raise RuntimeError(
             f'Generated config has fewer inbounds than expected '
@@ -1464,19 +1452,6 @@ def _health_check_loop():
             ranks = backup_ranks(all_obs)
             _set_backup_ranks(ranks)
             active_slots = set()
-
-            if not any(ob.get('enabled', True) for ob in all_obs):
-                # Nothing enabled, so generate_config() exposes a plain direct
-                # SOCKS on the first slot and that is the only way out. Report it
-                # up without probing: a probe has to reach the internet, and on a
-                # blocked network a failing one would take away the last server
-                # HAProxy has left. Sing-box being down is still caught by
-                # HAProxy's own connection check on the same port.
-                active_slots.add(0)
-                set_weight(0, 100)
-                with _health_lock:
-                    _health_status[0] = True
-                all_obs = []
 
             for ob in all_obs:
                 slot = ob['index']
