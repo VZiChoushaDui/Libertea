@@ -230,8 +230,9 @@ if [[ $(uname -m) == *"x86"* ]]; then
     if [[ ! $(grep avx2 /proc/cpuinfo) ]]; then 
         echo " ** Your CPU does not support AVX2, Libertea will run in compatibility mode."
         echo "    Please consider upgrading your CPU to support AVX2."
-        # change docker-compose.yml to use compatibility image
-        sed -i "s|image: mongo:latest|image: mongo:4.4|g" docker-compose.yml
+        # change docker-compose.yml to use compatibility image (matches any
+        # pinned tag, with or without a registry prefix)
+        sed -i -E 's|image: ([^[:space:]]*/)?mongo:[^[:space:]]+|image: \1mongo:4.4|g' docker-compose.yml docker-compose.iran.yml
     fi
 fi
 
@@ -611,6 +612,11 @@ set -e
 
 echo "    - Starting MongoDB..."
 compose up -d mongodb
+# A prior disk-full event can leave WiredTiger corrupted; repair before
+# anything else touches data/db, since the upgrade check below also needs a
+# mongod that can actually start. The script waits for mongod's verdict itself.
+./bash-tools/repair-mongodb.sh
+compose up -d mongodb
 sleep 3
 if docker logs libertea-mongodb 2>&1 | grep -q "UPGRADE PROBLEM"; then
     echo "    - MongoDB data files need a version upgrade..."
@@ -708,6 +714,12 @@ echo " ** Adding auto-update cronjob..."
 if ! crontab -l | grep -q "autoupdate.sh"; then
     (crontab -l 2>/dev/null; echo "") | crontab -
     (crontab -l 2>/dev/null; echo "0 0 * * * bash $DIR/autoupdate.sh >> /tmp/libertea-autoupdate.log 2>&1") | crontab -
+fi
+
+echo " ** Adding old-data eviction cronjob..."
+# stats_cache/connected_ips_log have no TTL of their own (see bash-tools/evict-mongo-history.sh)
+if ! crontab -l | grep -q "evict-mongo-history.sh"; then
+    (crontab -l 2>/dev/null; echo "30 0 * * * bash $DIR/bash-tools/evict-mongo-history.sh >> /tmp/libertea-evict.log 2>&1") | crontab -
 fi
 
 echo " ** Waiting for services to start..."

@@ -44,7 +44,7 @@ wait_for_mongo_ready() {
 set_fcv_command() {
     local fcv=$1
     case "$fcv" in
-        7.0|8.0|8.1|8.2)
+        7.0|8.0|8.1|8.2|8.3)
             echo "db.adminCommand({ setFeatureCompatibilityVersion: \"$fcv\", confirm: true })"
             ;;
         *)
@@ -53,11 +53,23 @@ set_fcv_command() {
     esac
 }
 
+# Docker Hub never published a mongo:8.1 image (library/mongo jumps from 8.0
+# straight to 8.2), so FCV 8.1 is set with the 8.2 binary, which still accepts
+# it as its last-continuous version.
+image_for_fcv() {
+    case "$1" in
+        8.1) echo "8.2" ;;
+        *) echo "$1" ;;
+    esac
+}
+
 run_mongo_command() {
     local mongo_version=$1
     local mongo_command=$2
+    local image_tag
+    image_tag=$(image_for_fcv "$mongo_version")
 
-    echo "    Starting MongoDB $mongo_version..."
+    echo "    Starting MongoDB $image_tag (featureCompatibilityVersion $mongo_version)..."
     docker rm -f libertea-mongodb >/dev/null 2>&1 || true
     container_id=$(docker run -d \
         --name libertea-mongodb \
@@ -65,7 +77,12 @@ run_mongo_command() {
         -e MONGO_INITDB_ROOT_USERNAME=root \
         -e MONGO_INITDB_ROOT_PASSWORD="$PANEL_MONGODB_PASSWORD" \
         -v "$ROOT_DIR/data/db:/data/db" \
-        "${MONGO_REGISTRY}mongo:$mongo_version")
+        "${MONGO_REGISTRY}mongo:$image_tag")
+
+    if [ -z "$container_id" ]; then
+        echo "Error: could not start ${MONGO_REGISTRY}mongo:$image_tag"
+        exit 1
+    fi
 
     wait_for_mongo_ready "$container_id"
 
@@ -102,23 +119,37 @@ if [ -z "$fcv" ]; then
     fcv="6.0"
 fi
 
-# Intermediate images only. Compose keeps image: mongo:8 so hosts already on
-# 8.1/8.2 stay there; 8.2 cannot start on FCV 6.0 or 7.0, so we raise FCV
-# through 7.0 then 8.0 first.
-steps=""
-case "$fcv" in
-    4.4) steps="5.0 6.0 7.0 8.0" ;;
-    5.0) steps="6.0 7.0 8.0" ;;
-    6.0) steps="7.0 8.0" ;;
-    7.0) steps="8.0" ;;
-    8.0|8.1|8.2)
-        echo " ** MongoDB featureCompatibilityVersion is already $fcv"
-        exit 0
-        ;;
-    *) steps="7.0 8.0" ;;
-esac
+# Every FCV value mongod accepts on the way up, oldest first. A rung can only
+# be reached from the one before it, so the path is just "everything after
+# wherever the data files currently sit". 3.6 is a starting point only, never
+# set. Compose keeps image: mongo:8.3, the newest FCV each of those binaries
+# accepts, so every data file ends up caught up to it instead of stalling on
+# some in-between version the next repair also has to handle.
+FCV_LADDER="3.6 4.0 4.2 4.4 5.0 6.0 7.0 8.0 8.1 8.2 8.3"
+TARGET_FCV="8.3"
 
-echo " ** Upgrading MongoDB data files (featureCompatibilityVersion $fcv -> 8.0 via $steps)..."
+steps=""
+seen=0
+for rung in $FCV_LADDER; do
+    if [ "$seen" = "1" ]; then
+        steps="${steps:+$steps }$rung"
+    elif [ "$rung" = "$fcv" ]; then
+        seen=1
+    fi
+done
+
+if [ "$seen" != "1" ]; then
+    echo "Error: unrecognized featureCompatibilityVersion '$fcv', refusing to guess an upgrade path."
+    echo "       Upgrade to $TARGET_FCV by hand, or restore from backup."
+    exit 1
+fi
+
+if [ -z "$steps" ]; then
+    echo " ** MongoDB featureCompatibilityVersion is already $fcv"
+    exit 0
+fi
+
+echo " ** Upgrading MongoDB data files (featureCompatibilityVersion $fcv -> $TARGET_FCV via $steps)..."
 
 for step in $steps; do
     run_mongo_command "$step" "$(set_fcv_command "$step")"

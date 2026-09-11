@@ -4,6 +4,7 @@ while true; do
     cd /app
     python3 parse.py
     python3 summarize.py
+    python3 evict.py
     cd /data/logs
 
     files_to_compress=`ls -t | grep -v gz |  tail -n +2 | wc -l`

@@ -234,12 +234,6 @@ for i in [0]: #range(30, 0, -1):
     generate_summary(last_day, end_date, 'day', last_day_name + '.json')
 
 
-    # from beginning of the week
-    last_week = last_day - timedelta(days=last_day.weekday())
-    last_week_name = last_week.strftime('%Y-%m-%d')
-    generate_summary(last_week, end_date, 'week', last_week_name + '.json')
-
-
     # from beginning of the month
     last_month = last_day.replace(day=1)
     last_month_name = last_month.strftime('%Y-%m')

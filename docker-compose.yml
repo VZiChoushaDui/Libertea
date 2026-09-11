@@ -1,7 +1,7 @@
 version: '3'
 services:
   mongodb:
-    image: mongo:8
+    image: mongo:8.3
     container_name: libertea-mongodb
     hostname: libertea-mongodb
     environment:

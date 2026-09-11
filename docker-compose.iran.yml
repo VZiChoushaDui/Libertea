@@ -4,7 +4,7 @@
 version: '3'
 services:
   mongodb:
-    image: docker.arvancloud.ir/mongo:8
+    image: docker.arvancloud.ir/mongo:8.3
   camouflage-nginx-fallback:
     image: docker.arvancloud.ir/nginx:latest
   rsyslog:
