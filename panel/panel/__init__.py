@@ -122,6 +122,7 @@ def create_app():
     sysops.haproxy_update_users_list()
     sysops.haproxy_update_domains_list()
     sysops.haproxy_update_camouflage_list()
+    sysops.haproxy_update_cgnat_enabled_flag()
 
     if settings.get_migration_counter() <= 1:
         for domain in utils.get_domains():

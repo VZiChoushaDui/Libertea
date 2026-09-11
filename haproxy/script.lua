@@ -92,6 +92,95 @@ local function getLength(set)
     return count
 end
 
+-- Carrier-grade NAT ranges (ISPs that hand a real user a new IP on every
+-- request/reconnect) are read from this file, one IPv4 CIDR per line
+-- ("#" starts a comment). A request whose source IP falls inside one of
+-- these ranges is counted, for connection-limit purposes, as coming from
+-- the whole matching CIDR rather than from its individual IP - so a single
+-- legit user isn't mistaken for many devices sharing an account.
+local cgnat_ranges_file = "/usr/local/etc/haproxy/cgnat-ranges.lst"
+-- Feature toggle written by the panel (advanced settings), default enabled
+-- when the file is missing/empty. Content "0" disables the feature.
+local cgnat_enabled_file = "/haproxy-files/lists/cgnat-enabled.lst"
+local cgnat_ranges_reload_interval = 5 * 60 -- seconds
+local cgnat_ranges = {}
+local cgnat_enabled = true
+local last_cgnat_ranges_reload = 0
+
+local function ip_to_int(ip)
+    local a, b, c, d = ip:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
+    if a == nil then
+        return nil
+    end
+    return tonumber(a) * 16777216 + tonumber(b) * 65536 + tonumber(c) * 256 + tonumber(d)
+end
+
+local function load_cgnat_ranges()
+    local ranges = {}
+    local f = io.open(cgnat_ranges_file, "r")
+    if f == nil then
+        return ranges
+    end
+    for line in f:lines() do
+        line = line:gsub("#.*$", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if line ~= "" then
+            local ip_part, prefix_part = line:match("^([^/]+)/(%d+)$")
+            local network = ip_part and ip_to_int(ip_part) or nil
+            if network ~= nil and tonumber(prefix_part) ~= nil then
+                table.insert(ranges, { network = network, prefix_len = tonumber(prefix_part), cidr = line })
+            else
+                logWarn("Ignoring invalid CIDR in cgnat-ranges.lst: '" .. line .. "'\n")
+            end
+        end
+    end
+    f:close()
+    return ranges
+end
+
+local function load_cgnat_enabled()
+    local f = io.open(cgnat_enabled_file, "r")
+    if f == nil then
+        return true
+    end
+    local content = f:read("*l")
+    f:close()
+    return content ~= "0"
+end
+
+local function reload_cgnat_ranges_if_needed()
+    local now = getTimestamp()
+    if now - last_cgnat_ranges_reload > cgnat_ranges_reload_interval then
+        last_cgnat_ranges_reload = now
+        cgnat_ranges = load_cgnat_ranges()
+        cgnat_enabled = load_cgnat_enabled()
+    end
+end
+
+-- Returns the key to use when counting this IP towards a user's connection
+-- limit: the matching configured CGNAT CIDR, or the plain IP if none match.
+local function get_ip_count_key(ip)
+    reload_cgnat_ranges_if_needed()
+
+    if not cgnat_enabled then
+        return ip
+    end
+
+    local ip_int = ip_to_int(ip)
+    if ip_int == nil then
+        return ip -- not a parseable IPv4 address (e.g. IPv6): count as-is
+    end
+
+    for _, range in ipairs(cgnat_ranges) do
+        local block_size = 2 ^ (32 - range.prefix_len)
+        local range_start = range.network - (range.network % block_size)
+        if ip_int >= range_start and ip_int < range_start + block_size then
+            return range.cidr
+        end
+    end
+
+    return ip
+end
+
 local whitelist_users = {}
 local whitelist_domains = {}
 
@@ -161,6 +250,10 @@ local function auth_request(txn)
 
         flush_if_needed()
 
+        -- key used for connection counting: the raw IP, unless it falls in a
+        -- configured CGNAT range, in which case the whole range counts as one
+        local count_key = get_ip_count_key(user_ip)
+
         -- check if user is already in path_ips table, if not add a list of ips
         for i = 1, path_ips_list_count do
             if path_ips_list[i][username] == nil then
@@ -169,7 +262,7 @@ local function auth_request(txn)
         end
         
         -- check if user ip is already in path_ips table, if not add the ip to the list
-        if not setContains(path_ips_list[1][username], user_ip) then
+        if not setContains(path_ips_list[1][username], count_key) then
             -- check if user has reached max number of ips
             local maxIps = getMaxIps(txn, username)
             if getLength(path_ips_list[ip_user_connected_list_items][username]) >= maxIps then
@@ -179,11 +272,11 @@ local function auth_request(txn)
             end
 
             for i = 1, path_ips_list_count do
-                if not setContains(path_ips_list[i][username], user_ip) then
-                    addToSet(path_ips_list[i][username], user_ip)
+                if not setContains(path_ips_list[i][username], count_key) then
+                    addToSet(path_ips_list[i][username], count_key)
                 end
             end
-            log(username .. ": IP " .. user_ip .. " connected to " .. hostname .. "\n")
+            log(username .. ": IP " .. user_ip .. " connected to " .. hostname .. " (counted as " .. count_key .. ")\n")
         end
     end
 end

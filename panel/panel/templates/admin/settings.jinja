@@ -209,6 +209,13 @@
                 Add all VPN endpoints as provider source URLs
             </label>
         </div>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" value="on" name="cgnat_bucketing_enabled" id="cgnat_bucketing_enabled" {% if cgnat_bucketing_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="cgnat_bucketing_enabled">
+                Bucket Iran-Azerbaijan NAT (Delta Telecom) IPs as a single connection<br />
+                <i style="opacity: 0.75">Some Iranian ISPs route users through Delta Telecom (AS29049, Azerbaijan), which assigns a new public IP on every request. Enabling this counts IPs from that network as one connection so affected users aren't wrongly capped by the concurrent IP limit.</i>
+            </label>
+        </div>
         <hr class="my-4">
 
         <div class="form-group mb-3">

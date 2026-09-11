@@ -164,6 +164,22 @@ def set_camouflage_domain(val, db=None):
     db.settings.update_one({"_id": "camouflage_domain"}, {"$set": {"value": val}}, upsert=True)
     sysops.haproxy_update_camouflage_list() 
 
+def get_cgnat_bucketing_enabled(db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    setting = db.settings.find_one({"_id": "cgnat_bucketing_enabled"})
+    if setting is None:
+        return True
+    return setting["value"]
+
+def set_cgnat_bucketing_enabled(val, db=None):
+    if db is None:
+        client = config.get_mongo_client()
+        db = client[config.MONGODB_DB_NAME]
+    db.settings.update_one({"_id": "cgnat_bucketing_enabled"}, {"$set": {"value": val}}, upsert=True)
+    sysops.haproxy_update_cgnat_enabled_flag()
+
 def get_periodic_health_check(db=None):
     if db is None:
         client = config.get_mongo_client()

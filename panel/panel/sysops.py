@@ -137,6 +137,15 @@ def haproxy_update_camouflage_list():
 
     return haproxy_reload()
 
+def haproxy_update_cgnat_enabled_flag():
+    haproxy_ensure_folder()
+    enabled = settings.get_cgnat_bucketing_enabled()
+    with open(config.get_root_dir() + 'data/haproxy-lists/cgnat-enabled.lst', 'w') as f:
+        f.write(('1' if enabled else '0') + '\n')
+
+    print("Wrote cgnat bucketing enabled=" + str(enabled) + " to haproxy-lists/cgnat-enabled.lst")
+    return haproxy_reload()
+
 SINGBOX_SERVICE = 'libertea-outbound-direct.service'
 
 def apply_outbound_config():

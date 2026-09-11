@@ -770,6 +770,7 @@ def app_settings(clash_rules_error=None, clash_custom_rules_override=None):
         add_domains_even_if_inactive=settings.get_add_domains_even_if_inactive(),
         health_check=settings.get_periodic_health_check(),
         manual_tier_select_clash=settings.get_manual_tier_select_clash(),
+        cgnat_bucketing_enabled=settings.get_cgnat_bucketing_enabled(),
         camouflage_domain=camouflage_domain,
         camouflage_error=camouflage_error,
         route_direct_countries=config.ROUTE_IP_LISTS,
@@ -824,6 +825,7 @@ def app_settings_save():
     camouflage_domain = request.form.get('camouflage_domain', None)
     health_check = request.form.get('health_check', None)
     manual_tier_select_clash = request.form.get('manual_tier_select_clash', None)
+    cgnat_bucketing_enabled = request.form.get('cgnat_bucketing_enabled', None)
 
     tier_enabled_for_subscription = {i: request.form.get(f'tier_enabled_for_subscription_{i}', None) for i in [1,2,3,4]}
     tiers_proxygroup_type = {i: request.form.get(f'tier_{i}_proxygroup_type', None) for i in [1,2,3,4]}
@@ -841,6 +843,7 @@ def app_settings_save():
     settings.set_providers_from_all_endpoints(providers_from_all_endpoints == 'on')
     settings.set_periodic_health_check(health_check == 'on')
     settings.set_manual_tier_select_clash(manual_tier_select_clash == 'on')
+    settings.set_cgnat_bucketing_enabled(cgnat_bucketing_enabled == 'on')
     for x in config.ROUTE_IP_LISTS:
         settings.set_route_direct_country_enabled(x['id'], route_direct[x['id']] == 'on')
     for x in ['vlessws', 'trojanws', 'ssv2ray', 'trojangrpc', 'vlessgrpc', 'vmessgrpc', 'ssgrpc']:

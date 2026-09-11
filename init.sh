@@ -701,6 +701,7 @@ touch ./data/haproxy-lists/camouflage-hosts.lst
 touch ./data/haproxy-lists/domains.lst
 touch ./data/haproxy-lists/valid-panel-endpoints.lst
 touch ./data/haproxy-lists/valid-user-endpoints.lst
+touch ./data/haproxy-lists/cgnat-enabled.lst
 
 echo " ** Adding auto-update cronjob..."
 # create a cronjob to run ./autoupdate.sh on bash and save the output to /tmp/libertea-autoupdate.log

@@ -1,0 +1,96 @@
+# One IPv4 CIDR per line. Requests from an IP inside one of these ranges are
+# counted, for connection-limit purposes, as coming from the whole CIDR
+# instead of the individual IP. Use this for ISPs that NAT many real users
+# through a fast-rotating shared IP pool, which otherwise makes a single
+# legit user look like many devices.
+# Lines starting with # are ignored. Reloaded automatically every 5 minutes.
+# This file is shipped and updated with Libertea itself (via git), since
+# it lives outside the gitignored data/ folder.
+#
+# Delta Telecom Ltd (AS29049, Azerbaijan) - some Iranian ISPs NAT users
+# through this network, rotating their public IP on every request.
+# Source: RIPEstat announced-prefixes for AS29049, collapsed to minimal
+# supernets, fetched 2026-09-11. Re-check periodically, ranges can change:
+# https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS29049
+31.170.224.0/21
+31.171.3.0/24
+31.171.4.0/22
+31.171.16.0/22
+31.171.21.0/24
+31.171.22.0/23
+31.171.24.0/21
+31.171.32.0/22
+31.171.36.0/23
+31.171.38.0/24
+31.171.40.0/24
+31.171.42.0/23
+31.171.44.0/22
+31.171.67.0/24
+31.171.99.0/24
+31.171.100.0/22
+31.171.110.0/24
+31.171.118.0/24
+31.171.121.0/24
+31.171.122.0/23
+62.212.230.0/23
+62.212.232.0/24
+62.212.239.0/24
+62.212.240.0/23
+62.212.242.0/24
+62.212.246.0/23
+62.212.249.0/24
+62.212.251.0/24
+62.212.252.0/23
+62.212.254.0/24
+82.194.14.0/24
+85.132.2.0/24
+85.132.6.0/24
+85.132.20.0/22
+85.132.60.0/24
+85.132.62.0/24
+85.132.74.0/24
+85.132.77.0/24
+85.132.80.0/24
+85.132.82.0/24
+85.132.90.0/24
+85.132.112.0/24
+85.132.125.0/24
+85.132.126.0/24
+94.20.10.0/24
+94.20.17.0/24
+94.20.23.0/24
+94.20.24.0/24
+94.20.41.0/24
+94.20.50.0/24
+94.20.73.0/24
+94.20.80.0/24
+94.20.89.0/24
+94.20.90.0/23
+94.20.121.0/24
+94.20.122.0/24
+94.20.140.0/24
+94.20.144.0/23
+94.20.152.0/24
+94.20.154.0/24
+94.20.156.0/24
+94.20.158.0/23
+94.20.160.0/23
+94.20.163.0/24
+94.20.177.0/24
+94.20.184.0/24
+94.20.188.0/24
+94.20.194.0/23
+94.20.196.0/22
+94.20.200.0/24
+94.20.218.0/23
+94.20.220.0/24
+94.20.222.0/23
+94.20.224.0/24
+94.20.226.0/24
+94.20.236.0/23
+94.20.238.0/24
+94.20.240.0/22
+94.20.244.0/23
+94.20.249.0/24
+94.20.250.0/24
+94.20.252.0/22
