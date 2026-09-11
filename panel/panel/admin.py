@@ -25,15 +25,31 @@ root_url = '/' + config.get_admin_uuid() + '/'
 OUTBOUND_RESTART_WAIT_SECONDS = 7   # apply_outbound_config: sing-box restart + haproxy_reload(5)
 HAPROXY_RELOAD_WAIT_SECONDS = 4     # plain haproxy_reload(): default 2s delay
 
-def _reloading_page(target_url, wait_seconds, message='Applying changes, please wait…'):
-    """Interim page shown instead of an immediate redirect after an action that
-    restarts haproxy and/or sing-box. Redirecting right away can hit the brief
-    window where those restart, breaking the request if the admin reaches this
-    panel through the same instance (e.g. while connected to its VPN)."""
+def _reloading_page(target_url, wait_seconds):
+    """Redirect (GET) to the interim "applying changes" page instead of
+    responding to the POST directly — the response must stay a redirect
+    (Post/Redirect/Get) so a refresh on the interim page can't resubmit the
+    form and, say, create the same outbound a second time."""
+    return redirect(url_for('admin.reloading_page', to=target_url, wait=wait_seconds))
+
+@blueprint.route(root_url + 'reloading/')
+def reloading_page():
+    """Interim page shown while an action restarts haproxy and/or sing-box.
+    Redirecting to the final page right away can hit the brief window where
+    those restart, breaking the request if the admin reaches this panel
+    through the same instance (e.g. while connected to its VPN)."""
+    target = request.args.get('to', '')
+    if not target.startswith(root_url):
+        target = url_for('admin.outbounds')
+    try:
+        wait_seconds = int(request.args.get('wait', HAPROXY_RELOAD_WAIT_SECONDS))
+    except (TypeError, ValueError):
+        wait_seconds = HAPROXY_RELOAD_WAIT_SECONDS
+    wait_seconds = max(0, min(wait_seconds, 30))
     return render_template('admin/reloading.jinja',
-        target_url=target_url,
+        target_url=target,
         wait_seconds=wait_seconds,
-        message=message,
+        message='Applying changes, please wait…',
     )
 
 @blueprint.route(root_url)
