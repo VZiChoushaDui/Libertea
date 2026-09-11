@@ -38,7 +38,8 @@ echo " ** Starting shadowsocks..."
 # load variables from config.env
 . /etc/xray/config.env
 
-ssservice server \
+# shadowsocks-rust v1.9.2 ships ssserver, not the later ssservice CLI
+ssserver \
       -s $SS_SERVER_ADDR \
       -k $SS_PASSWORD \
       -m $SS_METHOD \
