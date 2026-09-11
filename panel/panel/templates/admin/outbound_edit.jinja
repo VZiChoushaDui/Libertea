@@ -46,7 +46,7 @@
                    {% if outbound and outbound.backup %}checked{% endif %} onchange="updateBackupFields()">
             <label class="form-check-label" for="backup">Backup</label>
             <div class="form-text">
-                Backup outbounds are only used when <strong>all</strong> non-backup outbounds are unhealthy.
+                Primary outbounds are load-balanced, but backup outbounds are only used when <strong>all</strong> non-backup outbounds are unhealthy.
             </div>
         </div>
 
@@ -61,9 +61,7 @@
             <div class="form-text">
                 1 is tried first, then 2, and so on. Only one backup carries traffic
                 at a time, so this decides which one takes over when every normal
-                outbound is down. Numbers another backup already uses are not listed,
-                and {{ reserved_backup_priority }} is kept for the Direct fallback the
-                panel adds by itself — an outbound can be moved off it, but not back on.
+                outbound is down.
             </div>
         </div>
 
