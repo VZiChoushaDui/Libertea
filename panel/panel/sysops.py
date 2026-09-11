@@ -148,6 +148,25 @@ def haproxy_update_cgnat_enabled_flag():
 
 SINGBOX_SERVICE = 'libertea-outbound-direct.service'
 
+def apply_outbound_config_later(sleep_secs=2, on_failure=None):
+    """Run apply_outbound_config() after sleep_secs.
+
+    Used so the HTTP response (the "applying changes" page) can reach the
+    browser before sing-box/HAProxy bounce the tunnel the admin is using.
+    """
+    def _run():
+        time.sleep(sleep_secs)
+        success, err = apply_outbound_config()
+        if not success and on_failure is not None:
+            try:
+                on_failure(err)
+            except Exception as e:
+                print('apply_outbound_config_later on_failure failed:', e)
+
+    th = threading.Thread(target=_run)
+    th.start()
+    return True
+
 def apply_outbound_config():
     """
     Write new sing-box config from MongoDB, restart the service.

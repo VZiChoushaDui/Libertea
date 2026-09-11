@@ -13,24 +13,42 @@ from . import health_check
 from . import outbounds as outbounds_module
 from pymongo import MongoClient
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response, make_response
 
 blueprint = Blueprint('admin', __name__)
 
 root_url = '/' + config.get_admin_uuid() + '/'
 
-# How long the interim "applying changes" page waits before redirecting.
-# Must outlast the background restart it's covering for, since the panel
-# itself is reached through the same HAProxy/sing-box being restarted.
-OUTBOUND_RESTART_WAIT_SECONDS = 7   # apply_outbound_config: sing-box restart + haproxy_reload(5)
-HAPROXY_RELOAD_WAIT_SECONDS = 4     # plain haproxy_reload(): default 2s delay
+# How long the interim "applying changes" page waits before it starts
+# probing the target URL. Must outlast the background restart, since the
+# panel itself is reached through the same HAProxy/sing-box being restarted.
+# apply_outbound_config_later(2) + sing-box restart/sleep 3 + haproxy_reload(5)
+OUTBOUND_RESTART_WAIT_SECONDS = 12
+HAPROXY_RELOAD_WAIT_SECONDS = 6     # plain haproxy_reload(): default 2s delay
+# Let the reloading HTML reach the browser before bouncing the tunnel.
+RELOAD_RESPONSE_DELAY_SECONDS = 2
 
-def _reloading_page(target_url, wait_seconds):
-    """Redirect (GET) to the interim "applying changes" page instead of
-    responding to the POST directly — the response must stay a redirect
-    (Post/Redirect/Get) so a refresh on the interim page can't resubmit the
-    form and, say, create the same outbound a second time."""
-    return redirect(url_for('admin.reloading_page', to=target_url, wait=wait_seconds))
+def _reloading_page(target_url, wait_seconds, apply_outbound=False, on_apply_failure=None):
+    """Return the interim "applying changes" page as the POST response.
+
+    The restart is deferred so this HTML can be delivered before HAProxy /
+    sing-box drop the admin's tunnel. JS then replaceState()'s to the GET
+    URL so a refresh cannot resubmit the form (e.g. creating a duplicate
+    outbound)."""
+    if apply_outbound:
+        sysops.apply_outbound_config_later(
+            RELOAD_RESPONSE_DELAY_SECONDS,
+            on_failure=on_apply_failure,
+        )
+    response = make_response(render_template('admin/reloading.jinja',
+        target_url=target_url,
+        wait_seconds=wait_seconds,
+        message='Applying changes, please wait…',
+        reloading_url=url_for('admin.reloading_page', to=target_url, wait=wait_seconds),
+    ))
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Connection'] = 'close'
+    return response
 
 @blueprint.route(root_url + 'reloading/')
 def reloading_page():
@@ -46,11 +64,15 @@ def reloading_page():
     except (TypeError, ValueError):
         wait_seconds = HAPROXY_RELOAD_WAIT_SECONDS
     wait_seconds = max(0, min(wait_seconds, 30))
-    return render_template('admin/reloading.jinja',
+    response = make_response(render_template('admin/reloading.jinja',
         target_url=target,
         wait_seconds=wait_seconds,
         message='Applying changes, please wait…',
-    )
+        reloading_url=url_for('admin.reloading_page', to=target, wait=wait_seconds),
+    ))
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Connection'] = 'close'
+    return response
 
 @blueprint.route(root_url)
 def rootpage():
@@ -812,9 +834,6 @@ def app_settings_save():
         if clash_rules_error is None:
             ob.set_clash_custom_rules(clash_custom_rules_text)
 
-    if needs_outbound_restart:
-        sysops.apply_outbound_config()
-
     max_ips = request.form.get('max_ips', None)
     proxy_port = request.form.get('proxy_port', None)
     single_file_clash = request.form.get('single_file_clash', None)
@@ -877,7 +896,7 @@ def app_settings_save():
 
     target_url = url_for('admin.app_settings')
     if needs_outbound_restart:
-        return _reloading_page(target_url, OUTBOUND_RESTART_WAIT_SECONDS)
+        return _reloading_page(target_url, OUTBOUND_RESTART_WAIT_SECONDS, apply_outbound=True)
     if needs_haproxy_reload:
         return _reloading_page(target_url, HAPROXY_RELOAD_WAIT_SECONDS)
     return redirect(target_url)
@@ -921,12 +940,18 @@ def outbound_relay_save():
         'password': request.form.get('relay_password', '').strip(),
         'protocol': request.form.get('relay_protocol', 'hysteria2'),
     }
+    prev_relay = settings.get_relay_config()
     settings.set_relay_config(relay_config)
-    success, err = sysops.apply_outbound_config()
-    if not success:
-        relay_config['error'] = err
-        return _render_outbounds_page(relay_config)
-    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
+
+    def _revert_relay(_err):
+        settings.set_relay_config(prev_relay)
+
+    return _reloading_page(
+        url_for('admin.outbounds'),
+        OUTBOUND_RESTART_WAIT_SECONDS,
+        apply_outbound=True,
+        on_apply_failure=_revert_relay,
+    )
 
 @blueprint.route(root_url + 'outbounds/relay/setup-command/')
 def outbound_relay_setup_command():
@@ -985,11 +1010,16 @@ def outbound_create():
     new_ob = outbounds_module.get_one(new_id)
     if new_ob:
         outbounds_module.reset_health(new_ob['index'])
-    success, err = sysops.apply_outbound_config()
-    if not success:
+
+    def _revert_create(_err):
         outbounds_module.delete(new_id)
-        return _render_outbound_form(data, err)
-    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
+
+    return _reloading_page(
+        url_for('admin.outbounds'),
+        OUTBOUND_RESTART_WAIT_SECONDS,
+        apply_outbound=True,
+        on_apply_failure=_revert_create,
+    )
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/', methods=['GET'])
 def outbound_edit(outbound_id):
@@ -1007,12 +1037,17 @@ def outbound_update(outbound_id):
     data['type'] = old_ob['type']
     outbounds_module.update(outbound_id, data)
     outbounds_module.reset_health(old_ob['index'])
-    success, err = sysops.apply_outbound_config()
-    if not success:
-        restore = {k: v for k, v in old_ob.items() if k != '_id'}
+    restore = {k: v for k, v in old_ob.items() if k != '_id'}
+
+    def _revert_update(_err):
         outbounds_module.update(outbound_id, restore)
-        return _render_outbound_form(old_ob, err)
-    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
+
+    return _reloading_page(
+        url_for('admin.outbounds'),
+        OUTBOUND_RESTART_WAIT_SECONDS,
+        apply_outbound=True,
+        on_apply_failure=_revert_update,
+    )
 
 @blueprint.route(root_url + 'outbounds/<outbound_id>/delete/', methods=['POST'])
 def outbound_delete(outbound_id):
@@ -1020,8 +1055,7 @@ def outbound_delete(outbound_id):
     if ob:
         outbounds_module.reset_health(ob['index'])
     outbounds_module.delete(outbound_id)
-    sysops.apply_outbound_config()
-    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS)
+    return _reloading_page(url_for('admin.outbounds'), OUTBOUND_RESTART_WAIT_SECONDS, apply_outbound=True)
 
 def _form_int(form, field, default, minimum, maximum):
     """Read an integer form field, clamped to [minimum, maximum].
