@@ -676,7 +676,25 @@ if [ "$mongo_ready" -ne 1 ]; then
 fi
 echo ""
 echo "    - Starting remaining containers..."
-compose up -d $COMPOSE_UP_SERVICES
+# camouflage-nginx-fallback and rsyslog are the only services not on host
+# networking, so they're the only ones whose port docker just released on
+# `compose down` above; the docker-proxy for it can take a moment to exit,
+# making the first `up` here racy. Retry instead of failing the whole update.
+set +e
+compose_up_ok=0
+for i in $(seq 1 5); do
+    if compose up -d $COMPOSE_UP_SERVICES; then
+        compose_up_ok=1
+        break
+    fi
+    echo "    - Containers failed to start (a port from the previous run may still be closing), retrying in 3s..."
+    sleep 3
+done
+set -e
+if [ "$compose_up_ok" -ne 1 ]; then
+    echo "ERROR: Failed to start docker containers after multiple attempts."
+    exit 1
+fi
 
 mkdir -p ./data/haproxy-lists
 touch ./data/haproxy-lists/camouflage-hosts.lst
