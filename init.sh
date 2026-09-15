@@ -694,6 +694,17 @@ for i in $(seq 1 5); do
         break
     fi
     echo "    - Containers failed to start (a port from the previous run may still be closing), retrying in 3s..."
+    
+    retry_services="$COMPOSE_UP_SERVICES"
+    if [ -z "$retry_services" ]; then
+        retry_services="$(compose config --services 2>/dev/null)"
+    fi
+    for svc in $retry_services; do
+        cid=$(compose ps -a -q "$svc" 2>/dev/null)
+        if [ -n "$cid" ] && [ "$(docker inspect -f '{{.State.Running}}' "$cid" 2>/dev/null)" != "true" ]; then
+            docker rm -f "$cid" >/dev/null 2>&1
+        fi
+    done
     sleep 3
 done
 set -e
